@@ -1,6 +1,6 @@
 [project]
 name = "parlaibero-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "MCP server for ParlaIbero: plenary speeches from 16 Ibero-American parliaments, for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"

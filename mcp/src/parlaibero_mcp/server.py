@@ -18,7 +18,8 @@ except ImportError:  # mcp 1.x
     from mcp.server.fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
-from . import __version__, dataverse, store
+from . import __version__, analysis, dataverse, store
+from .textutil import search_regex
 from .catalog import COLLECTION_URL, COUNTRIES, DOCUMENTS, normalize_iso
 
 INSTRUCTIONS = """\
@@ -30,23 +31,47 @@ deputies. One dataset and one DOI per country in Harvard Dataverse (CC BY 4.0).
 How to work with it:
 1. `list_countries` shows what exists and what is already downloaded. Data must be downloaded
    once per country (`download_country`); big countries take 0.5-1.5 GB and a few minutes.
-2. `describe_data` gives the table schema. Aggregate with `query_sql` (DuckDB SQL, read-only);
-   find passages with `search_text`; read them with `get_intervention` / `get_session`;
-   compare word use across years, parties or sex with `term_frequency`.
+2. Before reading a trend, check the base with `coverage` (sessions, words, linkage, gaps).
+   Frequencies over time: `ngram_viewer` (can draw an SVG/HTML chart) and `term_counter` (totals,
+   first and last use). Who speaks: `share_of_voice` (voice vs weight in the chamber). What
+   distinguishes groups: `distinctive_words`. Close reading: `kwic`, `collocations`,
+   `search_text`, `get_intervention`, `get_session`. Anything else: `query_sql` (read-only
+   DuckDB, schema in `describe_data`); save results with `export_result`; `query_log` lists what
+   was run, for the methods section.
 3. Rows with `dm_speech = 0` are not speech (cover page, summaries, vote tallies, reproduced
    documents; `intervention_order = 0` is the session's Prolegomena). Filter `dm_speech = 1`
    to study what was said.
-4. `sex`, `party` and `district` come from the deputy register and are empty when the speaker
+4. Documents read into the record (reports, bills, lists) stay as speech where the record marks
+   no separator; they are about half of the words in Argentina and a quarter in Uruguay and
+   Mexico. Word-based comparisons between countries must check `coverage` (long_turn_words_pct)
+   and be re-run with `max_turn_words=10000`. The chair's procedural turns can dominate group
+   comparisons: use `exclude_chair=true` in distinctive_words and share_of_voice.
+5. `sex`, `party` and `district` come from the deputy register and are empty when the speaker
    could not be linked (`id_dep` empty: ministers, clerks, collective or anonymous voices).
    Coverage, linkage rates and caveats differ by country: read `get_documentation(country,
    'known_limitations')` and `'corpus_info'` before drawing comparative conclusions.
-5. `id_session` / `id_int` are stable within a published version, not across versions: always
+6. `id_session` / `id_int` are stable within a published version, not across versions: always
    report the dataset version. Cite each country's dataset with its DOI (`how_to_cite`).
 """
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 _server = _Server(name="parlaibero", instructions=INSTRUCTIONS)
+
+
+# Analysis tools are logged (for query_log) and need the v2 database (token-based n_words).
+LOGGED = {"query_sql", "search_text", "term_frequency", "ngram_viewer", "term_counter", "share_of_voice",
+          "distinctive_words", "kwic", "collocations", "coverage", "export_result", "get_session",
+          "get_intervention"}
+
+
+def _before(name: str, kwargs: dict) -> None:
+    if name in LOGGED:
+        if store.DB.exists() and store.schema_version() != store.SCHEMA_VERSION:
+            raise ToolError("The local database was built by an older parlaibero-mcp. Run "
+                            "`parlaibero-mcp reindex` in a terminal (about 2 minutes, no re-download) "
+                            "and try again.")
+        analysis.log_call(name, {k: v for k, v in kwargs.items() if k != "ctx"})
 
 
 class _Tools:
@@ -59,6 +84,7 @@ class _Tools:
                 @functools.wraps(fn)
                 async def wrapped(*a, **k):
                     try:
+                        _before(fn.__name__, k)
                         return await fn(*a, **k)
                     except ToolError:
                         raise
@@ -68,6 +94,7 @@ class _Tools:
                 @functools.wraps(fn)
                 def wrapped(*a, **k):
                     try:
+                        _before(fn.__name__, k)
                         return fn(*a, **k)
                     except ToolError:
                         raise
@@ -91,34 +118,10 @@ Countries = Annotated[list[str] | None, Field(
     default=None, description="ISO2 codes to restrict to; omit for every downloaded country")]
 
 
-def _countries_clause(countries: list[str] | None, params: list) -> str:
-    if not countries:
-        return ""
-    isos = [normalize_iso(c) for c in countries]
-    params.extend(isos)
-    return f" AND country IN ({', '.join('?' * len(isos))})"
-
-
-def _filters(countries, date_from, date_to, party, sex, id_dep, speech_only, params) -> str:
-    where = _countries_clause(countries, params)
-    if date_from:
-        where += " AND date >= CAST(? AS DATE)"
-        params.append(date_from)
-    if date_to:
-        where += " AND date <= CAST(? AS DATE)"
-        params.append(date_to)
-    if party:
-        where += " AND party ILIKE ?"
-        params.append(party)
-    if sex:
-        where += " AND sex = ?"
-        params.append(sex.upper()[:1])
-    if id_dep:
-        where += " AND id_dep = ?"
-        params.append(id_dep)
-    if speech_only:
-        where += " AND dm_speech = 1"
-    return where
+def _F(countries=None, date_from=None, date_to=None, party=None, sex=None, id_dep=None,
+       speech_only=True, exclude_chair=False, max_turn_words=None) -> analysis.Filters:
+    return analysis.Filters(countries, date_from, date_to, party, sex, id_dep, speech_only,
+                            exclude_chair, max_turn_words)
 
 
 def _rows(cols: list[str], rows: list[tuple], max_cell: int | None = None) -> list[dict]:
@@ -134,50 +137,32 @@ def _rows(cols: list[str], rows: list[tuple], max_cell: int | None = None) -> li
     return out
 
 
-_FOLD = {"a": "aáàâãä", "e": "eéèêë", "i": "iíìîï", "o": "oóòôõö", "u": "uúùûü",
-         "c": "cç", "n": "nñ"}
-_FOLD_REV = {ch: base for base, chars in _FOLD.items() for ch in chars}
-
-
-def _search_regex(pattern: str, regex: bool, whole_word: bool = False) -> str:
-    """RE2 pattern for DuckDB. Plain text becomes a case- and accent-tolerant literal
-    ('nacion' → 'n[aáàâãä]c[iíìîï][oóòôõö]n'), which RE2 matches far faster than folding the
-    text itself."""
-    if not pattern:
-        raise ValueError("Empty search pattern")
-    if regex:
-        return pattern if pattern.startswith("(?") else "(?i)" + pattern
-    out = []
-    for ch in pattern.lower():
-        base = _FOLD_REV.get(ch)
-        if base:
-            out.append(f"[{_FOLD[base]}]")
-        elif ch.isalnum():
-            out.append(ch)
-        elif ch.isspace():
-            out.append(r"\s+")
-        elif ch.isascii():
-            out.append("\\" + ch)  # ASCII punctuation: escaped; RE2 rejects escaping anything else
-        else:
-            out.append(ch)
-    body = "".join(out)
-    if whole_word:
-        body = r"(?:^|[^\pL\pN])" + body + r"(?:$|[^\pL\pN])"
-    return "(?i)" + body
-
-
-def _snippet(text: str, rx: str, width: int = 220) -> str:
+def _snippet(text: str, rx: re.Pattern, width: int = 220) -> str:
     if not text:
         return ""
-    try:
-        m = re.search(rx.replace("(?i)", "", 1).replace(r"\pL", "\\w").replace(r"\pN", "\\d"),
-                      text, re.IGNORECASE)
-    except re.error:
-        m = None
+    m = rx.search(text)
     if m is None:
         return text[: 2 * width] + ("…" if len(text) > 2 * width else "")
     a, b = max(0, m.start() - width), min(len(text), m.end() + width)
     return ("…" if a else "") + text[a:b] + ("…" if b < len(text) else "")
+
+
+# Common parameter types of the analysis tools
+DateFrom = Annotated[str | None, Field(description="YYYY or YYYY-MM-DD")]
+DateTo = Annotated[str | None, Field(description="YYYY or YYYY-MM-DD (inclusive)")]
+Party = Annotated[str | None, Field(description="Party label as an ILIKE pattern, e.g. 'PSOE' or '%Frente%'")]
+Sex = Annotated[Literal["M", "F"] | None, Field(description="Speaker's sex (linked deputies only)")]
+SpeechOnly = Annotated[bool, Field(description="Only rows with dm_speech = 1 (recommended)")]
+Terms = Annotated[str, Field(description="Comma-separated series; '+' sums variants into one series "
+                                         "('corrupción+corrupção'); '*' ends a prefix ('democrati*'). "
+                                         "Whole words, case- and accent-insensitive.")]
+ExcludeChair = Annotated[bool, Field(description="Leave out the presiding officer's turns (procedural "
+                                                 "speech: giving the floor, calling votes)")]
+MaxTurnWords = Annotated[int | None, Field(ge=100, description="Leave out turns longer than this many "
+                                                               "words — mostly documents read into the "
+                                                               "record; 10000 is a sensible check")]
+OutPath = Annotated[str | None, Field(description="File to write (absolute, or relative to the "
+                                                  "client's working directory)")]
 
 
 # ── Catalogue and documentation ───────────────────────────────────────────────
@@ -245,13 +230,16 @@ def describe_data() -> dict:
                              "intervention_order (0 = Prolegomena), speaker_raw (as printed), "
                              "id_dep (deputy id, empty if not linked), speaker_name, sex (M|F), "
                              "party, district, dm_speech (1 = speech, 0 = not speech), text, "
-                             "n_words (whitespace tokens, computed on import).",
+                             "n_words (tokens = runs of letters/digits, computed on import).",
             "deputies": "Deputy registers, core columns common to all countries: country, id_dep, "
                         "speaker_name, first_name, last_name, sex, sex_source, party, "
                         "parliamentary_group, district, legislature, start_date, end_date, notes. "
                         "id_dep may repeat across legislatures (one row per term).",
             "deputies_{iso}": "Full register of one country (e.g. deputies_es), with its own extra columns.",
             "datasets": "One row per loaded country: doi, version, source, n_rows, date range.",
+            "unigrams": "Word counts of speech rows: country, year, sex, fold (lower-case, accents "
+                        "stripped), n. sum(n) equals sum(n_words) of the same speech rows.",
+            "vocab": "Display form of each folded word per country: country, fold, word, n.",
         },
         "loaded": store.loaded(),
         "examples": [
@@ -264,7 +252,9 @@ def describe_data() -> dict:
             "AND date BETWEEN '2020-01-01' AND '2020-12-31' GROUP BY 1 ORDER BY 2 DESC",
         ],
         "tips": "Never SELECT text without LIMIT: the corpus holds millions of rows. Use "
-                "regexp_matches(text, '…', 'i') or contains(lower(text), '…') to filter on text.",
+                "regexp_matches(text, '…', 'i') or contains(lower(text), '…') to filter on text. "
+                "For word-based comparisons between countries add `n_words <= 10000` (documents read "
+                "into the record) and check coverage first.",
     }
 
 
@@ -325,27 +315,28 @@ def search_text(
     countries: Countries = None,
     regex: bool = False,
     whole_word: Annotated[bool, Field(description="Plain searches: match whole words only")] = False,
-    date_from: Annotated[str | None, Field(description="YYYY-MM-DD")] = None,
-    date_to: Annotated[str | None, Field(description="YYYY-MM-DD")] = None,
-    party: Annotated[str | None, Field(description="Party label (ILIKE pattern, e.g. 'PSOE' or '%Frente%')")] = None,
-    sex: Annotated[Literal["M", "F"] | None, Field(description="Speaker's sex (only linked deputies)")] = None,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    party: Party = None,
+    sex: Sex = None,
     id_dep: str | None = None,
-    speech_only: Annotated[bool, Field(description="Only rows with dm_speech = 1")] = True,
+    speech_only: SpeechOnly = True,
     limit: Annotated[int, Field(ge=1, le=200)] = 20,
     offset: Annotated[int, Field(ge=0)] = 0,
 ) -> dict:
     """Find interventions containing a word, phrase or regex, newest first, with a snippet
     around the first match and the total number of matching rows. Plain searches ignore case
     and accents ('nacion' finds 'Nación')."""
-    rx = _search_regex(pattern, regex, whole_word)
+    rx = search_regex(pattern, regex, whole_word)
     params: list = [rx]
-    where = "regexp_matches(text, ?)" + _filters(countries, date_from, date_to, party, sex, id_dep,
-                                                 speech_only, params)
+    where = "regexp_matches(text, ?)" + _F(countries, date_from, date_to, party, sex, id_dep,
+                                           speech_only).where(params)
     _, total, _ = store.run_query(f"SELECT count(*) FROM interventions WHERE {where}", params)
     _, ids, _ = store.run_query(
         f"SELECT id_int FROM interventions WHERE {where} ORDER BY date DESC, id_int "
         f"LIMIT {int(limit)} OFFSET {int(offset)}", params, max_rows=limit)
     hits = []
+    py_rx = analysis._py_regex(pattern, regex, whole_word)
     if ids:
         id_list = [r[0] for r in ids]
         cols, rows, _ = store.run_query(
@@ -355,7 +346,7 @@ def search_text(
         by_id = {r[1]: dict(zip(cols, r)) for r in rows}
         for i in id_list:
             d = by_id[i]
-            d["snippet"] = _snippet(d.pop("text") or "", rx)
+            d["snippet"] = _snippet(d.pop("text") or "", py_rx)
             hits.append({k: store.jsonable(v) for k, v in d.items()})
     return {"regex_used": rx, "total_matching_rows": total[0][0], "returned": len(hits),
             "offset": offset, "hits": hits}
@@ -399,49 +390,195 @@ def get_session(
     return {"session": _rows(mcols, mrows)[0], "turns": _rows(cols, rows), "truncated": truncated}
 
 
-GROUPS = {
-    "year": "year(date)",
-    "decade": "(year(date) // 10) * 10",
-    "country": "country",
-    "legislature": "country || ' ' || legislature",
-    "party": "country || ' ' || coalesce(party, '(unlinked)')",
-    "sex": "coalesce(sex, '(unlinked)')",
-    "speaker": "country || ' ' || coalesce(speaker_name, speaker_raw)",
-    "session_type": "session_type",
-}
+@mcp.tool(annotations=READ)
+def term_frequency(
+    pattern: Annotated[str, Field(description="Word or phrase; '+' sums variants, '*' ends a prefix")],
+    by: Annotated[Literal[tuple(analysis.GROUPS)], Field(description="Grouping dimension")] = "year",  # type: ignore[valid-type]
+    countries: Countries = None,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    party: Party = None,
+    sex: Sex = None,
+    speech_only: SpeechOnly = True,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+    max_rows: Annotated[int, Field(ge=1, le=2000)] = 300,
+) -> dict:
+    """How often a term is used, grouped by year, decade, country, legislature, party, sex,
+    speaker or session type: occurrences, interventions using it, total words and occurrences
+    per million words. Same counting as ngram_viewer."""
+    return analysis.term_frequency(pattern, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words),
+                                   by, max_rows)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False))
+def ngram_viewer(
+    terms: Terms,
+    countries: Countries = None,
+    split_by_country: Annotated[bool, Field(description="One line per term × country instead of "
+                                                        "pooling the countries")] = False,
+    measure: Annotated[Literal["per_million", "count", "interventions_pct"], Field(
+        description="per_million: occurrences per million words (comparable across years); count: raw "
+                    "occurrences; interventions_pct: % of interventions using the term")] = "per_million",
+    smoothing: Annotated[int, Field(ge=0, le=10, description="Centred moving average over ±N years "
+                                                             "(Google Ngram uses 3)")] = 0,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    party: Party = None,
+    sex: Sex = None,
+    speech_only: SpeechOnly = True,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+    chart_path: Annotated[str | None, Field(description="Write a chart: '.svg' (static figure for papers "
+                                                        "and slides) or '.html' (page with hover, dark mode "
+                                                        "and data table). At most 8 series.")] = None,
+    title: str | None = None,
+    language: Annotated[Literal["es", "en", "pt"], Field(description="Language of the chart labels")] = "es",
+    overwrite: bool = False,
+) -> dict:
+    """Google Books Ngram-style viewer: yearly frequency of one or more words or phrases, with
+    the base behind every point (words, sessions) and low-base years flagged. Optionally writes
+    the chart to an SVG or HTML file."""
+    return analysis.ngram_viewer(terms, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words),
+                                 split_by_country, measure, smoothing, chart_path, title, language, overwrite)
 
 
 @mcp.tool(annotations=READ)
-def term_frequency(
-    pattern: Annotated[str, Field(description="Word or phrase (or regex if regex=true)")],
-    by: Annotated[Literal[tuple(GROUPS)], Field(description="Grouping dimension")] = "year",  # type: ignore[valid-type]
+def term_counter(
+    terms: Terms,
+    countries: Countries = None,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    party: Party = None,
+    sex: Sex = None,
+    speech_only: SpeechOnly = True,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+) -> dict:
+    """Counter for one or more terms: occurrences, interventions, sessions, speakers, breakdown by
+    sex and party (with per-million rates), and the FIRST and LAST use in each country, with the
+    intervention id — when a term entered each chamber's vocabulary."""
+    return analysis.term_counter(terms, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words))
+
+
+@mcp.tool(annotations=READ)
+def share_of_voice(
+    countries: Countries = None,
+    by: Annotated[Literal["sex", "party"], Field(description="Group to compare")] = "sex",
+    per: Annotated[Literal["legislature", "year", "all"], Field(description="Period")] = "legislature",
+    unit: Annotated[Literal["words", "turns"], Field(description="Measure of voice")] = "words",
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+) -> dict:
+    """How much each group speaks compared with its weight in the chamber: share of words (or
+    turns) and of speakers among linked deputies, against the group's share of members on the
+    register in that period, and their ratio (>1 = speaks more than its weight)."""
+    return analysis.share_of_voice(_F(countries, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words), by, per, unit)
+
+
+@mcp.tool(annotations=READ)
+def distinctive_words(
+    field: Annotated[Literal["sex", "party", "period", "country", "id_dep"], Field(
+        description="What separates the two groups")],
+    a: Annotated[str, Field(description="Group A: 'F', a party label, a period '2000-2010', an ISO2 "
+                                        "code or an id_dep")],
+    b: Annotated[str | None, Field(description="Group B, same kind as A; omit for 'everyone else'")] = None,
+    countries: Countries = None,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+    top: Annotated[int, Field(ge=5, le=200)] = 30,
+    min_count: Annotated[int, Field(ge=1)] = 20,
+) -> dict:
+    """Words that most distinguish group A from group B (weighted log-odds with an informative
+    Dirichlet prior, Monroe et al. 2008): e.g. women vs men deputies, one party vs another,
+    one period vs another. Compare within one language."""
+    return analysis.distinctive_words(_F(countries, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words), field, a, b, top, min_count)
+
+
+@mcp.tool(annotations=READ)
+def kwic(
+    pattern: Annotated[str, Field(description="Word or phrase ('*' ends a prefix), or RE2 regex if regex=true")],
     countries: Countries = None,
     regex: bool = False,
-    whole_word: bool = False,
-    date_from: Annotated[str | None, Field(description="YYYY-MM-DD")] = None,
-    date_to: Annotated[str | None, Field(description="YYYY-MM-DD")] = None,
-    party: str | None = None,
-    sex: Literal["M", "F"] | None = None,
-    speech_only: bool = True,
-    max_rows: Annotated[int, Field(ge=1, le=2000)] = 300,
+    whole_word: bool = True,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    party: Party = None,
+    sex: Sex = None,
+    n: Annotated[int, Field(ge=1, le=500, description="Interventions to sample")] = 40,
+    width: Annotated[int, Field(ge=20, le=300, description="Characters of context on each side")] = 70,
+    order: Annotated[Literal["random", "newest", "oldest"], Field(
+        description="random gives a representative sample (reproducible with seed)")] = "random",
+    seed: int = 1,
 ) -> dict:
-    """How often a term is used, by year, party, sex, speaker…: occurrences, interventions
-    using it, total words, and occurrences per million words (to compare groups of different
-    size). Plain patterns are case- and accent-insensitive."""
-    rx = _search_regex(pattern, regex, whole_word)
-    # regexp_matches is a cheap pre-filter; every row stays in, so total_words is the full denominator
-    occ = "CASE WHEN regexp_matches(text, ?) THEN len(regexp_extract_all(text, ?)) ELSE 0 END"
-    params: list = [rx, rx]
-    where = _filters(countries, date_from, date_to, party, sex, None, speech_only, params)
-    sql = (f"WITH t AS (SELECT {GROUPS[by]} AS grp, n_words, {occ} AS occ "
-           f"FROM interventions WHERE text IS NOT NULL{where}) "
-           f"SELECT grp AS {by}, sum(occ) AS occurrences, count(*) FILTER (WHERE occ > 0) AS "
-           f"interventions_using, sum(n_words) AS total_words, "
-           f"round(sum(occ) * 1e6 / nullif(sum(n_words), 0), 2) AS per_million_words "
-           f"FROM t GROUP BY grp ORDER BY grp")
-    cols, rows, truncated = store.run_query(sql, params, max_rows=max_rows, timeout_s=600)
-    return {"pattern": pattern, "regex_used": rx, "by": by, "rows": _rows(cols, rows),
-            "truncated": truncated}
+    """Keyword in context: concordance lines (left context · match · right context) from a
+    sample of the interventions that use the term, for close reading."""
+    return analysis.kwic(pattern, _F(countries, date_from, date_to, party, sex), regex, whole_word,
+                         n, width, order, seed)
+
+
+@mcp.tool(annotations=READ)
+def collocations(
+    pattern: Annotated[str, Field(description="Word or phrase ('*' ends a prefix)")],
+    countries: Countries = None,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    party: Party = None,
+    sex: Sex = None,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+    window: Annotated[int, Field(ge=1, le=20, description="Tokens on each side")] = 5,
+    top: Annotated[int, Field(ge=5, le=200)] = 30,
+    min_count: Annotated[int, Field(ge=2)] = 5,
+    sample: Annotated[int, Field(ge=100, le=50000, description="Interventions sampled")] = 5000,
+    exclude_stopwords: bool = True,
+) -> dict:
+    """Words that keep company with a term: over-represented within ±window tokens of it
+    (Dunning log-likelihood). Run with different dates to see how a term's associations shift."""
+    return analysis.collocations(pattern, _F(countries, date_from, date_to, party, sex, exclude_chair=exclude_chair, max_turn_words=max_turn_words), window, top,
+                                 min_count, sample, exclude_stopwords)
+
+
+@mcp.tool(annotations=REMOTE_READ)
+def coverage(
+    countries: Countries = None,
+    by: Annotated[Literal["year", "legislature"], Field(description="Period")] = "year",
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+) -> dict:
+    """Data-quality check before interpreting a trend: sessions, rows, speech words, linked and
+    sex-known shares per period, missing years and low-base periods, plus each corpus's
+    linkage figures. Call it before comparing countries or reading peaks."""
+    return analysis.coverage(_F(countries, date_from, date_to), by)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False))
+def export_result(
+    sql: Annotated[str, Field(description="One SELECT over the tables in describe_data")],
+    path: Annotated[str, Field(description="Output file, .csv or .parquet (absolute, or relative to "
+                                           "the client's working directory)")],
+    format: Annotated[Literal["csv", "parquet"] | None, Field(description="Defaults to the extension")] = None,
+    overwrite: bool = False,
+) -> dict:
+    """Save the full result of a query to CSV or Parquet, to continue in R, Python or Stata.
+    Only the destination folder can be written (or read); nothing else on disk is reachable."""
+    return analysis.export_result(sql, path, format, overwrite)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False))
+def query_log(
+    last: Annotated[int, Field(ge=1, le=5000)] = 50,
+    methods_path: Annotated[str | None, Field(description="Also write a Markdown methods note (datasets "
+                                                          "with DOI and version + every analysis run)")] = None,
+    overwrite: bool = False,
+) -> dict:
+    """The analyses run so far (tool, parameters, dataset versions), for reproducibility. Can
+    write a methods appendix ready to adapt."""
+    return analysis.query_log(last, methods_path, overwrite)
 
 
 @mcp.resource("parlaibero://about", mime_type="text/markdown")

@@ -31,6 +31,7 @@ def main(argv: list[str] | None = None) -> int:
     i = sub.add_parser("import", help="load CSV files downloaded by hand")
     i.add_argument("folder")
     sub.add_parser("status", help="show what is loaded locally")
+    sub.add_parser("reindex", help="upgrade a database built by an older version (no re-download)")
     r = sub.add_parser("remove", help="remove a country from the local database")
     r.add_argument("countries", nargs="+")
     args = ap.parse_args(argv)
@@ -60,6 +61,9 @@ def main(argv: list[str] | None = None) -> int:
         for iso, d in loaded.items():
             print(f"  {iso}  v{d['version'] or '?':<4} {d['n_rows']:>10,} rows  {d['n_sessions']:>6,} sessions  "
                   f"{d['date_min']} → {d['date_max']}  ({d['source']})")
+    elif args.cmd == "reindex":
+        done = store.reindex_all(lambda iso: print(f"▸ {iso}", file=sys.stderr))
+        print(f"  ✓ {len(done)} countries reindexed", file=sys.stderr)
     elif args.cmd == "remove":
         for c in args.countries:
             store.remove_country(c)

@@ -22,6 +22,8 @@ HOME = Path(os.environ.get("PARLAIBERO_HOME", Path.home() / ".parlaibero")).expa
 DATA = HOME / "data"
 DB = HOME / "parlaibero.duckdb"
 
+LOG_DISABLED = os.environ.get("PARLAIBERO_LOG", "1") in ("0", "false", "no")
+
 # One DuckDB file can be open read-write OR read-only within a process, never both at once.
 _LOCK = threading.RLock()
 
@@ -44,12 +46,18 @@ CREATE TABLE IF NOT EXISTS interventions (
     n_words INTEGER
 );
 CREATE TABLE IF NOT EXISTS deputies (country VARCHAR, {", ".join(c + " VARCHAR" for c in DEPUTY_CORE)});
+CREATE TABLE IF NOT EXISTS unigrams (country VARCHAR, year SMALLINT, sex VARCHAR, fold VARCHAR, n BIGINT);
+CREATE TABLE IF NOT EXISTS vocab (country VARCHAR, fold VARCHAR, word VARCHAR, n BIGINT);
+CREATE TABLE IF NOT EXISTS meta (key VARCHAR PRIMARY KEY, value VARCHAR);
 CREATE TABLE IF NOT EXISTS datasets (
     country VARCHAR PRIMARY KEY, doi VARCHAR, title VARCHAR, version VARCHAR, source VARCHAR,
     imported_at TIMESTAMP, n_rows BIGINT, n_speech_rows BIGINT, n_sessions BIGINT,
     date_min DATE, date_max DATE
 );
 """
+
+
+SCHEMA_VERSION = "3"   # 3: n_words = letter/digit/mark tokens; unigrams + vocab tables
 
 
 class NoData(RuntimeError):
@@ -63,12 +71,33 @@ def connect(read_only: bool = True) -> Iterator[duckdb.DuckDBPyConnection]:
         if read_only:
             if not DB.exists():
                 raise NoData("No country has been downloaded yet. Use download_country first.")
-            con = duckdb.connect(str(DB), read_only=True,
-                                 config={"enable_external_access": False, "lock_configuration": True})
+            con = duckdb.connect(str(DB), read_only=True, config={"enable_external_access": False})
+            # never print a progress bar: on an MCP stdio server, stdout is the protocol channel
+            con.execute("SET enable_progress_bar = false")
+            con.execute("SET lock_configuration = true")
         else:
             HOME.mkdir(parents=True, exist_ok=True)
             con = duckdb.connect(str(DB))
+            con.execute("SET enable_progress_bar = false")
             con.execute(SCHEMA)
+        try:
+            yield con
+        finally:
+            con.close()
+
+
+@contextmanager
+def export_connection(directory: Path) -> Iterator[duckdb.DuckDBPyConnection]:
+    """Read-only connection that may write files only inside `directory` (for COPY … TO)."""
+    with _LOCK:
+        if not DB.exists():
+            raise NoData("No country has been downloaded yet. Use download_country first.")
+        con = duckdb.connect(str(DB), read_only=True)
+        con.execute("SET enable_progress_bar = false")
+        # order matters: allow the folder first, then close external access and lock the settings
+        con.execute("SET allowed_directories = ?", [[str(Path(directory).resolve()) + os.sep]])
+        con.execute("SET enable_external_access = false")
+        con.execute("SET lock_configuration = true")
         try:
             yield con
         finally:
@@ -77,6 +106,54 @@ def connect(read_only: bool = True) -> Iterator[duckdb.DuckDBPyConnection]:
 
 def _sql_str(s: str) -> str:
     return "'" + s.replace("'", "''") + "'"
+
+
+# A word is a maximal run of letters, digits and combining marks (so a decomposed 'ç' does not
+# split it): the same definition as the unigram table and the exact counts.
+N_WORDS_SQL = r"coalesce(len(regexp_extract_all(text, '[\pL\pN\pM]+')), 0)"
+
+
+def index_country(con: duckdb.DuckDBPyConnection, iso: str) -> None:
+    """(Re)build the unigram counts (speech rows, by year and sex, accent-folded) and the
+    display vocabulary of one country. ~5 s for 150 million words."""
+    con.execute("DELETE FROM unigrams WHERE country = ?", [iso])
+    con.execute("DELETE FROM vocab WHERE country = ?", [iso])
+    con.execute(r"""CREATE OR REPLACE TEMP TABLE _w AS
+        SELECT year(date) AS y, sex, w, count(*) AS n FROM (
+            SELECT date, sex, unnest(regexp_extract_all(lower(text), '[\pL\pN\pM]+')) AS w
+            FROM interventions WHERE country = ? AND dm_speech = 1)
+        GROUP BY ALL""", [iso])
+    con.execute("INSERT INTO unigrams SELECT ?, y, sex, strip_accents(w), sum(n) FROM _w GROUP BY ALL", [iso])
+    con.execute("""INSERT INTO vocab SELECT ?, f, arg_max(w, n), sum(n) FROM (
+        SELECT strip_accents(w) AS f, w, sum(n) AS n FROM _w GROUP BY ALL) GROUP BY f""", [iso])
+    con.execute("DROP TABLE _w")
+    con.execute("INSERT OR REPLACE INTO meta VALUES ('schema_version', ?)", [SCHEMA_VERSION])
+
+
+def reindex_all(progress=None) -> list[str]:
+    """Upgrade a database built by an older version: recompute n_words and the word tables."""
+    done = []
+    with connect(read_only=False) as con:
+        isos = [r[0] for r in con.execute("SELECT country FROM datasets ORDER BY 1").fetchall()]
+        for iso in isos:
+            if progress:
+                progress(iso)
+            con.execute(f"UPDATE interventions SET n_words = {N_WORDS_SQL} WHERE country = ?", [iso])
+            index_country(con, iso)
+            done.append(iso)
+        con.execute("CHECKPOINT")
+    return done
+
+
+def schema_version() -> str | None:
+    if not DB.exists():
+        return None
+    with connect() as con:
+        try:
+            r = con.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
+        except duckdb.CatalogException:
+            return "1"
+    return r[0] if r else "1"
 
 
 def country_dir(iso: str) -> Path:
@@ -127,7 +204,7 @@ def import_country(country: str, folder: Path, source: str | None = None,
         "TRY_CAST(intervention_order AS INTEGER)" if c == "intervention_order" else
         "TRY_CAST(dm_speech AS TINYINT)" if c == "dm_speech" else c
         for c in INTERVENTION_COLUMNS)
-    words = r"CASE WHEN text IS NULL OR trim(text) = '' THEN 0 ELSE len(regexp_split_to_array(trim(text), '\s+')) END"
+    words = N_WORDS_SQL
     with connect(read_only=False) as con:
         con.execute("BEGIN TRANSACTION")
         try:
@@ -142,6 +219,7 @@ def import_country(country: str, folder: Path, source: str | None = None,
                 have = {r[0] for r in con.execute(f"DESCRIBE deputies_{iso.lower()}").fetchall()}
                 sel = ", ".join(c if c in have else f"NULL AS {c}" for c in DEPUTY_CORE)
                 con.execute(f"INSERT INTO deputies SELECT {_sql_str(iso)}, {sel} FROM deputies_{iso.lower()}")
+            index_country(con, iso)
             stats = con.execute(
                 "SELECT count(*), sum(CASE WHEN dm_speech = 1 THEN 1 ELSE 0 END), "
                 "count(DISTINCT id_session), min(date), max(date) FROM interventions WHERE country = ?",
@@ -178,6 +256,8 @@ def remove_country(country: str) -> None:
         con.execute("DELETE FROM interventions WHERE country = ?", [iso])
         con.execute("DELETE FROM deputies WHERE country = ?", [iso])
         con.execute(f"DROP TABLE IF EXISTS deputies_{iso.lower()}")
+        con.execute("DELETE FROM unigrams WHERE country = ?", [iso])
+        con.execute("DELETE FROM vocab WHERE country = ?", [iso])
         con.execute("DELETE FROM datasets WHERE country = ?", [iso])
         con.execute("CHECKPOINT")
 

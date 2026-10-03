@@ -51,15 +51,25 @@ década?»*, *«compara el peso de las diputadas en el habla de España y Portug
 
 | herramienta | qué hace |
 |---|---|
-| `list_countries` | los 16 conjuntos: DOI, versión publicada, tamaño y qué hay ya descargado |
-| `download_country` | descarga un país de Dataverse (con verificación MD5) y lo carga en una base DuckDB local |
-| `get_documentation` | README, diccionario de datos, limitaciones conocidas, informe del proceso… en `en`, `es` o `pt` |
-| `describe_data` | el esquema de las tablas y consultas de ejemplo |
-| `query_sql` | SQL de solo lectura (DuckDB), sin acceso a ficheros ni a la red |
-| `search_text` | busca palabras, frases o expresiones regulares, sin distinguir mayúsculas ni tildes |
-| `term_frequency` | frecuencia de un término por año, década, país, partido, sexo, orador o legislatura, por millón de palabras |
-| `get_intervention` · `get_session` | el texto completo de un turno con su contexto, o el orden del día de una sesión |
-| `how_to_cite` | la cita del conjunto de un país, con su DOI y versión |
+| `list_countries` · `download_country` | los 16 conjuntos, qué hay descargado, y la descarga de Dataverse con verificación MD5 |
+| `get_documentation` · `describe_data` | README, diccionario, limitaciones conocidas… (`en`, `es`, `pt`) y el esquema de las tablas |
+| `coverage` | **la base antes de leer una tendencia**: sesiones, palabras, vinculación, años que faltan y años con base escasa |
+| `ngram_viewer` | visor **tipo Google Books Ngram**: varias palabras o frases a la vez, por millón de palabras, con suavizado y una línea por país si se quiere; escribe el gráfico en **SVG** (para artículos y diapositivas) o **HTML** (interactivo) |
+| `term_counter` | el contador: apariciones, intervenciones, oradores, desglose por sexo y partido, y la **primera y la última aparición en cada país** |
+| `term_frequency` | un término agrupado por año, década, país, legislatura, partido, sexo u orador |
+| `share_of_voice` | cuánto habla cada grupo (sexo o partido) frente a su peso en el padrón de ese periodo |
+| `distinctive_words` | las palabras que más distinguen a dos grupos: diputadas y diputados, dos partidos, dos periodos (log-odds de Monroe et al. 2008) |
+| `kwic` · `collocations` | concordancias en contexto y palabras que acompañan a un término |
+| `search_text` · `get_intervention` · `get_session` | buscar pasajes y leerlos con su contexto |
+| `query_sql` · `export_result` | SQL de solo lectura (DuckDB) y exportación a CSV o Parquet |
+| `query_log` · `how_to_cite` | lo que se ha ejecutado, con las versiones de los datos (y una nota de métodos), y la cita de cada conjunto |
+
+Dos filtros cambian los resultados, y las herramientas avisan cuando conviene usarlos:
+`max_turn_words` deja fuera los turnos muy largos. Casi siempre son documentos leídos en el acta,
+que el corpus conserva como habla cuando el acta no marca separación: son el 54 % de las palabras
+de Argentina, el 26 % de Uruguay y el 25 % de México, frente a menos del 1 % en España. Por su
+parte, `exclude_chair` deja fuera a la presidencia de la sesión, cuyo habla procedimental puede
+dominar una comparación entre grupos.
 
 Los datos se guardan en `~/.parlaibero` (o en `PARLAIBERO_HOME`). Los 16 países ocupan unos
 12 GB de descarga y 15 GB de base de datos; El Salvador, el más pequeño, ocupa 99 MB. Los países

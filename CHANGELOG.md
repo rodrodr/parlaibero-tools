@@ -1,0 +1,25 @@
+# Changelog
+
+## 0.2.0 · 2026-10-03
+
+Analysis tools for the MCP server.
+
+- `ngram_viewer`: Google Books Ngram-style series (several terms, `+` variants, `*` prefixes,
+  per million words / counts / % of interventions, smoothing, per country), with the base behind
+  every point and low-base years flagged; writes the chart as SVG or interactive HTML.
+- `term_counter`: totals, breakdown by sex and party, first and last use per country.
+- `share_of_voice`: voice of each sex or party against its weight on the register (by date overlap,
+  so it works in all 16 countries whatever their legislature labels).
+- `distinctive_words` (weighted log-odds, Monroe et al. 2008), `kwic`, `collocations`, `coverage`,
+  `export_result` (CSV/Parquet, sandboxed), `query_log` (with a methods note).
+- Filters `exclude_chair` and `max_turn_words`, with automatic warnings when documents read into the
+  record or the chair weigh on a result; rows without a date are reported, not silently dropped.
+- One definition of a word everywhere (letters, digits and combining marks). `n_words` changes
+  accordingly, and a precomputed word table makes single-word series instant.
+  **Databases built with 0.1 must run `parlaibero-mcp reindex` once (≈2 min, no re-download).**
+- DuckDB's progress bar is off, so nothing but the protocol reaches stdout.
+
+## 0.1.0 · 2026-10-03
+
+First release: MCP server (download, documentation, SQL, search, reading, citation) and the 21
+`diaries-*` skills.
