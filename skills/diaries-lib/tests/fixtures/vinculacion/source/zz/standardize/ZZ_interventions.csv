@@ -1,0 +1,107 @@
+legislature,session_number,date,session_type,speaker_raw,id_dep,speaker_name,party,district,text
+LX,1,2001-03-04,ordinaria,El señor Diputado Número0,ZZ000,,,,"Con comas, ""comillas"" y
+un salto de línea."
+LX,1,2001-03-04,ordinaria,El señor Diputado Número1,ZZ001,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número2,ZZ002,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número3,ZZ003,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número4,ZZ004,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número5,ZZ005,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número6,ZZ006,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número7,ZZ007,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número8,ZZ008,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número9,ZZ009,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número10,ZZ010,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número11,ZZ011,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número12,ZZ012,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número13,ZZ013,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número14,ZZ014,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número15,ZZ015,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número16,ZZ016,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número17,ZZ017,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número18,ZZ018,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número19,ZZ019,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número20,ZZ020,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número21,ZZ021,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número22,ZZ022,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número23,ZZ023,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número24,ZZ024,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número25,ZZ025,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número26,ZZ026,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número27,ZZ027,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número28,ZZ028,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número29,ZZ029,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número30,ZZ030,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número31,ZZ031,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número32,ZZ032,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número33,ZZ033,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número34,ZZ034,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número35,ZZ035,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número36,ZZ036,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número37,ZZ037,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número38,ZZ038,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número39,ZZ039,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número40,ZZ040,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número41,ZZ041,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número42,ZZ042,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número43,ZZ043,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número44,ZZ044,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número45,ZZ045,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número46,ZZ046,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número47,ZZ047,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número48,ZZ048,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número49,ZZ049,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número50,ZZ050,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número51,ZZ051,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número52,ZZ052,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número53,ZZ053,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número54,ZZ054,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número55,ZZ055,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número56,ZZ056,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número57,ZZ057,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número58,ZZ058,,,,Texto.
+LX,1,2001-03-04,ordinaria,El señor Diputado Número59,ZZ059,,,,Texto.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,RELATOR,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO (Administrativo),,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,PRESIDENTE,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,"EL SEÑOR MARIO ROSSI, PRESIDENTE DE LA COMISIÓN",,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,"EL SEÑOR MARIO ROSSI, PRESIDENTE DE LA COMISIÓN",,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,"EL SEÑOR MARIO ROSSI, PRESIDENTE DE LA COMISIÓN",,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,"EL SEÑOR MARIO ROSSI, PRESIDENTE DE LA COMISIÓN",,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,"EL SEÑOR MARIO ROSSI, PRESIDENTE DE LA COMISIÓN",,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,Juan Pérez,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,Juan Pérez,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,Juan Pérez,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,Juan Pérez,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,Juan Pérez,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,SECRETARIO,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,Primer Secretario,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,Primer Secretario,,,,,Texto de la intervención.
+LX,1,2001-03-04,ordinaria,Primer Secretario,,,,,Texto de la intervención.

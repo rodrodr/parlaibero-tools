@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParlaIbero — Árbol de procedimiento de los skills diaries-*</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1c2230; --muted:#5b6472; --line:#e2e6ec;
+    --accent:#2d3e74; --accent2:#3b5bdb; --mono:'SF Mono',ui-monospace,Menlo,Consolas,monospace;
+    --auto:#1f7a4d; --auto-bg:#e7f4ec; --flag:#9a6a00; --flag-bg:#fbf0d4;
+    --halt:#b3261e; --halt-bg:#fbe6e4; --skip:#5b6472; --skip-bg:#eceef2;
+    --test:#1f5f9e; --test-bg:#e7f0f9; --io:#5a3a8e; --io-bg:#efe8f7;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  a{color:var(--accent2);text-decoration:none}
+  code,.mono{font-family:var(--mono);font-size:.86em}
+  .wrap{display:grid;grid-template-columns:262px 1fr;max-width:1500px;margin:0 auto}
+  /* ---- sidebar ---- */
+  aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+        background:#10162b;color:#cfd6e6;padding:20px 16px;font-size:13px}
+  aside h1{font-size:15px;color:#fff;margin:0 0 4px;letter-spacing:.2px}
+  aside .sub{color:#8b95ad;font-size:11.5px;margin-bottom:14px}
+  aside .toc-group{margin:14px 0 4px;color:#7f8aa6;text-transform:uppercase;
+        font-size:10.5px;letter-spacing:.12em}
+  aside ol{list-style:none;margin:0;padding:0;counter-reset:s}
+  aside ol li a{display:block;color:#c3cadc;padding:3px 8px;border-radius:6px;line-height:1.35}
+  aside ol li a:hover{background:#1d2745;color:#fff}
+  aside .lvl{float:right;font-size:9.5px;padding:1px 6px;border-radius:8px;margin-top:2px}
+  .lvl.pais{background:#3a2a5e;color:#d7c4f5}
+  .lvl.ses{background:#264a3a;color:#bfe6cf}
+  .lvl.ctrl{background:#3a3320;color:#ecd9a6}
+  aside .btns{margin-top:16px;display:flex;gap:6px}
+  aside button{flex:1;background:#1d2745;color:#cfd6e6;border:1px solid #2c3a63;
+        border-radius:6px;padding:6px;font-size:11px;cursor:pointer}
+  aside button:hover{background:#26345c}
+  /* ---- main ---- */
+  main{padding:30px 38px 80px;min-width:0}
+  .hero{margin-bottom:26px}
+  .hero h2{font-size:25px;margin:0 0 6px;color:var(--accent)}
+  .hero p{color:var(--muted);margin:4px 0;max-width:80ch}
+  section{margin:30px 0}
+  h3.sec{font-size:13px;text-transform:uppercase;letter-spacing:.13em;color:var(--accent2);
+        border-bottom:2px solid var(--line);padding-bottom:6px;margin:0 0 16px}
+  /* ---- legend ---- */
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+        padding:3px 10px;border-radius:20px;border:1px solid transparent;white-space:nowrap}
+  .chip.auto{background:var(--auto-bg);color:var(--auto)} .chip.flag{background:var(--flag-bg);color:var(--flag)}
+  .chip.halt{background:var(--halt-bg);color:var(--halt)} .chip.skip{background:var(--skip-bg);color:var(--skip)}
+  .chip.test{background:var(--test-bg);color:var(--test)} .chip.io{background:var(--io-bg);color:var(--io)}
+  .chip.err{background:#fbe6e4;color:#b3261e}
+  /* ---- info cards ---- */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .panel h4{margin:0 0 8px;font-size:14px;color:var(--accent)}
+  table.t{border-collapse:collapse;width:100%;font-size:13px}
+  table.t th,table.t td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+  table.t th{background:#eef1f6;color:var(--accent);font-weight:600}
+  table.t td.num{font-family:var(--mono);text-align:center;white-space:nowrap}
+  /* ---- pipeline overview ---- */
+  .pipe{display:flex;flex-direction:column;gap:0}
+  .pstage{display:grid;grid-template-columns:30px 1fr;gap:0;}
+  .prail{display:flex;flex-direction:column;align-items:center}
+  .pdot{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;
+        font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+  .pdot.pais{background:#5a3a8e}
+  .pline{width:2px;flex:1;background:var(--line);min-height:14px}
+  .pbody{padding:0 0 14px 14px}
+  .pbody .nm{font-weight:700;color:var(--accent)}
+  .pbody .nm code{color:var(--ink)}
+  .pbody .ds{color:var(--muted);font-size:13px}
+  .pbody .art{font-family:var(--mono);font-size:11.5px;background:var(--io-bg);color:var(--io);
+        padding:1px 7px;border-radius:5px;display:inline-block;margin-top:3px}
+  .pbranch{font-size:12px;color:var(--flag);background:var(--flag-bg);border-radius:5px;
+        padding:1px 7px;display:inline-block;margin-top:3px}
+  /* ---- skill cards ---- */
+  .skill{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:14px 0;
+        overflow:hidden;box-shadow:0 1px 2px rgba(20,30,60,.04)}
+  .skill > summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;align-items:center;
+        gap:12px;background:linear-gradient(180deg,#fbfcfe,#f3f5f9);border-bottom:1px solid var(--line)}
+  .skill > summary::-webkit-details-marker{display:none}
+  .skill[open] > summary{border-bottom:1px solid var(--line)}
+  .snum{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;
+        display:flex;align-items:center;justify-content:center;flex:none;font-size:14px}
+  .snum.pais{background:#5a3a8e}.snum.ctrl{background:#8a6d1f}
+  .sname{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--ink)}
+  .stitle{color:var(--muted);font-size:12.5px}
+  .sbadges{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#eef1f6;color:var(--accent)}
+  .badge.thr{background:#fff3e0;color:#9a6a00}
+  .sbody{padding:16px 20px 20px}
+  .block{margin:14px 0}
+  .block .lab{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent2);
+        font-weight:700;margin-bottom:7px}
+  .opts{display:flex;flex-wrap:wrap;gap:6px}
+  .opt{font-family:var(--mono);font-size:11.5px;background:#eef1f6;border:1px solid var(--line);
+        border-radius:6px;padding:2px 8px;color:var(--ink)}
+  .opt b{color:var(--accent2)}
+  /* flow nodes */
+  .flow{display:flex;flex-direction:column;gap:0;margin:2px 0}
+  .fnode{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:#fcfdff;position:relative}
+  .fnode.test{background:var(--test-bg);border-color:#c4ddf2}
+  .fnode.proc{background:#fff}
+  .fnode .ttl{font-weight:600}
+  .fnode .mut{color:var(--muted);font-size:12.5px}
+  .fdown{align-self:flex-start;margin:0 0 0 18px;color:var(--line);font-size:16px;line-height:1}
+  .fdown::before{content:"↓"}
+  .branches{display:flex;flex-direction:column;gap:7px;margin:7px 0 0 18px;
+        border-left:2px dashed var(--line);padding-left:14px}
+  .br{display:flex;gap:9px;align-items:flex-start}
+  .br .cond{font-family:var(--mono);font-size:12px;background:#fff;border:1px solid var(--line);
+        border-radius:5px;padding:2px 8px;flex:none;max-width:48%}
+  .br .res{font-size:13px;padding-top:2px}
+  .br .arr{color:var(--muted);flex:none;padding-top:3px}
+  .out{display:inline-block;font-weight:700;font-size:11.5px;padding:1px 8px;border-radius:5px;margin-right:5px}
+  .out.auto{background:var(--auto-bg);color:var(--auto)}.out.flag{background:var(--flag-bg);color:var(--flag)}
+  .out.halt{background:var(--halt-bg);color:var(--halt)}.out.skip{background:var(--skip-bg);color:var(--skip)}
+  .out.err{background:#fbe6e4;color:#b3261e}.out.ok{background:var(--auto-bg);color:var(--auto)}
+  .formula{font-family:var(--mono);font-size:12.5px;background:#10162b;color:#d7e0f5;
+        border-radius:8px;padding:10px 13px;white-space:pre-wrap;line-height:1.5;overflow-x:auto}
+  .statusmap{display:flex;flex-wrap:wrap;gap:8px}
+  .smap{flex:1;min-width:160px;border-radius:8px;padding:8px 11px;font-size:12.5px;border:1px solid}
+  .smap.auto{background:var(--auto-bg);border-color:#bfe3cd}.smap.flag{background:var(--flag-bg);border-color:#ecd9a6}
+  .smap.halt{background:var(--halt-bg);border-color:#f2c4bf}
+  .smap b{display:block;margin-bottom:2px}
+  .io2{display:flex;flex-wrap:wrap;gap:14px}
+  .io2 .col{flex:1;min-width:200px}
+  .pathline{font-family:var(--mono);font-size:11.5px;color:var(--io);background:var(--io-bg);
+        border-radius:5px;padding:2px 7px;display:inline-block;margin:2px 0}
+  .note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--flag);background:#fffaf0;
+        padding:7px 11px;border-radius:0 6px 6px 0;margin:8px 0}
+  .crit{border-left-color:var(--halt);background:#fef5f4}
+  details.skill[data-crit] > summary{box-shadow:inset 4px 0 0 var(--halt)}
+  .footer{color:var(--muted);font-size:12px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}aside{position:static;height:auto}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside>
+  <h1>ParlaIbero</h1>
+  <div class="sub">Árbol de procedimiento · skills <code>diaries-*</code></div>
+  <div class="toc-group">Modelo</div>
+  <ol>
+    <li><a href="#confianza">Confianza AUTO/FLAG/HALT</a></li>
+    <li><a href="#overview">Vista del pipeline</a></li>
+  </ol>
+  <div class="toc-group">Pipeline (orden)</div>
+  <ol>
+    <li><a href="#bootstrap">bootstrap<span class="lvl pais">país</span></a></li>
+    <li><a href="#ocr">ocr<span class="lvl ses">sesión</span></a></li>
+    <li><a href="#extract">extract<span class="lvl ses">sesión</span></a></li>
+    <li><a href="#correct">correct<span class="lvl ses">sesión</span></a></li>
+    <li><a href="#tag">tag ⚠<span class="lvl ses">sesión</span></a></li>
+    <li><a href="#meta">meta<span class="lvl ses">sesión</span></a></li>
+    <li><a href="#matrix">matrix<span class="lvl ses">sesión</span></a></li>
+    <li><a href="#deputies">deputies<span class="lvl pais">país</span></a></li>
+    <li><a href="#match">match<span class="lvl pais">país</span></a></li>
+    <li><a href="#merge">merge<span class="lvl pais">país</span></a></li>
+    <li><a href="#standardize">standardize<span class="lvl pais">país</span></a></li>
+    <li><a href="#document">document<span class="lvl pais">país</span></a></li>
+  </ol>
+  <div class="toc-group">Control</div>
+  <ol>
+    <li><a href="#status">status<span class="lvl ctrl">ctrl</span></a></li>
+    <li><a href="#review">review<span class="lvl ctrl">ctrl</span></a></li>
+    <li><a href="#feedback">feedback<span class="lvl ctrl">ctrl</span></a></li>
+    <li><a href="#report">report<span class="lvl ctrl">ctrl</span></a></li>
+    <li><a href="#teach">teach<span class="lvl ctrl">ctrl</span></a></li>
+    <li><a href="#refine">refine<span class="lvl ctrl">ctrl</span></a></li>
+  </ol>
+  <div class="btns">
+    <button onclick="document.querySelectorAll('details.skill').forEach(d=>d.open=true)">Expandir todo</button>
+    <button onclick="document.querySelectorAll('details.skill').forEach(d=>d.open=false)">Colapsar todo</button>
+  </div>
+</aside>
+
+<main>
+  <div class="hero">
+    <h2>Árbol de procedimiento del pipeline ParlaIbero</h2>
+    <p>Cada skill <code>diaries-*</code> con sus <b>opciones de invocación</b>, <b>prerequisitos</b>,
+    <b>condiciones de decisión</b> y la <b>acción que toma según cada rama</b>. El hilo conductor es la
+    puntuación de confianza, que cada skill convierte en estado del pipeline.</p>
+    <div class="legend">
+      <span class="chip auto">AUTO · complete</span>
+      <span class="chip flag">FLAG · revisar</span>
+      <span class="chip halt">HALT · detener</span>
+      <span class="chip skip">SKIP · no aplica</span>
+      <span class="chip test">TEST / decisión</span>
+      <span class="chip io">artefacto E/S</span>
+      <span class="chip err">ERROR · aborta</span>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted)">Claude es el orquestador: lee cada <code>SKILL.md</code>,
+    ejecuta las utilidades deterministas de <code>lib/utils/</code>, y resuelve con su juicio los casos
+    ambiguos. Todos los skills de sesión aceptan <code>--session</code> · <code>--batch</code> ·
+    <code>--all</code> + <code>--force</code> · <code>--dry-run</code>.</p>
+  </div>
+
+  <!-- ============ CONFIANZA ============ -->
+  <section id="confianza">
+    <h3 class="sec">El modelo de confianza — hilo conductor de todo el pipeline</h3>
+    <div class="grid2">
+      <div class="panel">
+        <h4>Umbrales globales <span class="mono">(lib/confidence.py)</span></h4>
+        <table class="t">
+          <tr><th>Confianza</th><th>Nivel</th><th>Estado</th><th>Acción</th></tr>
+          <tr><td class="num">≥ 0.85</td><td><span class="out auto">AUTO</span></td><td>complete</td><td>continúa sin interrumpir</td></tr>
+          <tr><td class="num">0.65–0.85</td><td><span class="out flag">FLAG</span></td><td>flag</td><td>revisión diferida (<code>/diaries-review</code>)</td></tr>
+          <tr><td class="num">&lt; 0.65</td><td><span class="out halt">HALT</span></td><td>halt</td><td>intervención manual obligatoria</td></tr>
+        </table>
+        <div class="note">Cada skill escribe su resultado con <code>update_state.py</code> en
+        <code>state/{iso2}/pipeline_state.json</code>.</div>
+      </div>
+      <div class="panel">
+        <h4>Overrides por skill <span class="mono">(country_config.thresholds)</span></h4>
+        <table class="t">
+          <tr><th>Skill</th><th>auto</th><th>flag</th><th>por qué</th></tr>
+          <tr><td><code>diaries-tag</code></td><td class="num">0.80</td><td class="num">0.60</td><td>corpus difícil; etiquetado irregular</td></tr>
+          <tr><td><code>diaries-match</code></td><td class="num">0.90</td><td class="num">0.70</td><td>vinculación es crítica → más estricto</td></tr>
+          <tr><td>resto</td><td class="num">0.85</td><td class="num">0.65</td><td>globales por defecto</td></tr>
+        </table>
+        <div class="note">Algunos skills de país (<code>matrix</code>, <code>match</code>, <code>merge</code>,
+        <code>standardize</code>) determinan el estado por <b>tasas</b> (cobertura, % de error), no solo por
+        un umbral — ver cada tarjeta.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section id="overview">
+    <h3 class="sec">Vista del pipeline — flujo de artefactos</h3>
+    <div class="pipe">
+      <div class="pstage"><div class="prail"><div class="pdot pais">0</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-bootstrap</span> — configura el país, audita trabajo previo, infiere config.
+        <div><span class="art">country_config/{iso2}.yaml · state/…/pipeline_state.json</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot">1</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-ocr</span> — OCR Ollama. <span class="pbranch">SKIP si pdf_digital / html</span>
+        <div><span class="art">source/{iso2}/ocr/{id}/page_*.txt</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot">2</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-extract</span> — texto limpio + <b>quita cabeceros/pies</b> (page-aware o texto plano).
+        <div><span class="art">source/{iso2}/extracted/{id}.txt</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot">3</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-correct</span> — párrafos + hifenación + normalización por país.
+        <div><span class="art">source/{iso2}/corrected/{id}.txt</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot">4</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-tag</span> ⚠ — etiqueta oradores (2 niveles). <span class="pbranch">+ diaries-meta en paralelo →</span>
+        <div><span class="art">source/{iso2}/tagged/{id}.txt</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot">5</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-meta</span> — fecha, nº, tipo, legislatura, presidente.
+        <div><span class="art">source/{iso2}/meta/{id}.json</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot">6</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-matrix</span> — parse <code>&lt;int&gt;</code> → filas CSV (acumulativo).
+        <div><span class="art">source/{iso2}/matrix/interventions_raw.csv</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot pais">7</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-deputies</span> — BD de diputados + deduplicación.
+        <div><span class="art">source/{iso2}/deputies/deputies.csv</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot pais">8</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-match</span> — speaker_raw → id_dep (exact→fuzzy→struct→LLM).
+        <div><span class="art">source/{iso2}/match/matching_table.csv</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot pais">9</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-merge</span> — join pandas de las 3 tablas.
+        <div><span class="art">source/{iso2}/merge/interventions_enriched.csv</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot pais">10</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-standardize</span> — esquema canónico. <span class="pbranch">guardia --force</span>
+        <div><span class="art">source/{iso2}/standardize/{ISO2}_interventions.csv ⚠ canónico</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot pais">11</div></div>
+        <div class="pbody"><span class="nm">diaries-document</span> — README, diccionario, JSON-LD.
+        <div><span class="art">docs/{iso2}/README.md · data_dictionary.md · dataset.jsonld</span></div></div></div>
+    </div>
+  </section>
+
+  <!-- ============ SKILL CARDS ============ -->
+  <section>
+    <h3 class="sec">Skills del pipeline — detalle de decisiones</h3>
+
+    <!-- BOOTSTRAP -->
+    <details class="skill" id="bootstrap" open>
+      <summary><span class="snum pais">0</span>
+        <span><span class="sname">diaries-bootstrap</span><br><span class="stitle">Configura el país: audita lo ya hecho, infiere config, entrevista, inicializa estado</span></span>
+        <span class="sbadges"><span class="badge">nivel país</span><span class="badge">solo --country</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Paso 0 · Test de material fuente</div>
+          <div class="flow">
+            <div class="fnode test"><span class="ttl">¿Existe y no está vacío <code>source/{iso2}/raw/</code>?</span></div>
+            <div class="branches">
+              <div class="br"><span class="cond">vacío / no existe</span><span class="arr">→</span><span class="res"><span class="out err">ERROR</span>aborta: «copia los archivos fuente antes de ejecutar»</span></div>
+              <div class="br"><span class="cond">hay archivos</span><span class="arr">→</span><span class="res">lista session_ids (stem de cada archivo) y continúa</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 0b · Inventario de trabajo previo (por sesión y por país)</div>
+          <div class="fnode proc">Para cada sesión comprueba qué etapas ya tienen output → celda <code>OK</code> / <code>SKIP</code> / <code>.</code> (pendiente). Clasifica:</div>
+          <div class="branches">
+            <div class="br"><span class="cond">ninguna etapa</span><span class="arr">→</span><span class="res">sesión virgen → <span class="out skip">pending</span></span></div>
+            <div class="br"><span class="cond">algunas etapas con output</span><span class="arr">→</span><span class="res">marca esas <span class="out auto">complete (detectado)</span>, resto pending</span></div>
+            <div class="br"><span class="cond">ocr/ vacío + formato digital/html</span><span class="arr">→</span><span class="res"><span class="out skip">SKIP</span> OCR (normal y correcto)</span></div>
+            <div class="br"><span class="cond">ya existe pipeline_state.json</span><span class="arr">→</span><span class="res">NO sobreescribe: <b>fusiona</b> sesiones nuevas y actualiza pendientes detectadas</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 1 · Inferencia automática del formato (discriminador FIABLE)</div>
+          <div class="fnode test"><span class="ttl">¿Los archivos de análisis son raw o ya procesados?</span></div>
+          <div class="branches">
+            <div class="br"><span class="cond">corrected/ o extracted/</span><span class="arr">→</span><span class="res">infiere formato del contenido o pregunta (confianza 0.70/1.0)</span></div>
+            <div class="br"><span class="cond">raw/ → assess_source.py</span><span class="arr">→</span><span class="res">estructura por año (capa de imagen vía <code>pdfimages</code>), NO char-count</span></div>
+          </div>
+          <div class="branches" style="margin-top:7px">
+            <div class="br"><span class="cond">año DIGITAL</span><span class="arr">→</span><span class="res"><code>pdf_digital</code> → texto embebido, OMITIR OCR</span></div>
+            <div class="br"><span class="cond">año ESCANEADO/MIXTO</span><span class="arr">→</span><span class="res"><code>pdf_image</code> → capa OCR de calidad desconocida (ante duda: OCR)</span></div>
+          </div>
+          <div class="note crit">⚠ Paso 1d — chequeo de <b>integridad del prefijo de orador</b> en escaneados: si
+          <code>garble_ratio &gt; 0.40</code> con corrupción real (p.ej. <code>SEROR</code>≈SEÑOR) →
+          <code>source_format: pdf_poor_ocr</code>, OCR obligatorio. (UY 1987: embebido detectó 14 intervenciones, OCR 164.)</div>
+        </div>
+        <div class="block"><div class="lab">Paso 2 · Entrevista dirigida</div>
+          <div class="branches">
+            <div class="br"><span class="cond">campo confianza &lt; 0.80</span><span class="arr">→</span><span class="res">muestra evidencia y pregunta (máx 8 preguntas)</span></div>
+            <div class="br"><span class="cond">usuario confirma regex</span><span class="arr">→</span><span class="res">úsalo directo (confianza 1.0)</span></div>
+            <div class="br"><span class="cond">usuario dice «no sé»</span><span class="arr">→</span><span class="res">deja <code>needs_review: true</code></span></div>
+            <div class="br"><span class="cond">ya hay sesiones tagged</span><span class="arr">→</span><span class="res">toma sus patrones como referencia y reduce la entrevista</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Salidas</div>
+          <span class="pathline">country_config/{iso2}.yaml</span>
+          <span class="pathline">state/{iso2}/pipeline_state.json</span>
+          <span class="pathline">docs/{iso2}/onboarding_report.md</span>
+        </div>
+      </div>
+    </details>
+
+    <!-- OCR -->
+    <details class="skill" id="ocr" open>
+      <summary><span class="snum">1</span>
+        <span><span class="sname">diaries-ocr</span><br><span class="stitle">OCR con Ollama (LightOnOCR-2:1b → glm-ocr) sobre escaneados</span></span>
+        <span class="sbadges"><span class="badge">nivel sesión</span><span class="badge thr">0.85 / 0.65</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Opciones</div><div class="opts">
+          <span class="opt"><b>--session</b> YYYY-MM-DD</span><span class="opt"><b>--batch</b> YYYY-MM</span>
+          <span class="opt"><b>--all</b></span><span class="opt"><b>--force</b></span><span class="opt"><b>--dry-run</b></span></div></div>
+        <div class="block"><div class="lab">Paso 0 · Test de formato (puerta de entrada)</div>
+          <div class="flow"><div class="fnode test"><span class="ttl">¿<code>source_format</code> requiere OCR?</span></div>
+          <div class="branches">
+            <div class="br"><span class="cond">pdf_digital / html</span><span class="arr">→</span><span class="res"><span class="out skip">SKIP</span> imprime aviso, NO toca estado, deriva a extract</span></div>
+            <div class="br"><span class="cond">pdf_image / pdf_poor_ocr</span><span class="arr">→</span><span class="res">arranca Ollama (mata huérfanos, <code>KEEP_ALIVE=-1</code>) y procesa</span></div>
+          </div></div>
+        </div>
+        <div class="block"><div class="lab">Paso 1 · Filtro de pendientes</div>
+          <div class="branches">
+            <div class="br"><span class="cond">status complete o skipped</span><span class="arr">→</span><span class="res">excluida (salvo <code>--force</code>)</span></div>
+            <div class="br"><span class="cond">--dry-run</span><span class="arr">→</span><span class="res">imprime comando, no ejecuta ni actualiza</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 2d · Confianza y estado</div>
+          <div class="formula">confidence = mean_confidence (del OCR)
+páginas en low_confidence_pages &lt; 0.50 → advertencia en el resumen</div>
+          <div class="statusmap" style="margin-top:8px">
+            <div class="smap auto"><b>AUTO</b>confidence ≥ 0.85</div>
+            <div class="smap flag"><b>FLAG</b>0.65 ≤ confidence &lt; 0.85</div>
+            <div class="smap halt"><b>HALT</b>confidence &lt; 0.65</div>
+          </div>
+          <div class="note">Rendimiento: el GPU satura con 1 inferencia → <code>workers = ollama_num_parallel = 6</code>
+          es el óptimo; 8 perjudica. Causa #1 de lentitud = procesos huérfanos (matar antes del batch). Paralelizar a nivel de <b>página</b>.</div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/ocr/{id}/page_*.txt</span></div>
+      </div>
+    </details>
+
+    <!-- EXTRACT -->
+    <details class="skill" id="extract" open>
+      <summary><span class="snum">2</span>
+        <span><span class="sname">diaries-extract</span><br><span class="stitle">Texto limpio + eliminación de cabeceros/pies recurrentes</span></span>
+        <span class="sbadges"><span class="badge">nivel sesión</span><span class="badge thr">0.85 / 0.65</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Paso 3b/3c · Mapeo source_format → modo de extracción</div>
+          <div class="branches">
+            <div class="br"><span class="cond">pdf_digital</span><span class="arr">→</span><span class="res"><code>pdf_digital</code> — páginas vía fitz (paginado)</span></div>
+            <div class="br"><span class="cond">pdf_image / pdf_poor_ocr</span><span class="arr">→</span><span class="res"><code>ocr_pages</code> — lee los <code>page_*.txt</code> ya producidos · <b>NO reprocesa OCR</b></span></div>
+            <div class="br"><span class="cond">html</span><span class="arr">→</span><span class="res"><code>html</code> — 1 «página», sin strip</span></div>
+            <div class="br"><span class="cond">text_flat</span><span class="arr">→</span><span class="res"><code>text_flat</code> — texto ya extraído sin paginar</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Eliminación de cabeceros/pies (page-aware o texto plano)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">paginado (PDF / page_*.txt)</span><span class="arr">→</span><span class="res">detector por recurrencia en zona-borde de cada página (cluster difuso + ancla de pie)</span></div>
+            <div class="br"><span class="cond">text_flat + page_break_marker</span><span class="arr">→</span><span class="res">segmenta por marcador y usa el detector paginado</span></div>
+            <div class="br"><span class="cond">text_flat sin marcador</span><span class="arr">→</span><span class="res">modo <b>frecuencia</b>: excluye turnos de orador y prosa en caja de oración</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 3e/3f · Confianza, integridad y estado</div>
+          <div class="formula">confidence = valid_ratio
+si chars(salida) &lt; 500            → confidence = min(confidence, 0.60)
+si pdf_poor_ocr y garble_ratio&gt;0.50 → confidence = min(confidence, 0.55)  (prefijo de orador corrupto)
+si header_suspect_count &gt; 0        → FLAG  (posible falso positivo del stripper)
+si header_removal_ratio &gt; 0.25     → FLAG  (posible sobre-detección)</div>
+          <div class="statusmap" style="margin-top:8px">
+            <div class="smap auto"><b>AUTO</b>≥ 0.85 y sin alertas</div>
+            <div class="smap flag"><b>FLAG</b>0.65–0.85 · o alerta de cabeceros</div>
+            <div class="smap halt"><b>HALT</b>&lt; 0.65 · prefijo OCR corrupto</div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/extracted/{id}.txt</span></div>
+      </div>
+    </details>
+
+    <!-- CORRECT -->
+    <details class="skill" id="correct" open>
+      <summary><span class="snum">3</span>
+        <span><span class="sname">diaries-correct</span><br><span class="stitle">Corrección tipográfica: párrafos, hifenación, normalización por país</span></span>
+        <span class="sbadges"><span class="badge">nivel sesión</span><span class="badge thr">0.85 / 0.65</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Paso 2c/2d · Pase determinista + resolución LLM</div>
+          <div class="fnode proc"><code>correct_text.py</code>: aplica <code>normalize_replacements</code> (regex por país), une guiones de fin de línea, fusiona líneas cortas. Devuelve <code>ambiguous_breaks</code>.</div>
+          <div class="branches">
+            <div class="br"><span class="cond">ambiguous_breaks vacío</span><span class="arr">→</span><span class="res">salta el pase LLM</span></div>
+            <div class="br"><span class="cond">salto = artefacto (corte de columna/justificación)</span><span class="arr">→</span><span class="res">une las dos partes con Edit</span></div>
+            <div class="br"><span class="cond">salto = párrafo real (fin de oración + mayúscula)</span><span class="arr">→</span><span class="res">no toca nada</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 2e · Confianza</div>
+          <div class="formula">ratio_ambiguous = n_ambiguous / total_paragraphs
+ratio &lt; 0.05 → 0.95     ratio &lt; 0.10 → 0.88
+ratio &lt; 0.20 → 0.78     ratio ≥ 0.20 → 0.65
+(si corregiste &gt;15% de párrafos como artefactos → −0.05)</div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/corrected/{id}.txt</span></div>
+      </div>
+    </details>
+
+    <!-- TAG -->
+    <details class="skill" id="tag" data-crit open>
+      <summary><span class="snum">4</span>
+        <span><span class="sname">diaries-tag</span> ⚠<br><span class="stitle">Etiqueta oradores — skill crítico, dos niveles de detección</span></span>
+        <span class="sbadges"><span class="badge thr">0.80 / 0.60</span></span></summary>
+      <div class="sbody">
+        <div class="note crit">El honorífico y el terminador son específicos de cada país y cambian por OCR/era/taquígrafo.
+        <b>Paso 0b obligatorio la 1ª vez</b>: <code>analyze_speaker_markers.py</code> descubre variantes/errores antes de tagear.</div>
+        <div class="block"><div class="lab">Paso 2c/2d · Detección de dos niveles + LLM</div>
+          <div class="branches">
+            <div class="br"><span class="cond">NIVEL 1 estricto (speaker_tag_patterns)</span><span class="arr">→</span><span class="res">marcador canónico; guion <code>[-–—]</code> (OCR usa em-dash) → etiqueta directa</span></div>
+            <div class="br"><span class="cond">NIVEL 2 score ≥ 0.60</span><span class="arr">→</span><span class="res">etiqueta (recupera ~5% de terminadores irregulares)</span></div>
+            <div class="br"><span class="cond">NIVEL 2 score ∈ [0.40, 0.60)</span><span class="arr">→</span><span class="res">caso límite → <span class="out flag">FLAG</span> / resolución LLM</span></div>
+            <div class="br"><span class="cond">span sospechoso (untagged)</span><span class="arr">→</span><span class="res">LLM decide orador (inserta <code>&lt;int speaker&gt;</code>) o lo descarta</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 2e · Confianza + guardia estructural</div>
+          <div class="formula">confidence = n_auto / (n_auto + n_untagged + n_llm·(1 − avg_llm_conf))
+si n_auto + n_untagged + n_llm == 0 → confidence = 0.50  (sesión sin oradores: sospechosa)
+
+GUARDIA (fuente escaneada): si source_format ∈ {pdf_poor_ocr, pdf_image}
+   y chars &gt; 5000 y n_auto &lt; 3 → confidence = min(confidence, 0.50)
+   «prefijo de orador corrompido por OCR embebido → re-OCR obligatorio»</div>
+          <div class="statusmap" style="margin-top:8px">
+            <div class="smap auto"><b>AUTO</b>confidence ≥ 0.80</div>
+            <div class="smap flag"><b>FLAG</b>0.60 ≤ confidence &lt; 0.80</div>
+            <div class="smap halt"><b>HALT</b>confidence &lt; 0.60</div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/tagged/{id}.txt</span></div>
+      </div>
+    </details>
+
+    <!-- META -->
+    <details class="skill" id="meta" open>
+      <summary><span class="snum">5</span>
+        <span><span class="sname">diaries-meta</span><br><span class="stitle">Metadatos: fecha, nº de sesión, tipo, legislatura, presidente</span></span>
+        <span class="sbadges"><span class="badge thr">0.85 / 0.65</span></span></summary>
+      <div class="sbody">
+        <div class="note crit">⚠ Paso 0c obligatorio 1ª vez: verificar que los regex están <b>anclados a la fórmula de cabecera</b>
+        de la sesión (no a la 1ª fecha del texto, que suele ser un acta/decreto citado).</div>
+        <div class="block"><div class="lab">Paso 2d · Decisión crítica de <code>date</code> (override del peso)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">date_source = text</span><span class="arr">→</span><span class="res">autoritativa, puede ser <span class="out auto">AUTO</span></span></div>
+            <div class="br"><span class="cond">date_mismatch = true (texto ≠ nombre)</span><span class="arr">→</span><span class="res">confía en el TEXTO, fuerza <span class="out flag">FLAG</span></span></div>
+            <div class="br"><span class="cond">filename_fallback (texto sin fecha)</span><span class="arr">→</span><span class="res">nunca AUTO → <span class="out flag">FLAG</span> obligatorio</span></div>
+            <div class="br"><span class="cond">missing (ni texto ni nombre)</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span></span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 2e · Confianza ponderada (5 campos × 0.20)</div>
+          <div class="formula">cada campo:  regex → 0.20   |   LLM → 0.17   |   no encontrado → 0.0
+confidence = Σ contribuciones de {date, session_number, session_type, legislature, president}
+(el override de date manda sobre el resultado del peso)</div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/meta/{id}.json</span></div>
+      </div>
+    </details>
+
+    <!-- MATRIX -->
+    <details class="skill" id="matrix" open>
+      <summary><span class="snum">6</span>
+        <span><span class="sname">diaries-matrix</span><br><span class="stitle">Parse de texto etiquetado → filas CSV (determinista)</span></span>
+        <span class="sbadges"><span class="badge">nivel sesión</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Paso 3a/3b · Prerequisitos + auditoría previa</div>
+          <div class="branches">
+            <div class="br"><span class="cond">falta tagged/ o meta/</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span>, informa qué falta</span></div>
+            <div class="br"><span class="cond">n_tags &lt;int&gt; == 0 en fuente</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span>: archivo sin etiquetas válidas</span></div>
+            <div class="br"><span class="cond">intervention_format</span><span class="arr">→</span><span class="res"><code>auto</code> · <code>inline</code> (&lt;int speaker&gt;) · <code>standalone</code> (PT)</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 3e/3f · Cobertura de tags (salvaguarda anti-bug del parser)</div>
+          <div class="formula">tasa_cobertura = (interventions_added + filtered_short) / n_tags_fuente
+confianza = 1 − untagged_blocks / (interventions_added + untagged_blocks)
+si tasa_cobertura &lt; 0.80 → confianza = min(confianza, tasa_cobertura)</div>
+          <div class="statusmap" style="margin-top:8px">
+            <div class="smap auto"><b>complete</b>confianza ≥ 0.80</div>
+            <div class="smap flag"><b>FLAG</b>confianza &lt; 0.80 · o cobertura &lt; 0.50</div>
+            <div class="smap halt"><b>HALT</b>cobertura &lt; 0.20 (fallo sistemático)</div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/matrix/interventions_raw.csv (acumulativo)</span></div>
+      </div>
+    </details>
+
+    <!-- DEPUTIES -->
+    <details class="skill" id="deputies" open>
+      <summary><span class="snum pais">7</span>
+        <span><span class="sname">diaries-deputies</span><br><span class="stitle">Construye la BD de diputados + deduplicación obligatoria</span></span>
+        <span class="sbadges"><span class="badge">nivel país</span><span class="badge">--force · --dry-run</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Paso 2 · Guardias</div>
+          <div class="branches">
+            <div class="br"><span class="cond">falta interventions_raw.csv</span><span class="arr">→</span><span class="res"><span class="out err">ERROR</span> ejecuta diaries-matrix</span></div>
+            <div class="br"><span class="cond">deputies.csv existe y no --force</span><span class="arr">→</span><span class="res"><span class="out err">ERROR</span> usa --force</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 3/4 · Dos rutas de construcción</div>
+          <div class="branches">
+            <div class="br"><span class="cond">deputies.external_file definido</span><span class="arr">→</span><span class="res"><b>Ruta A</b>: valida columnas, genera id_dep si falta, mapea a esquema canónico</span></div>
+            <div class="br"><span class="cond">external_file vacío</span><span class="arr">→</span><span class="res"><b>Ruta B</b>: extrae speakers únicos, agrupa por similaridad (clúster 4+ → juicio LLM)</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 5 · Deduplicación (SIEMPRE, 3 pasadas)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">Pasada 1: fuzzy token_sort_ratio ≥ 85</span><span class="arr">→</span><span class="res">typos, acentos, OCR, orden de tokens</span></div>
+            <div class="br"><span class="cond">Pasada 2: subconjunto de apellido + mismo nombre</span><span class="arr">→</span><span class="res">apellido completo vs primero (inter-legislatura)</span></div>
+            <div class="br"><span class="cond">Pasada 3: vecinos ±5 ordenados por apellido</span><span class="arr">→</span><span class="res">iniciales expandidas (Alfonso G. ↔ Alfonso González)</span></div>
+            <div class="br"><span class="cond">par ambiguo</span><span class="arr">→</span><span class="res">presenta al usuario (partido/distrito/fechas) antes de fusionar</span></div>
+          </div>
+          <div class="note">Mismas filas con <b>mismo</b> id_dep en distintas legislaturas son correctas. Re-escanea tras cada ronda de fusión.</div>
+        </div>
+        <div class="block"><div class="lab">Paso 6 · Confianza</div>
+          <div class="formula">confianza = 1 − clustered_ambiguous / total_unique     ( &lt; 0.85 → FLAG )</div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/deputies/deputies.csv</span></div>
+      </div>
+    </details>
+
+    <!-- MATCH -->
+    <details class="skill" id="match" open>
+      <summary><span class="snum pais">8</span>
+        <span><span class="sname">diaries-match</span><br><span class="stitle">Vincula speaker_raw → id_dep (umbrales altos)</span></span>
+        <span class="sbadges"><span class="badge">nivel país</span><span class="badge thr">0.90 / 0.70</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Cascada de métodos de vinculación</div>
+          <div class="flow">
+            <div class="fnode proc"><b>Paso 4</b> · <code>fuzzy_match.py</code>: limpia títulos, matchea contra nombre completo Y apellidos (<code>token_set_ratio</code>), filtra por <b>vigencia temporal</b> (mandato vs fecha de sesión).</div>
+            <div class="branches">
+              <div class="br"><span class="cond">match_method = exact</span><span class="arr">→</span><span class="res">vinculado</span></div>
+              <div class="br"><span class="cond">= fuzzy (≥ threshold)</span><span class="arr">→</span><span class="res">vinculado</span></div>
+              <div class="br"><span class="cond">= ambiguous (apellido compartido)</span><span class="arr">→</span><span class="res">trae <code>candidates</code> → LLM elige por contexto</span></div>
+              <div class="br"><span class="cond">= unmatched</span><span class="arr">→</span><span class="res">Paso 4b heurísticas estructurales (prefijo, iniciales, apellido+nombre) → si no, LLM</span></div>
+            </div>
+            <span class="fdown"></span>
+            <div class="fnode proc"><b>Paso 5</b> · LLM resuelve <code>ambiguous</code> + <code>unmatched</code> con contexto (±3 intervenciones, partido, fecha) → <code>llm</code> o <code>unmatched</code> final.</div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 7 · Estado por TASA de cobertura</div>
+          <div class="formula">confianza_global = n_matched_auto(exact|fuzzy, conf≥0.90) / n_unique_speakers
+sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
+          <div class="statusmap" style="margin-top:8px">
+            <div class="smap auto"><b>complete</b>sin_resolver ≤ 10%</div>
+            <div class="smap flag"><b>FLAG</b>sin_resolver &gt; 10%</div>
+            <div class="smap halt"><b>HALT</b>sin_resolver &gt; 30%</div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/match/matching_table.csv</span></div>
+      </div>
+    </details>
+
+    <!-- MERGE -->
+    <details class="skill" id="merge" open>
+      <summary><span class="snum pais">9</span>
+        <span><span class="sname">diaries-merge</span><br><span class="stitle">Join pandas de raw + matching + deputies</span></span>
+        <span class="sbadges"><span class="badge">nivel país</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Paso 3 · Verificación de integridad (crítica)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">filas_salida ≠ filas_entrada</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span>: el join perdió/duplicó filas</span></div>
+            <div class="br"><span class="cond">falta cualquiera de los 3 CSV</span><span class="arr">→</span><span class="res"><span class="out err">ERROR</span> ejecuta el skill que falta</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 4 · Estado por match_rate</div>
+          <div class="statusmap">
+            <div class="smap auto"><b>complete</b>match_rate ≥ 0.90 y filas coinciden</div>
+            <div class="smap flag"><b>FLAG</b>match_rate ≥ 0.70 y filas coinciden</div>
+            <div class="smap halt"><b>HALT</b>match_rate &lt; 0.70 o filas no coinciden</div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/merge/interventions_enriched.csv</span></div>
+      </div>
+    </details>
+
+    <!-- STANDARDIZE -->
+    <details class="skill" id="standardize" open>
+      <summary><span class="snum pais">10</span>
+        <span><span class="sname">diaries-standardize</span><br><span class="stitle">Esquema canónico final (10 columnas) — salida del corpus</span></span>
+        <span class="sbadges"><span class="badge">nivel país</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Paso 1 · GUARDIA de sobreescritura (antes que nada)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">{ISO2}_interventions.csv existe y NO --force</span><span class="arr">→</span><span class="res"><span class="out err">ERROR</span> aborta. «Sobreescribir elimina el archivo canónico». Nunca continúa sin --force</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 5/6 · Validación de esquema → estado por % de error</div>
+          <div class="formula">confianza = 1 − validation_errors / total_rows</div>
+          <div class="statusmap" style="margin-top:8px">
+            <div class="smap auto"><b>complete</b>errores ≤ 5% de filas</div>
+            <div class="smap flag"><b>FLAG</b>errores &gt; 5% de filas</div>
+            <div class="smap halt"><b>HALT</b>errores &gt; 20% de filas</div>
+          </div>
+          <div class="note"><code>session_number</code> acepta entero o alfanumérico (<code>12</code>, <code>12A</code>, <code>001O</code>); <code>date</code> debe ser ISO <code>YYYY-MM-DD</code>.</div>
+        </div>
+        <div class="block"><div class="lab">Salida ⚠ canónica</div><span class="pathline">source/{iso2}/standardize/{ISO2}_interventions.csv</span></div>
+      </div>
+    </details>
+
+    <!-- DOCUMENT -->
+    <details class="skill" id="document" open>
+      <summary><span class="snum pais">11</span>
+        <span><span class="sname">diaries-document</span><br><span class="stitle">Documentación del corpus (entrevista + README canónico)</span></span>
+        <span class="sbadges"><span class="badge">nivel país</span></span></summary>
+      <div class="sbody">
+        <div class="block"><div class="lab">Paso 1 · Prerequisito + reutilización de entrevista</div>
+          <div class="branches">
+            <div class="br"><span class="cond">falta {ISO2}_interventions.csv</span><span class="arr">→</span><span class="res"><span class="out err">ERROR</span> ejecuta standardize</span></div>
+            <div class="br"><span class="cond">corpus_info.json existe + --force</span><span class="arr">→</span><span class="res">carga como base y ofrece modificar</span></div>
+            <div class="br"><span class="cond">existe sin --force</span><span class="arr">→</span><span class="res">salta entrevista, regenera docs</span></div>
+            <div class="br"><span class="cond">nuevo</span><span class="arr">→</span><span class="res">entrevista de 5 preguntas (fuentes, transformación, autores, notas)</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 5/6 · Generación + verificación</div>
+          <div class="branches">
+            <div class="br"><span class="cond">generate_docs.py OK</span><span class="arr">→</span><span class="res"><span class="out auto">complete</span> (confianza 1.0)</span></div>
+            <div class="br"><span class="cond">falta algún archivo de salida</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span></span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Salidas</div>
+          <span class="pathline">docs/{iso2}/README.md</span><span class="pathline">data_dictionary.md</span><span class="pathline">dataset.jsonld</span></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ CONTROL ============ -->
+  <section>
+    <h3 class="sec">Skills de control — disponibles en cualquier momento</h3>
+
+    <details class="skill" id="status" open>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-status</span><br><span class="stitle">Tabla de estado (solo lectura)</span></span></summary>
+      <div class="sbody"><div class="block">
+        <div class="fnode proc">Lee <code>pipeline_state.json</code> y agrega por skill: total · OK · FLAG · HALT · Pend · confianza media. Skills país: entrada <code>_country</code>.</div>
+        <div class="branches">
+          <div class="br"><span class="cond">hay HALT</span><span class="arr">→</span><span class="res">«revisa errores y re-ejecuta con --force»</span></div>
+          <div class="br"><span class="cond">hay FLAG</span><span class="arr">→</span><span class="res">deriva a <code>/diaries-review</code></span></div>
+          <div class="br"><span class="cond">todo complete</span><span class="arr">→</span><span class="res">«corpus listo» → <code>/diaries-report</code></span></div>
+          <div class="br"><span class="cond">solo pending</span><span class="arr">→</span><span class="res">sugiere el siguiente skill pendiente</span></div>
+        </div>
+      </div></div>
+    </details>
+
+    <details class="skill" id="review" open>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-review</span><br><span class="stitle">Bucle interactivo de resolución de FLAGs</span></span>
+        <span class="sbadges"><span class="badge">--skill (filtro opcional)</span></span></summary>
+      <div class="sbody"><div class="block"><div class="lab">Por cada caso FLAG (en orden de pipeline) — menú de opciones</div>
+        <div class="branches">
+          <div class="br"><span class="cond">[A] Aceptar</span><span class="arr">→</span><span class="res">marca <span class="out auto">complete</span> con la confianza actual</span></div>
+          <div class="br"><span class="cond">[C] Corregir</span><span class="arr">→</span><span class="res">registra CorrectionRecord puntual + marca complete</span></div>
+          <div class="br"><span class="cond">[R] Reintentar MiniMax</span><span class="arr">→</span><span class="res"><i>solo diaries-ocr</i>: re-OCR de páginas &lt;0.70, recalcula estado</span></div>
+          <div class="br"><span class="cond">[E] Escalar</span><span class="arr">→</span><span class="res">marca <span class="out halt">HALT</span> (intervención manual)</span></div>
+          <div class="br"><span class="cond">[S] Saltar</span><span class="arr">→</span><span class="res">mantiene FLAG</span></div>
+          <div class="br"><span class="cond">[Q] Salir</span><span class="arr">→</span><span class="res">rompe el bucle</span></div>
+        </div>
+      </div></div>
+    </details>
+
+    <details class="skill" id="feedback" open>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-feedback</span><br><span class="stitle">Inyecta correcciones — 3 tipos con distinta propagación</span></span></summary>
+      <div class="sbody"><div class="block"><div class="lab">Propagación según <code>--type</code></div>
+        <div class="branches">
+          <div class="br"><span class="cond">punctual (--from sesión)</span><span class="arr">→</span><span class="res">1 sesión · registra CorrectionRecord · <b>no propaga</b></span></div>
+          <div class="br"><span class="cond">rule (--from sesión + --pattern/--action)</span><span class="arr">→</span><span class="res">re-marca como <span class="out skip">pending</span> todas las sesiones posteriores a <code>--from</code> → re-ejecutar el skill</span></div>
+          <div class="br"><span class="cond">strategy</span><span class="arr">→</span><span class="res">añade a <code>global_rules[]</code> · requiere re-ejecutar con <code>--force</code></span></div>
+        </div>
+        <div class="note">Tras editar valida el JSON (<code>json.load</code>); si falla, no confirma el guardado.</div>
+      </div></div>
+    </details>
+
+    <details class="skill" id="report" open>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-report</span><br><span class="stitle">Informe del proceso + diagnóstico de salud</span></span></summary>
+      <div class="sbody"><div class="block"><div class="lab">Paso 4 · Salud global del pipeline</div>
+        <div class="branches">
+          <div class="br"><span class="cond">VERDE</span><span class="arr">→</span><span class="res">automatización ≥ 80% · sin HALTs · confianza media ≥ 0.85</span></div>
+          <div class="br"><span class="cond">AMARILLO</span><span class="arr">→</span><span class="res">automatización ≥ 60% · HALTs ≤ 5% · confianza ≥ 0.75</span></div>
+          <div class="br"><span class="cond">ROJO</span><span class="arr">→</span><span class="res">cualquier otra combinación</span></div>
+        </div>
+        <div class="note">Incluye histogramas ASCII de confianza por skill e historial de correcciones (punctual/rule/strategy). Salida: <span class="mono">docs/{iso2}/process_report.md</span></div>
+      </div></div>
+    </details>
+
+    <details class="skill" id="teach" open>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-teach</span><br><span class="stitle">Guía interactiva — 7 caminos</span></span></summary>
+      <div class="sbody"><div class="block"><div class="lab">Caminos</div>
+        <div class="opts">
+          <span class="opt">1 · qué es el sistema</span><span class="opt">2 · país nuevo desde cero</span>
+          <span class="opt">3 · retomar pipeline</span><span class="opt">4 · problema con un skill</span>
+          <span class="opt">5 · confianza AUTO/FLAG/HALT</span><span class="opt">6 · correcciones y propagación</span>
+          <span class="opt">7 · mapa completo de skills</span></div>
+      </div></div>
+    </details>
+
+    <details class="skill" id="refine" open>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-refine</span><br><span class="stitle">Mejora un SKILL.md a partir de testing real</span></span></summary>
+      <div class="sbody"><div class="block">
+        <div class="fnode proc">Observación de testing → localiza la sección afectada → propone cambio quirúrgico → <code>[A]plicar / [E]ditar / [C]ancelar</code> → edita el SKILL.md y registra en <code>REFINEMENTS.md</code>.</div>
+        <div class="note">No modifica datos de sesiones ni el estado. Cambios estructurales grandes → mostrar borrador completo antes de aplicar.</div>
+      </div></div>
+    </details>
+  </section>
+
+  <div class="footer">
+    ParlaIbero · pipeline de diarios parlamentarios. Fuente: los <code>SKILL.md</code> en
+    <code>~/.claude/skills/diaries-*</code>. Documento generado para visualización del árbol de procedimiento.
+    Las rutas usan <code>{iso2}</code> en minúsculas y <code>{ISO2}</code> en mayúsculas.
+  </div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,177 @@
+# country_config/_template.yaml
+# Template para configuración de país en el pipeline ParlaIbero.
+# Generado por /diaries-bootstrap; editar manualmente para ajustes.
+# Copiar como country_config/{iso2}.yaml
+
+# ── Identidad ────────────────────────────────────────────────────────────────
+country: ""                      # Código ISO2 en minúsculas (ej: "es", "mx", "ar")
+country_name_es: ""              # Nombre del país en español
+country_name_en: ""              # Nombre del país en inglés
+institution: ""                  # Nombre de la institución parlamentaria
+legislature: ""                  # Identificador de la legislatura (ej: "II República")
+years: ""                        # Años de cobertura (ej: "1931-1936")
+
+# ── Formato de la fuente ──────────────────────────────────────────────────────
+# Valores posibles: pdf_image | pdf_poor_ocr | pdf_good_ocr | pdf_digital | html
+source_format: "pdf_image"
+
+# ── Identificación de sesiones ─────────────────────────────────────────────────
+# Patrón del ID de sesión derivado del nombre de archivo
+session_id_pattern: "YYYY-MM-DD"
+# Regex para extraer número de sesión del texto
+session_number_regex: "N[uú]m\\.\\s*(\\d+)"
+# Regex para extraer fecha del texto (grupo 1 = fecha en texto)
+session_date_regex: "(\\d{1,2}\\s+de\\s+\\w+\\s+de\\s+\\d{4})"
+# Palabras clave para detectar tipo de sesión
+session_type_keywords:
+  ordinaria:      ["ordinaria", "sesión pública"]
+  extraordinaria: ["extraordinaria"]
+  solemne:        ["solemne"]
+  especial:       ["especial"]
+# Regex para extraer identificador de legislatura
+legislature_regex: ""
+
+# ── Etiquetado de oradores ─────────────────────────────────────────────────────
+# Lista de patrones regex en orden de prioridad.
+# El grupo capturado (grupo 1) es el nombre del orador.
+# ⚠ GUIONES EN MARCADORES: si el marcador de orador usa raya (ej. "APELLIDO.-"), la clase
+#   de guion debe aceptar los tres caracteres: "[-–—]" (hyphen-minus U+002D, en-dash U+2013,
+#   em-dash U+2014). El OCR (LightOnOCR-2:1b) emite EM-DASH "—"; el texto embebido usa hyphen
+#   "-". Un regex con solo "[-]" no detecta el OCR → tagging vacío silencioso. Verificado UY.
+speaker_tag_patterns:
+  - "^El\\s+PRESIDENTE"
+  - "^(?:El\\s+)?(?:Sr\\.|Sra\\.?)\\s+([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ\\s]+):"
+  - "^(?:El\\s+)?SEÑOR\\s+([A-ZÁÉÍÓÚÜÑ\\s]+):"
+
+# CRITERIO LAXO DE DOS NIVELES (general para todos los países, ver skill diaries-tag).
+# Nivel 2 probabilístico: detector laxo que captura honorífico + nombre SIN exigir terminador.
+# tag_text.py puntúa cada candidato (terminador, texto siguiente, paréntesis, plausibilidad,
+# match con diputados) y etiqueta si score >= speaker_score_threshold; los intermedios quedan
+# como casos límite (FLAG). Recupera el ~5% de marcadores con terminador irregular (OCR/escaneo).
+# El grupo 'name' es obligatorio. Adaptar el honorífico/forma del nombre a cada país.
+speaker_loose_pattern: "^(?P<name>(?:El\\s+)?(?:Sr\\.|Sra\\.?|SEÑOR[A]?)\\s+[A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ.\\s]+?)(?:\\s*\\([^)]*\\))?(?=\\s*[.:\\-–—]|\\s+[¿¡A-ZÁÉÍÓÚÜÑ])"
+speaker_score_threshold: 0.60       # >= → etiquetar (nivel 2)
+speaker_borderline_threshold: 0.40  # [borderline, threshold) → caso límite (FLAG)
+
+# Prefijos a eliminar al normalizar el nombre del orador
+speaker_prefix_strip:
+  - "El Sr."
+  - "La Sra."
+  - "El SEÑOR"
+  - "La SEÑORA"
+  - "SEÑOR"
+  - "SEÑORA"
+# Patrón que identifica al presidente/a de la cámara
+president_tag: "El PRESIDENTE"
+# Marcador de intervención en texto etiquetado
+intervention_marker: "<int>"
+
+# ── OCR (diaries-ocr) ─────────────────────────────────────────────────────────
+# El OCR usa Ollama local (NO Tesseract). Lecciones de UY (2026-06):
+#
+# FRONTERA OCR/EMBEBIDO — no OCR-ear lo que el embebido ya resuelve. Antes de OCR,
+#   ejecuta: python lib/utils/assess_source.py --country {iso2}
+#   Detecta año por año si el texto embebido es usable (frontera real, no "dos eras"
+#   gruesas). En UY ahorró 790 sesiones (~33h): 2000+ embebido OK, pre-2000 OCR.
+#
+# RENDIMIENTO (Apple Silicon M3 Max) — el GPU satura con ~1 inferencia:
+#   - 6 workers = ollama_num_parallel = 6 es el óptimo; >6 no ayuda, <6 es más lento.
+#   - dpi 150 == dpi 300 en calidad Y velocidad (el modelo redimensiona internamente).
+#   - El coste escala con CHARS de salida (densidad), no con páginas. Páginas de cuerpo
+#     son ~1.4x más densas que carátula/índice. Medir desempeño con random.sample()
+#     sobre el rango COMPLETO de varios documentos y varios años (nunca primeras páginas).
+#   - Trabajar en chars/hora (invariante a densidad), no en páginas/hora.
+#   - Protección anti-zombie obligatoria en batches largos (kill_orphans + lockfile):
+#     procesos OCR huérfanos compitiendo por el GPU son la causa #1 de lentitud.
+#   - vLLM en GPU NVIDIA cloud = ~90x (LightOnOCR-1B: 5.71 pág/s en H100) para corpus urgentes.
+ocr:
+  lang: "spa"                          # Idioma (ej: "spa", "por")
+  dpi: 150                             # 150 == 300 en calidad/velocidad (modelos que redimensionan)
+  primary_model: "Maternion/LightOnOCR-2:1b"  # mejor calidad/velocidad local (glm-ocr es ~3x más lento)
+  fallback_model: "glm-ocr"
+  workers: 6                           # óptimo M3 Max; ajustar al hardware
+  ollama_num_parallel: 6               # = workers (menor fragmentación de KV cache)
+  ollama_keep_alive: "-1"              # el modelo nunca se descarga durante el batch
+  min_page_confidence: 60.0            # % mínimo por página; por debajo → FLAG
+  minimax_fallback_threshold: null     # si se define (ej. 0.70), páginas bajo umbral → reintento MiniMax M3
+
+# ── Extracción de texto (diaries-extract) ─────────────────────────────────────
+# Eliminación de CABECEROS y PIES recurrentes (running headers/footers), page-aware.
+# Actúa en la extracción: sobre las páginas de fitz (pdf_digital) o sobre los page_*.txt
+# YA producidos por el OCR (NO reprocesa el OCR — solo re-corre extract, que es barato).
+# Validado en UY ambas épocas (~1.7M líneas, 0 falsos positivos). Detecta por recurrencia
+# en la ZONA-BORDE de cada página: número de página, cluster difuso de líneas cortas
+# (tolera ruido OCR: "CÁMARA"≈"CAMARA", "Miércoles"≈"Milécoles") y ancla de token-líder
+# para el pie-sello de digitalización. El cuerpo de la página nunca se toca.
+extract:
+  strip_headers: true            # eliminar cabeceros/pies recurrentes
+  edge: 3                        # nº de líneas de la zona-borde (top/bottom) a inspeccionar
+  recurrence: 0.5                # una línea es "mueble" si recurre en >= esta fracción de páginas
+  similarity: 85                 # umbral RapidFuzz (token_sort_ratio) para agrupar variantes OCR
+  min_pages: 4                   # por debajo de N páginas no se intenta (riesgo > beneficio)
+  page_break_marker: ""          # SOLO fuentes de texto ya extraído (no PDF/OCR paginado): marca de
+                                 # salto de página (ej. "---PAGE BREAK---"). "" = sin marca → modo por
+                                 # frecuencia (las líneas recurrentes son el mobiliario; excluye los
+                                 # turnos de orador del config y la prosa en caja de oración).
+  protect_patterns: []           # regex; una línea de borde que case NUNCA se elimina (seguridad)
+  extra_patterns: []             # regex; una línea de borde que case SIEMPRE se elimina (añadidos)
+
+# ── Corrección de texto (diaries-correct) ─────────────────────────────────────
+correct:
+  hyphen_join: true              # Reunir palabras cortadas con guión al final de línea
+  min_paragraph_chars: 80        # Caracteres mínimos para considerar párrafo completo
+
+# ── Umbrales de confianza ──────────────────────────────────────────────────────
+# Umbrales globales (pueden sobreescribirse por skill en la sección 'thresholds')
+threshold_auto: 0.85             # >= threshold_auto → AUTO (sin interrupción)
+threshold_flag: 0.65             # >= threshold_flag → FLAG (revisión diferida)
+                                 # < threshold_flag  → HALT (pausa obligatoria)
+
+# Sobreescrituras por skill (opcional)
+thresholds:
+  diaries-tag:
+    threshold_auto: 0.80
+    threshold_flag: 0.60
+  diaries-match:
+    threshold_auto: 0.90
+    threshold_flag: 0.70
+
+# ── Metadatos (diaries-meta) ──────────────────────────────────────────────────
+meta:
+  president_name_canonical: ""   # Nombre canónico del presidente (rellenar tras primera ejecución)
+  date_locale: "es_ES"           # Locale para parseo de fechas en texto
+
+# ── Vinculación de oradores (diaries-match) ───────────────────────────────────
+# fuzzy_match.py: limpia títulos/cargos, matchea contra nombre completo Y apellidos con
+# token_set_ratio, desempata candidatos de apellido compartido por vigencia temporal (mandato
+# vs fecha de sesión), y marca los empates irresolubles como `ambiguous` para el paso LLM.
+# REQUISITO: deputies.csv con columnas id_dep, nombre_completo, apellidos, fecha_inicio, fecha_fin
+# (las dos últimas habilitan la desambiguación temporal — sin ellas recae más en el LLM).
+match:
+  fuzzy_threshold: 85            # umbral token_set_ratio (0-100)
+  ambiguity_margin: 4            # 2+ candidatos dentro de este margen → ambiguous (desambiguar por contexto)
+  max_llm_batch_size: 20
+  context_interventions: 3
+
+# ── Diputados (diaries-deputies) ──────────────────────────────────────────────
+deputies:
+  external_file: ""              # Ruta a archivo de diputados pre-existente, o "" para construir desde cero
+  canonical_format: "Full Name;Given Name;Surname(s)"
+  id_dep_prefix: ""              # Prefijo para id_dep (ej: "ES", "MX"); vacío = usa iso2 en mayúsculas
+
+# ── Estandarización (diaries-standardize) ─────────────────────────────────────
+standardize:
+  # Template para el campo cite_as. Variables: {year}, {ISO2}, {doi}
+  cite_as_template: "ParlaIbero-{ISO2} ({year}). Harvard Dataverse. https://doi.org/{doi}"
+  encoding: "utf-8"
+  csv_separator: ";"
+
+# ── Documentación (diaries-document) ──────────────────────────────────────────
+document:
+  doi: ""                        # DOI del dataset (ej: "10.7910/DVN/THQCMI")
+  license: "CC-BY-4.0"
+  institution: ""                # Institución responsable
+  pi: ""                         # Investigador/a principal: "Apellido, Nombre"
+
+# ── Informe de configuración ──────────────────────────────────────────────────
+onboarding_report: ""            # Ruta al informe de configuración (rellenado por diaries-bootstrap)

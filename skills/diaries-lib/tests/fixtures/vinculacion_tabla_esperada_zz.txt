@@ -1,0 +1,7 @@
+             filas    bruta  EFECTIVA          ·         NO-DIP  presidencia   ambiguo
+  ZZ          105   57.14%    70.59%    72.29%             20           10         2
+
+  TOTAL 105 filas · bruta 57.14%
+     EFECTIVA 70.59%  (si los 2 ambiguos son diputados)
+     EFECTIVA 72.29%  (si son funcionarios)  ← horquilla 1.70 puntos
+     descontado 20 · presidencia sin identificar 10 (NO se descuenta) · resto 13

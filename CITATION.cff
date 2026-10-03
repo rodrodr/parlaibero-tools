@@ -1,0 +1,38 @@
+# Cita del SOFTWARE (servidor MCP y skills). Para los DATOS se cita el conjunto de cada país con su DOI:
+# la herramienta how_to_cite del servidor devuelve la cita formateada.
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it as below. If you use the data of a country,
+  cite that country's ParlaIbero dataset with its DOI as well.
+type: software
+title: "ParlaIbero tools: MCP server and diaries-* pipeline skills"
+abstract: >-
+  An MCP server that gives AI agents access to the ParlaIbero corpora of plenary speeches from
+  16 Ibero-American parliaments (Harvard Dataverse), and the Claude Code skills that built them
+  from session diaries.
+authors:
+  - family-names: Rodrigues-Silveira
+    given-names: Rodrigo
+    affiliation: "Instituto de Iberoamérica, Universidad de Salamanca"
+version: "0.1.0"
+date-released: "2026-10-03"
+license: MIT
+repository-code: "https://github.com/rodrodr/parlaibero-tools"
+url: "https://rodrodr.github.io/parlaibero/"
+keywords:
+  - parliamentary speeches
+  - legislative debates
+  - Latin America
+  - Spain
+  - Portugal
+  - MCP
+  - corpus construction
+references:
+  - type: data
+    title: "ParlaIbero: Parliamentary Speeches from Latin America, Portugal and Spain"
+    authors:
+      - name: ParlaIbero
+    publisher:
+      name: Harvard Dataverse
+    url: "https://dataverse.harvard.edu/dataverse/parlaibero"
+    notes: "Collection. Each country is a dataset with its own DOI, authorship and version."

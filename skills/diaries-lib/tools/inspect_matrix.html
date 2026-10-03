@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>ParlaIbero · Inspector de matriz (interventions_raw)</title>
+<style>
+:root{
+  --bg:#fbfaf8; --panel:#fff; --line:#e4e0d8; --ink:#1d1b17; --dim:#6f6a61;
+  --accent:#7a4b2a; --accent-soft:#f2e9e1; --warn:#a8541f; --bad:#9b2c2c; --ok:#2f6b3f;
+  --ses:#3b5b7d;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#171614; --panel:#1f1e1b; --line:#332f29; --ink:#ece7de;
+        --dim:#948c7e; --accent:#d8a179; --accent-soft:#2b241d; --warn:#e0a06a;
+        --bad:#e08585; --ok:#7fc08f; --ses:#8fb4d9;}
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+     display:flex;flex-direction:column;overflow:hidden}
+
+header{padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);
+       display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px}
+h1 small{font-weight:400;color:var(--dim);margin-left:6px}
+#stats{color:var(--dim);font-size:12.5px;font-variant-numeric:tabular-nums}
+button,select,input[type=text],input[type=number]{
+  font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);
+  border-radius:6px;padding:5px 9px}
+button{cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+label.file{display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+  background:var(--accent);color:#fff;border-radius:6px;padding:6px 13px;font-weight:500}
+label.file input{display:none}
+
+#bar{height:3px;background:var(--line);display:none}
+#bar div{height:100%;width:0;background:var(--accent);transition:width .12s}
+
+main{flex:1;display:grid;grid-template-columns:minmax(300px,38%) 1fr;min-height:0}
+@media (max-width:820px){main{grid-template-columns:1fr;grid-template-rows:44% 1fr}}
+
+#left{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;
+      background:var(--panel)}
+#tools{padding:8px 10px;border-bottom:1px solid var(--line);display:flex;gap:6px;flex-wrap:wrap;
+       align-items:center}
+#tools input[type=text]{flex:1;min-width:110px}
+#sesnav{padding:6px 10px;border-bottom:1px solid var(--line);display:flex;gap:6px;flex-wrap:wrap;
+        align-items:center}
+#sesnav input{flex:1;min-width:130px;font-family:var(--mono);font-size:12.5px}
+#filters{padding:6px 10px;border-bottom:1px solid var(--line);display:flex;gap:6px;flex-wrap:wrap}
+#filters button{font-size:12px;padding:3px 8px}
+
+#scroll{flex:1;overflow-y:auto;position:relative}
+#spacer{position:relative}
+#rows{position:absolute;left:0;right:0;top:0}
+.row{height:34px;display:flex;align-items:center;gap:8px;padding:0 10px;cursor:pointer;
+     border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;font-size:13px}
+.row:hover{background:var(--accent-soft)}
+.row.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.row.ses1{border-top:2px solid var(--ses)}
+.row .n{color:var(--dim);font:11.5px var(--mono);min-width:52px;text-align:right}
+.row .sid{color:var(--ses);font:11.5px var(--mono);min-width:150px;overflow:hidden;
+          text-overflow:ellipsis}
+.row .o{color:var(--dim);font:11.5px var(--mono);min-width:38px;text-align:right}
+.row .s{flex:1;overflow:hidden;text-overflow:ellipsis}
+.row .s.none{color:var(--bad);font-style:italic}
+.row .b{font:10.5px var(--mono);padding:1px 5px;border-radius:4px;background:var(--line);
+        color:var(--dim)}
+.row .b.no{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.row.mark{box-shadow:inset 3px 0 0 var(--warn)}
+.row.sel.mark{box-shadow:inset 3px 0 0 var(--accent), inset 6px 0 0 var(--warn)}
+
+#right{overflow-y:auto;padding:16px 20px}
+#meta{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;align-items:baseline;
+      font-size:13px;margin-bottom:14px}
+#meta dt{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+#meta dd{margin:0;font-family:var(--mono);font-size:12.5px;word-break:break-word}
+#meta dd.empty{color:var(--bad);font-style:italic;font-family:inherit}
+#flags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.flag{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--warn);
+      color:var(--warn)}
+.flag.bad{border-color:var(--bad);color:var(--bad)}
+.flag.ok{border-color:var(--ok);color:var(--ok)}
+.flag.cls{border-color:var(--ses);color:var(--ses)}
+#text{white-space:pre-wrap;font-size:14.5px;line-height:1.62;background:var(--panel);
+      border:1px solid var(--line);border-radius:8px;padding:16px 18px;
+      max-width:74ch;word-wrap:break-word}
+#text mark{background:transparent;border-bottom:2px solid var(--warn);color:inherit;
+           padding-bottom:1px}
+#text mark.bad{border-color:var(--bad)}
+.hint{color:var(--dim);font-size:13px;max-width:62ch}
+.hint code{font-family:var(--mono);font-size:12px;background:var(--accent-soft);
+           padding:1px 5px;border-radius:4px}
+kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;
+    padding:1px 5px;color:var(--dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Inspector de matriz <small>interventions_raw · ParlaIbero</small></h1>
+  <label class="file"><input type="file" id="file" accept=".csv,text/csv">Abrir CSV…</label>
+  <span id="stats">ningún archivo cargado</span>
+  <span style="flex:1"></span>
+  <button id="rnd" title="Salta a un registro al azar (muestreo)">Aleatorio</button>
+  <button id="expo" title="Exporta los registros marcados">Exportar marcados</button>
+</header>
+<div id="bar"><div></div></div>
+
+<main>
+  <section id="left">
+    <div id="tools">
+      <input type="text" id="q" placeholder="Buscar por orador o session_id…">
+      <button id="go">Buscar</button>
+      <input type="number" id="jump" placeholder="nº fila" style="width:88px">
+    </div>
+    <div id="sesnav">
+      <button id="sprev" title="Primera fila de la sesión anterior">‹ sesión</button>
+      <input type="text" id="sid" list="sids" placeholder="ir a session_id…">
+      <datalist id="sids"></datalist>
+      <button id="snext" title="Primera fila de la sesión siguiente">sesión ›</button>
+    </div>
+    <div id="filters">
+      <button data-f="all" class="on">Todas</button>
+      <button data-f="prol" title="1ª fila de sesión, sin orador, dm_speech=0">Prolegomena</button>
+      <button data-f="anexo" title="dm_speech=0 sin orador, no primera de sesión">Anexos</button>
+      <button data-f="dm0" title="Todo lo declarado no-discurso">dm=0</button>
+      <button data-f="dm0sp" title="dm=0 CON orador: filas post-separador">dm=0 con orador</button>
+      <button data-f="huerf" title="dm=1 SIN orador: no debería existir en la matriz">⚠ sin orador</button>
+      <button data-f="giga" title="registros de ≥100.000 bytes">Gigantes</button>
+      <button data-f="marked">Marcadas</button>
+    </div>
+    <div id="scroll"><div id="spacer"><div id="rows"></div></div></div>
+  </section>
+
+  <section id="right">
+    <p class="hint">
+      Abre un <code>interventions_raw.csv</code> de <code>source/{iso}/matrix/</code>.
+      El archivo <strong>no se carga en memoria</strong>: una pasada anota dónde empieza cada
+      registro y deduce por sesión el orden de cada fila; después cada intervención se lee
+      directamente del disco al pulsarla. Funciona igual con 50 MB que con 2 GB, y nada sale
+      de tu equipo.
+      <br><br>
+      La matriz cruda no trae <code>id_int</code>: cada fila se identifica como
+      <code>session_id · #orden</code>. La barra de sesión (‹ ›) salta a la primera fila de la
+      sesión vecina; el desplegable acepta cualquier <code>session_id</code> del archivo.
+      <br><br>
+      <kbd>j</kbd> <kbd>k</kbd> o <kbd>↑</kbd> <kbd>↓</kbd> registro a registro ·
+      <kbd>m</kbd> marca el actual · <kbd>[</kbd> <kbd>]</kbd> sesión anterior / siguiente.
+      <br><br>
+      Filtros pensados para auditar la salida de <code>diaries-matrix</code>: los
+      <em>Prolegomena</em> (carátula, orden 0), los <em>Anexos</em> declarados, las filas
+      <em>dm=0 con orador</em> (post-separador) y —la alarma— <em>dm=1 sin orador</em>,
+      que en una matriz bien construida no existe.
+    </p>
+  </section>
+</main>
+
+<script>
+"use strict";
+// ─────────────────────────────────────────────────────────────────────────────
+// Inspector de la MATRIZ CRUDA (interventions_raw.csv, 10 columnas):
+//   session_id,legislature,session_number,session_type,date,president,
+//   speaker_raw,party_raw,text,dm_speech
+//
+// Hereda del inspector canónico el índice por DESPLAZAMIENTO EN BYTES (una sola
+// pasada; después cada lectura es un slice de KB) y la lista virtual ESCALADA
+// (los navegadores recortan la altura de un elemento hacia 2^24 px; el separador
+// se limita a 8 M px y la posición se traduce por proporción).
+//
+// Diferencias con el canónico, y por qué:
+//  · No hay id_int ni intervention_order: el ORDEN DENTRO DE SESIÓN se deriva
+//    durante la indexación (la matriz está agrupada por sesión) y la fila se
+//    identifica como session_id · #orden.
+//  · dm_speech es la ÚLTIMA columna, DESPUÉS de un text que puede medir 500 KB:
+//    el prefijo no lo contiene. Se decide mirando HACIA ATRÁS los últimos bytes
+//    del registro al encontrar su salto de cierre — tolerando \r, espacios y el
+//    campo entrecomillado («…,"0"⏎»), que un rolling ingenuo de 3 bytes perdía.
+//  · No hay id_dep: los filtros de vinculación se sustituyen por las clases de
+//    la matriz (Prolegomena · Anexos · dm=0 con orador · dm=1 sin orador).
+//
+// Revisión adversarial 2026-08-30 (4 lentes + refutadores): los stubs de lista
+// ya no envenenan el detalle ni el export; indexar/buscar llevan token de
+// generación (abrir otro CSV a mitad no corrompe el índice); pintar re-encola
+// en vez de descartar y compensa el overscan en modo escalado; las señales se
+// detectan sobre el texto CRUDO por rangos (no sobre HTML escapado, no anidan
+// marcas); las líneas en blanco no crean filas fantasma; un session_id vacío
+// no revienta la indexación.
+// ─────────────────────────────────────────────────────────────────────────────
+const CH = 1 << 24;                    // 16 MB por trozo de lectura
+const RH = 34;                         // alto de fila, fijo (lista virtual)
+const MAXH = 8e6;                      // tope del separador (ver nota de arriba)
+const GIGA = 100000;                   // umbral de registro «gigante», en bytes
+const DEC = new TextDecoder("utf-8");
+
+// flags por registro
+const F_DM0=1, F_SINSP=2, F_SES1=4, F_GIGA=8;
+
+let file=null, cols=[], sep=44;        // 44 = ','   59 = ';'
+let off=new Float64Array(0), nrec=0;
+let flag=new Uint8Array(0);
+let ordEn=new Uint32Array(0);          // orden de la fila dentro de su sesión (1..n)
+let sesDe=new Uint32Array(0);          // índice de sesión de cada fila
+let sesiones=[];                       // [{id, fila0, n, dm0}]
+let dmOk=true;                         // dm_speech es la última columna → flags fiables
+let view=[], sel=-1, selPos=-1, marked=new Set(), filt="all";
+let gen=0;                             // token de generación: invalida indexados/búsquedas viejos
+const cache=new Map();
+
+const $=s=>document.querySelector(s);
+const bar=$("#bar"), barIn=bar.firstElementChild;
+
+/* Parte un registro CSV en campos respetando comillas y comillas dobladas. */
+function parseRec(str){
+  const out=[]; let cur="", q=false;
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(q){
+      if(c==='"'){ if(str[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=c;
+    } else if(c==='"') q=true;
+    else if(c===String.fromCharCode(sep)){ out.push(cur); cur=""; }
+    else if(c==="\n"){ break; }
+    else if(c!=="\r") cur+=c;
+  }
+  out.push(cur);
+  return out;
+}
+
+/* Recorre el archivo anotando el inicio de cada registro, el orden por sesión y
+   los flags. Cede el hilo entre trozos para que la interfaz siga viva. */
+async function indexar(f){
+  const g=++gen;                        // invalida cualquier indexado/búsqueda anterior
+  file=f; nrec=0; cache.clear(); marked.clear(); sel=-1; selPos=-1; sesiones=[];
+  bar.style.display="block"; barIn.style.width="0";
+
+  let cap=1<<20;
+  off=new Float64Array(cap); flag=new Uint8Array(cap);
+  ordEn=new Uint32Array(cap); sesDe=new Uint32Array(cap);
+  // `pendiente` arrastra entre trozos la comilla cuyo carácter siguiente aún no
+  // llegó: sin esto, una comilla de cierre justo en el límite de 16 MB se toma
+  // por comilla escapada y el resto del archivo queda desincronizado.
+  let q=false, pendiente=false, campo=0, recIni=0, primera=true;
+  let tail=new Uint8Array(0);          // últimos 8 bytes del trozo anterior (cierre de registro)
+  let pre=[], preFin=-1;               // [nrec, ini, fin] de los prefijos del trozo
+  let sesActual=null, sesN=0;          // null: un session_id VACÍO también abre sesión
+
+  try{
+  for(let ini=0; ini<f.size; ini+=CH){
+    const buf=new Uint8Array(await f.slice(ini, Math.min(ini+CH, f.size)).arrayBuffer());
+    if(g!==gen) return;                 // se abrió otro archivo a mitad: abandonar
+    // byte en la posición absoluta `a` (cae en este trozo o en la cola del anterior)
+    const at=a=>{ const k=a-ini; return k>=0 ? buf[k] : tail[tail.length+k]; };
+    // dm_speech al CIERRE del registro que termina en el \n de `abs`:
+    // hacia atrás: [\r]? [espacios]* ["]? DIGITO ["]? SEP — tolera «,0», «, 0», «,"0"», \r\n
+    const dm0AlCierre=abs=>{
+      let p=abs-1, b=at(p);
+      if(b===13){ p--; b=at(p); }
+      while(b===32||b===9){ p--; b=at(p); }
+      let quoted=false;
+      if(b===34){ quoted=true; p--; b=at(p); }
+      if(b!==48) return false;          // solo nos interesa el '0'
+      p--; b=at(p);
+      if(quoted){ if(b!==34) return false; p--; b=at(p); }
+      return b===sep;
+    };
+    for(let i=0;i<buf.length;i++){
+      const b=buf[i], abs=ini+i;
+      if(pendiente){                    // veníamos de una comilla al final del trozo anterior
+        pendiente=false;
+        if(b===34) continue;            // era `""` escapada
+        q=false;                        // era cierre de campo: sigue el tratamiento normal
+      }
+      if(q){
+        if(b===34){
+          if(i+1===buf.length) pendiente=true;      // decidirlo con el trozo siguiente
+          else if(buf[i+1]===34) i++;               // comilla escapada
+          else q=false;
+        }
+        continue;
+      }
+      if(b===34){ q=true; continue; }
+      if(b===sep && campo<40){ campo++; if(campo===8) preFin=abs; continue; }
+      if(b===10){
+        if(primera){
+          const linea=DEC.decode(new Uint8Array(await f.slice(0,abs).arrayBuffer()));
+          if(g!==gen) return;
+          sep = (linea.split(";").length > linea.split(",").length) ? 59 : 44;
+          cols = parseRec(linea).map(s=>s.replace(/^﻿/,"").trim());
+          dmOk = cols[cols.length-1]==="dm_speech";
+          primera=false; recIni=abs+1; campo=0; preFin=-1;
+          continue;
+        }
+        // línea en blanco (`\n\n` o `\r\n` sola): NO es un registro — sin esto se
+        // crean filas fantasma atribuidas a la primera sesión e invisibles al
+        // filtro-alarma «sin orador»
+        if(abs===recIni || (abs===recIni+1 && at(recIni)===13)){
+          recIni=abs+1; campo=0; preFin=-1;
+          continue;
+        }
+        if(nrec===cap){ cap*=2;
+          const o=new Float64Array(cap); o.set(off); off=o;
+          const gg=new Uint8Array(cap); gg.set(flag); flag=gg;
+          const e=new Uint32Array(cap); e.set(ordEn); ordEn=e;
+          const d=new Uint32Array(cap); d.set(sesDe); sesDe=d; }
+        off[nrec]=recIni;
+        let fl=0;
+        if(dmOk && dm0AlCierre(abs)) fl|=F_DM0;
+        if(abs-recIni>=GIGA) fl|=F_GIGA;
+        flag[nrec]=fl;
+        const fin = preFin>recIni ? preFin : Math.min(abs, recIni+400);
+        pre.push([nrec, recIni, fin]);
+        nrec++; recIni=abs+1; campo=0; preFin=-1;
+      }
+    }
+    // prefijos del trozo: UNA lectura contigua; de aquí salen session_id,
+    // speaker_raw vacío, el orden por sesión y la lista de sesiones
+    if(pre.length){
+      const a=pre[0][1], z=pre[pre.length-1][2];
+      const blk = z>a ? new Uint8Array(await f.slice(a,z).arrayBuffer()) : null;
+      if(g!==gen) return;
+      for(const [n,s,e] of pre){
+        const campos = (blk && e>s)
+          ? parseRec(DEC.decode(blk.subarray(s-a, Math.min(e-a, blk.length))))
+          : [];
+        const gc=k=>{const j=cols.indexOf(k); return j>=0?(campos[j]||"").trim():"";};
+        const sid=gc("session_id");
+        if(sid!==sesActual){
+          sesActual=sid; sesN=0;
+          sesiones.push({id:sid, fila0:n, n:0, dm0:0});
+          flag[n]|=F_SES1;
+        }
+        sesN++;
+        const S=sesiones[sesiones.length-1];
+        S.n++; if(flag[n]&F_DM0) S.dm0++;
+        ordEn[n]=sesN; sesDe[n]=sesiones.length-1;
+        if(!gc("speaker_raw")) flag[n]|=F_SINSP;
+      }
+      pre=[];
+    }
+    tail=buf.slice(Math.max(0,buf.length-8));
+    barIn.style.width=(100*(ini+CH)/f.size).toFixed(1)+"%";
+    await new Promise(r=>setTimeout(r));
+    if(g!==gen) return;
+  }
+  if(recIni<f.size){                    // último registro sin \n final
+    if(nrec===cap){const o=new Float64Array(cap+1);o.set(off);off=o;
+      const gg=new Uint8Array(cap+1);gg.set(flag);flag=gg;
+      const e=new Uint32Array(cap+1);e.set(ordEn);ordEn=e;
+      const d=new Uint32Array(cap+1);d.set(sesDe);sesDe=d;}
+    off[nrec]=recIni;
+    if(f.size-recIni>=GIGA) flag[nrec]|=F_GIGA;
+    const o=parseRec(DEC.decode(new Uint8Array(await f.slice(recIni,f.size).arrayBuffer())));
+    if(g!==gen) return;
+    const gc=k=>{const j=cols.indexOf(k); return j>=0?(o[j]||"").trim():"";};
+    if(dmOk && gc("dm_speech")==="0") flag[nrec]|=F_DM0;
+    if(!gc("speaker_raw")) flag[nrec]|=F_SINSP;
+    const sid=gc("session_id");
+    if(sid!==sesActual){ sesActual=sid; sesN=0;
+      sesiones.push({id:sid, fila0:nrec, n:0, dm0:0}); flag[nrec]|=F_SES1; }
+    sesN++; const S=sesiones[sesiones.length-1]; S.n++; if(flag[nrec]&F_DM0) S.dm0++;
+    ordEn[nrec]=sesN; sesDe[nrec]=sesiones.length-1;
+    nrec++;
+  }
+  } catch(err){
+    bar.style.display="none";
+    $("#stats").textContent="⚠ error al indexar: "+err.message;
+    throw err;
+  }
+  bar.style.display="none";
+
+  $("#sids").innerHTML=sesiones.map(s=>`<option value="${esc(s.id)}">`).join("");
+  const ndm0=[...flag.subarray(0,nrec)].reduce((a,f)=>a+(f&F_DM0?1:0),0);
+  $("#stats").textContent=`${f.name} · ${nrec.toLocaleString("es")} filas · `
+    +`${sesiones.length.toLocaleString("es")} sesiones · `
+    +`dm=0: ${ndm0.toLocaleString("es")} (${(100*ndm0/Math.max(nrec,1)).toFixed(1)}%) · `
+    +`${(f.size/1048576).toFixed(0)} MB`
+    +(dmOk?"":" · ⚠ dm_speech no es la última columna: filtros dm sin datos");
+  aplicarFiltro();
+  if(nrec) mostrar(0);
+}
+
+/* Lee un registro completo del disco y lo descodifica. Los stubs de lista
+   (_parcial, 600 bytes) NO valen como registro: se relee entero. */
+async function leer(n){
+  const c=cache.get(n);
+  if(c && !c._parcial) return c;
+  const a=off[n], z=(n+1<nrec? off[n+1] : file.size);
+  const campos=parseRec(DEC.decode(new Uint8Array(await file.slice(a,z).arrayBuffer())));
+  const o={}; cols.forEach((cn,i)=>o[cn]=(campos[i]??"").trim());
+  if(cache.size>400) cache.clear();
+  cache.set(n,o);
+  return o;
+}
+
+/* ── lista virtual ─────────────────────────────────────────────────────────── */
+const scroll=$("#scroll"), spacer=$("#spacer"), rowsEl=$("#rows");
+function pasaFiltro(i){
+  const f=flag[i];
+  switch(filt){
+    case "prol":   return (f&F_SES1)&&(f&F_SINSP)&&(f&F_DM0);
+    case "anexo":  return (f&F_DM0)&&(f&F_SINSP)&&!(f&F_SES1);
+    case "dm0":    return !!(f&F_DM0);
+    case "dm0sp":  return (f&F_DM0)&&!(f&F_SINSP);
+    case "huerf":  return !(f&F_DM0)&&(f&F_SINSP);
+    case "giga":   return !!(f&F_GIGA);
+    case "marked": return marked.has(i);
+    default:       return true;
+  }
+}
+function aplicarFiltro(){
+  view=[];
+  for(let i=0;i<nrec;i++) if(pasaFiltro(i)) view.push(i);
+  selPos=view.indexOf(sel);
+  ajustaAlto();
+  pintar();
+}
+function ajustaAlto(){
+  spacer.style.height = Math.min(view.length*RH, MAXH) + "px";
+}
+const escalado = () => view.length*RH > MAXH;
+function idxDesde(top){
+  if(!escalado()) return Math.floor(top/RH);
+  const util = Math.max(1, MAXH - scroll.clientHeight);
+  const vis  = Math.ceil(scroll.clientHeight/RH);
+  return Math.min(view.length-1, Math.round(top/util * Math.max(0, view.length - vis)));
+}
+function topDesde(i){
+  if(!escalado()) return i*RH;
+  const util = Math.max(1, MAXH - scroll.clientHeight);
+  const vis  = Math.ceil(scroll.clientHeight/RH);
+  return Math.round(i/Math.max(1, view.length - vis) * util);
+}
+let pintando=false, repintar=false;
+async function pintar(){
+  if(pintando){ repintar=true; return; }   // re-encola en vez de descartar
+  pintando=true;
+  do{
+    repintar=false;
+    const v=view;                          // capturada: un cambio de filtro re-encola
+    const top=scroll.scrollTop, alto=scroll.clientHeight;
+    const base=idxDesde(top);
+    const a=Math.max(0, base-4);
+    const z=Math.min(v.length, base+Math.ceil(alto/RH)+6);
+    // en modo escalado el bloque se ancla al viewport COMPENSANDO el overscan de
+    // arriba (sin la resta, todo se corre 4 filas y las últimas quedan fuera)
+    rowsEl.style.transform=`translateY(${escalado()? Math.max(0, top-(base-a)*RH) : a*RH}px)`;
+    const trozos=[];
+    for(let i=a;i<z;i++) trozos.push(v[i]);
+    if(trozos.length && file){
+      const p=trozos[0], u=trozos[trozos.length-1];
+      const ini=off[p], fin=(u+1<nrec? off[u+1] : file.size);
+      if(fin>ini && fin-ini < 8e6){
+        const blk=new Uint8Array(await file.slice(ini,fin).arrayBuffer());
+        for(const n of trozos){
+          const prev=cache.get(n);
+          if(prev && !prev._parcial) continue;   // un stub SÍ se sustituye por el registro entero
+          const s=off[n]-ini, e=(n+1<nrec? off[n+1]:file.size)-ini;
+          const campos=parseRec(DEC.decode(blk.subarray(s, Math.min(e,blk.length))));
+          const o={}; cols.forEach((cn,i)=>o[cn]=(campos[i]??"").trim());
+          if(cache.size>800) cache.clear();
+          cache.set(n,o);
+        }
+      } else {
+        // vista dispersa (filtro/búsqueda): stubs de lista acotados — solo para
+        // pintar la fila; leer() los ignora y relee el registro completo
+        for(const n of trozos){
+          if(cache.has(n)) continue;
+          const s=off[n], e=Math.min((n+1<nrec? off[n+1]:file.size), s+600);
+          const campos=parseRec(DEC.decode(new Uint8Array(await file.slice(s,e).arrayBuffer())));
+          const o={}; cols.forEach((cn,i)=>o[cn]=(campos[i]??"").trim());
+          o._parcial=true;
+          if(cache.size>800) cache.clear();
+          cache.set(n,o);
+        }
+      }
+    }
+    let h="";
+    for(let i=a;i<z;i++){
+      const n=v[i], o=cache.get(n)||{}, f=flag[n];
+      const sr=(o.speaker_raw||"").slice(0,70);
+      h+=`<div class="row${n===sel?" sel":""}${marked.has(n)?" mark":""}${(f&F_SES1)?" ses1":""}" data-n="${n}">`
+        +`<span class="n">${(n+1).toLocaleString("es")}</span>`
+        +`<span class="sid">${esc((o.session_id||"").slice(0,26))}</span>`
+        +`<span class="o">#${ordEn[n]||"·"}</span>`
+        +(sr?`<span class="s">${esc(sr)}</span>`
+            :`<span class="s none">${(f&F_SES1)&&(f&F_DM0)?"Prolegomena":(f&F_DM0)?"anexo":"— sin orador —"}</span>`)
+        +`<span class="b${(f&F_DM0)?" no":""}">${(f&F_DM0)?"dm 0":"dm 1"}</span></div>`;
+    }
+    rowsEl.innerHTML=h;
+  } while(repintar);
+  pintando=false;
+}
+scroll.addEventListener("scroll",()=>requestAnimationFrame(pintar));
+rowsEl.addEventListener("click",e=>{
+  const r=e.target.closest(".row"); if(r) mostrar(+r.dataset.n);
+});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ── panel de detalle ──────────────────────────────────────────────────────── */
+// Señales de que algo se torció ANTES o DENTRO de diaries-matrix. Son pistas
+// para mirar, no juicios. Cada patrón viene de un defecto real del pipeline.
+// Se evalúan sobre el texto CRUDO (nunca sobre HTML escapado) y el marcado se
+// construye por RANGOS en una sola pasada: ni cuantificadores contando
+// entidades, ni <mark> anidados.
+const SENAL=[
+  [/---\s*PAGE\s*\d+\s*---/g,      "mobiliario de página sin limpiar",  true],
+  [/Ã[©¡³±ºa-z]|â€|Â[º°]/g,        "mojibake de codificación",          true],
+  [/\w-\s*\n\s*\w/g,               "guion de corte sin recomponer",     false],
+  // familia AR: honorífico (o degradado) + [rol minúscula o partícula] + apellido con posible
+  // basura OCR + terminador punto O COMA + guion (también corrupto aislado). Las clases coma /
+  // «Sr. diputado X» / «Ibáñe¿» las destapó el investigador leyendo registros (2026-08-30).
+  [/(?:^|\n)\s*(?:Sr|Sra|Srta|Sí|Si|St)[.,]\s+(?:(?:diputad[oa]|senador[a]?|elector[a]?|de|del|la|von|van|der)\s+){0,2}[A-ZÁÉÍÓÚÜÑ][\wÁÉÍÓÚÜÑáéíóúüñ'’\-¿¡~¬^| ]{1,60}?(?:\s*[({[][^)}\]\n]{2,40}[)}\]])?[.,]\s*(?:[-–—]|(?<=\s)[_~·](?=\s))/g,
+                                    "marcador de orador incrustado (inicio de línea)", true],
+  [/[.!?»")]\s+(?:Sr|Sra|Srta)[.,]\s+(?:(?:diputad[oa]|senador[a]?|elector[a]?)\s+)?[A-ZÁÉÍÓÚÜÑ][\wÁÉÍÓÚÜÑáéíóúüñ'’\- ]{1,60}?[.,]\s*[-–—]\s*[A-ZÁÉÍÓÚÜÑ¿¡]/g,
+                                    "marcador incrustado a mitad de línea", true],
+  [/(?:^|\n)\s*(?:(?![a-záéíóúüñ])[^\s\n]{1,4}[ \t]+){0,2}(?:President[ea]|Vicepresident[ea]|Secretari[oa]|Prosecretari[oa])\s*[({[]?[^)}\]\n]{2,40}[)}\]][.,]?\s*[-–—]/g,
+                                    "rol de mesa incrustado",            true],
+  // genérico multi-país: NOMBRE EN VERSALES + dos puntos + mayúscula, a media fila
+  [/\n\s*[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ .'’-]{2,40}:\s+[A-ZÁÉÍÓÚÑ¿¡]/g,
+                                    "posible marcador versal incrustado", false],
+  // familia CL: «El señor APELLIDO (rol).-» — también con honorífico DEGRADADO
+  // («La señorá MATTHEI.-», hallado por el investigador 2026-08-30) — incrustado tras texto
+  [/[^\n]\s(?:El|La)\s+\S{4,9}\s+[A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ\-' ]{1,38}(?:\s*\([^)\n]{0,40}\))?\s*[.,]?[-–—](?=\s)/g,
+                                    "posible marcador CL incrustado", false],
+  // separador de anexo en línea propia dentro de un texto: si la fila es dm=1,
+  // hay material documental sin declarar (en las dm=0 es su razón de ser y se omite)
+  [/(?:^|\n)[ \t]*(?:ANEXO|ANExo|AP[ÉE]NDICE|INSERCIONES)\b[^\n]{0,60}(?=\n|$)/g,
+                                    "separador de ANEXO dentro del texto", false, "soloDm1"],
+  [/^[a-záéíóúñ]/,                 "empieza en minúscula: ¿turno cortado?", false],
+];
+function claseDe(n,t){
+  const f=flag[n];
+  if((f&F_SES1)&&(f&F_SINSP)&&(f&F_DM0)) return ["Prolegomena (carátula del acta)","cls"];
+  if((f&F_DM0)&&(f&F_SINSP)){
+    // en los corpus NARRATIVOS (DO) la clase dominante dm=0 sin orador es la narración
+    // del taquígrafo que INTRODUCE el turno siguiente — llamarla «anexo» era falso
+    // (lo señaló el investigador, 2026-08-30, fila 561 de DO)
+    const s=(t||"").trimEnd();
+    if(/[:：]\s*["“”]?$/.test(s)) return ["Narración del acta — introduce el turno siguiente (dm=0)","cls"];
+    return ["No-discurso declarado (dm=0, sin orador): narración · resultado · anexo","cls"];
+  }
+  if((f&F_DM0)) return ["dm=0 con orador (post-separador)","cls"];
+  if(f&F_SINSP) return ["⚠ dm=1 SIN orador — no debería existir","bad"];
+  return null;
+}
+/* señala el texto crudo: devuelve {rangos:[[a,z,grave]], avisos:[[nombre,grave]]} */
+function señalar(t, n){
+  const cls=claseDe(n,t), rangos=[], avisos=new Map();
+  for(const [rx,nom,grave,cond] of SENAL){
+    if(cond==="soloDm1" && (flag[n]&F_DM0)) continue;
+    if(!rx.global){ if(rx.test(t)) avisos.set(nom,grave); continue; }
+    let hay=false, m;
+    const re=new RegExp(rx.source, rx.flags);
+    while((m=re.exec(t))){
+      hay=true;
+      rangos.push([m.index, m.index+m[0].length, grave]);
+      if(m.index===re.lastIndex) re.lastIndex++;
+    }
+    if(hay){
+      if(nom.includes("incrustado") && cls && cls[0].startsWith("Prolegomena"))
+        avisos.set("marcador dentro del Prolegomena: corte tardío", true);
+      else avisos.set(nom, grave);
+    }
+  }
+  // fusión de rangos solapados (conserva la gravedad mayor)
+  rangos.sort((a,b)=>a[0]-b[0]);
+  const fus=[];
+  for(const r of rangos){
+    const u=fus[fus.length-1];
+    if(u && r[0]<u[1]){ u[1]=Math.max(u[1],r[1]); u[2]=u[2]||r[2]; }
+    else fus.push([...r]);
+  }
+  return {rangos:fus, avisos:[...avisos.entries()]};
+}
+async function mostrar(n){
+  sel=n; selPos=view.indexOf(n); pintar();
+  const o=await leer(n);
+  if(sel!==n) return;                    // otro clic ganó mientras se leía el registro
+  const orden=["session_id","legislature","session_number","session_type","date","president",
+               "speaker_raw","party_raw","dm_speech"];
+  let meta=`<dt>fila · orden</dt><dd>${(n+1).toLocaleString("es")} · sesión ${esc(sesiones[sesDe[n]]?.id||"?")} #${ordEn[n]}</dd>`;
+  for(const c of orden.filter(c=>cols.includes(c)).concat(cols.filter(c=>c!=="text"&&!orden.includes(c)))){
+    const v=o[c]??"";
+    meta+=`<dt>${esc(c)}</dt><dd class="${v?"":"empty"}">${v?esc(v):"vacío"}</dd>`;
+  }
+  const t=o.text||"";
+  const cls=claseDe(n,t);
+  const {rangos,avisos}=señalar(t,n);
+  // render por rangos: se escapa cada segmento por separado, nada se anida
+  let html="", cur=0;
+  for(const [a,z,grave] of rangos){
+    html+=esc(t.slice(cur,a))+`<mark class="${grave?"bad":""}">${esc(t.slice(a,z))}</mark>`;
+    cur=z;
+  }
+  html+=esc(t.slice(cur));
+  const lineas=t?t.split("\n").length:0;
+  if(!t) avisos.push(["texto VACÍO",true]);
+  else if(t.length<25 && !(flag[n]&F_DM0)) avisos.push(["texto muy corto",false]);
+  const chips=(cls?`<span class="flag ${cls[1]}">${esc(cls[0])}</span>`:"")
+    +(avisos.map(([a,g])=>`<span class="flag ${g?"bad":""}">${esc(a)}</span>`).join("")
+      || `<span class="flag ok">sin señales</span>`);
+  $("#right").innerHTML=
+     `<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">`
+    +`<strong>Fila ${(n+1).toLocaleString("es")}</strong>`
+    +`<span style="color:var(--dim);font-size:12.5px">${t.length.toLocaleString("es")} caracteres · ${lineas} líneas</span>`
+    +`<button id="mk">${marked.has(n)?"Desmarcar":"Marcar"}</button></div>`
+    +`<dl id="meta">${meta}</dl><div id="flags">${chips}</div>`
+    +`<div id="text">${html||"<em style='color:var(--bad)'>sin texto</em>"}</div>`;
+  $("#mk").onclick=()=>{marked.has(n)?marked.delete(n):marked.add(n);mostrar(n);};
+}
+
+/* ── controles ─────────────────────────────────────────────────────────────── */
+$("#file").onchange=e=>{ if(e.target.files[0]) indexar(e.target.files[0]); };
+function botonFiltro(f){
+  document.querySelectorAll("#filters button").forEach(x=>x.classList.toggle("on",x.dataset.f===f));
+}
+document.querySelectorAll("#filters button").forEach(b=>b.onclick=()=>{
+  botonFiltro(b.dataset.f); filt=b.dataset.f; scroll.scrollTop=0; aplicarFiltro();
+});
+$("#rnd").onclick=()=>{ if(!view.length)return;
+  const i=Math.floor(Math.random()*view.length);
+  scroll.scrollTop=topDesde(i); mostrar(view[i]); };
+$("#jump").onchange=e=>{ const n=+e.target.value-1;
+  if(n>=0&&n<nrec){ irA(n); } };
+/* muestra la fila n aunque el filtro actual no la liste: sitúa la lista en la
+   posición más cercana y deja `selPos` como punto de partida para j/k */
+function irA(n){
+  let i=view.indexOf(n);
+  if(i<0){
+    // posición virtual: primera entrada de view >= n (view está ordenada)
+    let lo=0, hi=view.length;
+    while(lo<hi){ const m=(lo+hi)>>1; view[m]<n ? lo=m+1 : hi=m; }
+    i=Math.min(lo, view.length-1);
+  }
+  if(view.length) scroll.scrollTop=topDesde(Math.max(0,i-3));
+  mostrar(n);
+  selPos = view.indexOf(n)>=0 ? view.indexOf(n) : i;
+}
+function sesionDelta(d){
+  if(sel<0||!sesiones.length) return;
+  const s=Math.min(Math.max(sesDe[sel]+d,0),sesiones.length-1);
+  irA(sesiones[s].fila0);
+}
+$("#sprev").onclick=()=>sesionDelta(-1);
+$("#snext").onclick=()=>sesionDelta(1);
+$("#sid").onchange=e=>{
+  const v=e.target.value.trim();
+  const s=sesiones.find(x=>x.id===v)||sesiones.find(x=>x.id.includes(v));
+  if(s) irA(s.fila0);
+};
+$("#go").onclick=buscar;
+$("#q").addEventListener("keydown",e=>{ if(e.key==="Enter") buscar(); });
+
+/* Busca en orador, session_id, presidente y fecha recorriendo el archivo otra
+   vez: no hay índice de texto en memoria, y a cambio la búsqueda no cuesta RAM. */
+async function buscar(){
+  const q=$("#q").value.trim().toLowerCase();
+  if(!q||!file){ filt="all"; botonFiltro("all"); aplicarFiltro(); return; }
+  const g=++gen;                         // una búsqueda nueva (o un CSV nuevo) invalida esta
+  bar.style.display="block"; const hall=[];
+  for(let n=0;n<nrec;n+=2000){
+    const z=Math.min(n+2000,nrec);
+    for(let k=n;k<z;k++){
+      // 2 KB de prefijo: los 8 campos previos al text caben holgados (presidencias múltiples incluidas)
+      const s=off[k], e=Math.min((k+1<nrec? off[k+1]:file.size), s+2048);
+      const c=parseRec(DEC.decode(new Uint8Array(await file.slice(s,e).arrayBuffer())));
+      if(g!==gen){ bar.style.display="none"; return; }
+      const gc=j=>{const i=cols.indexOf(j); return i>=0?(c[i]||""):"";};
+      const sr=[gc("speaker_raw"),gc("session_id"),gc("president"),gc("date")].join(" ");
+      if(sr.toLowerCase().includes(q)) hall.push(k);
+    }
+    barIn.style.width=(100*z/nrec).toFixed(1)+"%";
+    if(n%20000===0) await new Promise(r=>setTimeout(r));
+  }
+  bar.style.display="none";
+  filt="search"; botonFiltro("");        // ningún botón de filtro queda encendido
+  view=hall; selPos=view.indexOf(sel); ajustaAlto(); scroll.scrollTop=0; pintar();
+  $("#stats").textContent=`${hall.length.toLocaleString("es")} coincidencias de «${q}» · `
+    +`(el botón «Todas» restaura)`;
+}
+
+$("#expo").onclick=()=>{
+  if(!marked.size) return alert("No hay registros marcados.");
+  const ns=[...marked].sort((a,b)=>a-b);
+  Promise.all(ns.map(leer)).then(rs=>{
+    const cs=["_fila","_orden_en_sesion",...cols.filter(c=>c!=="text"),"_text_inicio"];
+    const csv=[cs.join(",")].concat(rs.map((o,i)=>
+      cs.map(c=>{
+        if(c==="_fila") return ns[i]+1;
+        if(c==="_orden_en_sesion") return ordEn[ns[i]];
+        if(c==="_text_inicio") return `"${String(o.text??"").slice(0,160).replace(/"/g,'""')}"`;
+        return `"${String(o[c]??"").replace(/"/g,'""')}"`;
+      }).join(","))).join("\n");
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+    a.download=(file?file.name.replace(/\.csv$/,""):"matrix")+"_marcados.csv"; a.click();
+  });
+};
+
+addEventListener("keydown",e=>{
+  if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  const i = selPos>=0 ? selPos : view.indexOf(sel);
+  if(e.key==="j"||e.key==="ArrowDown"){ e.preventDefault();
+    if(i+1<view.length){ mostrar(view[i+1]);
+      if(idxDesde(scroll.scrollTop)+Math.ceil(scroll.clientHeight/RH)-2 <= i+1)
+        scroll.scrollTop=topDesde(Math.max(0,i+2-Math.ceil(scroll.clientHeight/RH)+2)); } }
+  if(e.key==="k"||e.key==="ArrowUp"){ e.preventDefault();
+    if(i>0){ mostrar(view[i-1]);
+      if(idxDesde(scroll.scrollTop) >= i-1) scroll.scrollTop=topDesde(Math.max(0,i-2)); } }
+  if(e.key==="m"&&sel>=0){ marked.has(sel)?marked.delete(sel):marked.add(sel); mostrar(sel); }
+  if(e.key==="[") sesionDelta(-1);
+  if(e.key==="]") sesionDelta(1);
+});
+</script>
+</body>
+</html>
