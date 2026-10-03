@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.1 · sin publicar
+## 0.2.1 · 2026-10-03
 
 - Todas las herramientas de análisis devuelven el DOI y la edición de los conjuntos que usaron
   (antes, solo `ngram_viewer`, `term_counter` y `share_of_voice`).
