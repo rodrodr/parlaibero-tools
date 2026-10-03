@@ -155,8 +155,9 @@
     <li><a href="#ocr">ocr<span class="lvl ses">sesión</span></a></li>
     <li><a href="#extract">extract<span class="lvl ses">sesión</span></a></li>
     <li><a href="#correct">correct<span class="lvl ses">sesión</span></a></li>
-    <li><a href="#tag">tag ⚠<span class="lvl ses">sesión</span></a></li>
     <li><a href="#meta">meta<span class="lvl ses">sesión</span></a></li>
+    <li><a href="#dedupe">dedupe<span class="lvl pais">país</span></a></li>
+    <li><a href="#tag">tag ⚠<span class="lvl ses">sesión</span></a></li>
     <li><a href="#matrix">matrix<span class="lvl ses">sesión</span></a></li>
     <li><a href="#deputies">deputies<span class="lvl pais">país</span></a></li>
     <li><a href="#match">match<span class="lvl pais">país</span></a></li>
@@ -241,33 +242,39 @@
         <div class="pbody"><span class="nm">diaries-ocr</span> — OCR Ollama. <span class="pbranch">SKIP si pdf_digital / html</span>
         <div><span class="art">source/{iso2}/ocr/{id}/page_*.txt</span></div></div></div>
       <div class="pstage"><div class="prail"><div class="pdot">2</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-extract</span> — texto limpio + <b>quita cabeceros/pies</b> (page-aware o texto plano).
-        <div><span class="art">source/{iso2}/extracted/{id}.txt</span></div></div></div>
+        <div class="pbody"><span class="nm">diaries-extract</span> — consolida el raw en texto <b>FIEL</b> con marcadores <code>---PAGE N---</code>. <b>NO limpia</b>: toda la limpieza es de correct. <span class="pbranch">XML de CL: parse_cl_xml.py → matriz por turno, entra directo al nivel de matrix</span>
+        <div><span class="art">source/{iso2}/extracted/{id}.txt (capa fiel)</span></div></div></div>
       <div class="pstage"><div class="prail"><div class="pdot">3</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-correct</span> — párrafos + hifenación + normalización por país.
+        <div class="pbody"><span class="nm">diaries-correct</span> — el ÚNICO limpiador: 5 pasos en orden fijo + bucle de residuo + deshifenización de 2ª pasada.
         <div><span class="art">source/{iso2}/corrected/{id}.txt</span></div></div></div>
       <div class="pstage"><div class="prail"><div class="pdot">4</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-tag</span> ⚠ — etiqueta oradores (2 niveles). <span class="pbranch">+ diaries-meta en paralelo →</span>
-        <div><span class="art">source/{iso2}/tagged/{id}.txt</span></div></div></div>
-      <div class="pstage"><div class="prail"><div class="pdot">5</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-meta</span> — fecha, nº, tipo, legislatura, presidente.
+        <div class="pbody"><span class="nm">diaries-meta</span> — fecha, nº, tipo, legislatura y la PRESIDENCIA por TRAMOS. <span class="pbranch">lee extracted/ — la capa FIEL</span>
         <div><span class="art">source/{iso2}/meta/{id}.json</span></div></div></div>
-      <div class="pstage"><div class="prail"><div class="pdot">6</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-matrix</span> — parse <code>&lt;int&gt;</code> → filas CSV (acumulativo).
-        <div><span class="art">source/{iso2}/matrix/interventions_raw.csv</span></div></div></div>
-      <div class="pstage"><div class="prail"><div class="pdot pais">7</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-deputies</span> — BD de diputados + deduplicación.
+      <div class="pstage"><div class="prail"><div class="pdot pais">5</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-dedupe</span> — duplicados en dos clases: (A) misma sesión bajo &gt;1 session_id (boletín + fecha real) · (B) filas dobladas por ingesta multi-track. <span class="pbranch">⚠ ANTES de tag</span>
+        <div><span class="art">source/{iso2}/_quarantine_duplicates/</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot pais">5b</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-deputies</span> <span class="pbranch">opcional aquí</span> — si las actas traen pase de lista nominal, el padrón sale de <code>corrected/</code> y se pasa a tag con <code>--deputies</code>.
         <div><span class="art">source/{iso2}/deputies/deputies.csv</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot">6</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-tag</span> ⚠ — etiqueta oradores (2 niveles · 5 clases de marcador) sobre corpus ya deduplicado.
+        <div><span class="art">source/{iso2}/tagged/{id}.txt</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot">7</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-matrix</span> — parse <code>&lt;int&gt;</code> → filas CSV (acumulativo). <span class="pbranch">gate incrustados ≤0,1% · Prolegomena orden 0 · ANEXOS → dm_speech=0</span>
+        <div><span class="art">source/{iso2}/matrix/interventions_raw.csv</span></div></div></div>
       <div class="pstage"><div class="prail"><div class="pdot pais">8</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-match</span> — speaker_raw → id_dep (exact→fuzzy→struct→LLM).
-        <div><span class="art">source/{iso2}/match/matching_table.csv</span></div></div></div>
+        <div class="pbody"><span class="nm">diaries-deputies</span> — BD de diputados + deduplicación + padrón publicable.
+        <div><span class="art">source/{iso2}/deputies/deputies.csv · standardize/{ISO2}_deputies.csv</span></div></div></div>
       <div class="pstage"><div class="prail"><div class="pdot pais">9</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-merge</span> — join pandas de las 3 tablas.
-        <div><span class="art">source/{iso2}/merge/interventions_enriched.csv</span></div></div></div>
+        <div class="pbody"><span class="nm">diaries-match</span> — speaker_raw → id_dep (exact→fuzzy→struct→LLM). <span class="pbranch">tabla CONGELADA (106.938 decisiones · 13 países) reimpuesta al final</span>
+        <div><span class="art">source/{iso2}/match/matching_table.csv</span></div></div></div>
       <div class="pstage"><div class="prail"><div class="pdot pais">10</div><div class="pline"></div></div>
-        <div class="pbody"><span class="nm">diaries-standardize</span> — esquema canónico. <span class="pbranch">guardia --force</span>
+        <div class="pbody"><span class="nm">diaries-merge</span> — join period-aware de las 3 tablas. <span class="pbranch">3-bis: presidencia por TRAMO · 3-ter: gate de integridad referencial matriz ↔ padrón</span>
+        <div><span class="art">source/{iso2}/merge/interventions_enriched.csv</span></div></div></div>
+      <div class="pstage"><div class="prail"><div class="pdot pais">11</div><div class="pline"></div></div>
+        <div class="pbody"><span class="nm">diaries-standardize</span> — esquema canónico (16 columnas). <span class="pbranch">guardia --force · 4-ter: desdoblar Prolegomena → asignar_ids → verificar VALORES</span>
         <div><span class="art">source/{iso2}/standardize/{ISO2}_interventions.csv ⚠ canónico</span></div></div></div>
-      <div class="pstage"><div class="prail"><div class="pdot pais">11</div></div>
+      <div class="pstage"><div class="prail"><div class="pdot pais">12</div></div>
         <div class="pbody"><span class="nm">diaries-document</span> — README, diccionario, JSON-LD.
         <div><span class="art">docs/{iso2}/README.md · data_dictionary.md · dataset.jsonld</span></div></div></div>
     </div>
@@ -371,72 +378,222 @@ páginas en low_confidence_pages &lt; 0.50 → advertencia en el resumen</div>
     <!-- EXTRACT -->
     <details class="skill" id="extract" open>
       <summary><span class="snum">2</span>
-        <span><span class="sname">diaries-extract</span><br><span class="stitle">Texto limpio + eliminación de cabeceros/pies recurrentes</span></span>
+        <span><span class="sname">diaries-extract</span><br><span class="stitle">Consolida el raw en texto FIEL con marcadores de página — NO limpia (la limpieza entera es de diaries-correct)</span></span>
         <span class="sbadges"><span class="badge">nivel sesión</span><span class="badge thr">0.85 / 0.65</span></span></summary>
       <div class="sbody">
         <div class="block"><div class="lab">Paso 3b/3c · Mapeo source_format → modo de extracción</div>
           <div class="branches">
             <div class="br"><span class="cond">pdf_digital</span><span class="arr">→</span><span class="res"><code>pdf_digital</code> — páginas vía fitz (paginado)</span></div>
             <div class="br"><span class="cond">pdf_image / pdf_poor_ocr</span><span class="arr">→</span><span class="res"><code>ocr_pages</code> — lee los <code>page_*.txt</code> ya producidos · <b>NO reprocesa OCR</b></span></div>
-            <div class="br"><span class="cond">html</span><span class="arr">→</span><span class="res"><code>html</code> — 1 «página», sin strip</span></div>
-            <div class="br"><span class="cond">text_flat</span><span class="arr">→</span><span class="res"><code>text_flat</code> — texto ya extraído sin paginar</span></div>
+            <div class="br"><span class="cond">html / docx</span><span class="arr">→</span><span class="res"><code>html</code> / <code>docx</code> — con sus trampas de encoding (charset declarado, mojibake por archivo)</span></div>
+            <div class="br"><span class="cond">xml (CL)</span><span class="arr">→</span><span class="res">NO pasa por <code>extract_text.py</code>: <code>parse_cl_xml.py</code> — el XML ya viene TAGGED y MATCHED (id oficial de la Cámara como id_dep) → matriz por TURNO directa; esas sesiones entran al pipeline en el nivel de <b>matrix</b> (PT exigirá parser propio, esquema distinto)</span></div>
+            <div class="br"><span class="cond">doc (CL)</span><span class="arr">→</span><span class="res"><code>textutil -convert txt</code> → tratar como <code>text_flat</code></span></div>
+            <div class="br"><span class="cond">text_flat</span><span class="arr">→</span><span class="res"><code>text_flat</code> — texto ya extraído; con <code>page_break_marker</code> segmenta por esa marca</span></div>
           </div>
         </div>
-        <div class="block"><div class="lab">Eliminación de cabeceros/pies (page-aware o texto plano)</div>
+        <div class="block"><div class="lab">La capa FIEL — conserva la frontera de página y NO se limpia nunca</div>
           <div class="branches">
-            <div class="br"><span class="cond">paginado (PDF / page_*.txt)</span><span class="arr">→</span><span class="res">detector por recurrencia en zona-borde de cada página (cluster difuso + ancla de pie)</span></div>
-            <div class="br"><span class="cond">text_flat + page_break_marker</span><span class="arr">→</span><span class="res">segmenta por marcador y usa el detector paginado</span></div>
-            <div class="br"><span class="cond">text_flat sin marcador</span><span class="arr">→</span><span class="res">modo <b>frecuencia</b>: excluye turnos de orador y prosa en caja de oración</span></div>
+            <div class="br"><span class="cond">---PAGE N--- en línea propia</span><span class="arr">→</span><span class="res">se CONSERVA (<code>extract.emit_page_marker</code>, default true): es el ANCLA con la que <code>correct</code> quita el mobiliario</span></div>
+            <div class="br"><span class="cond">cabeceros / mobiliario / hifenación</span><span class="arr">→</span><span class="res"><b>NO se tocan aquí</b> — <code>--strip-headers</code> queda como legado opt-in, fuera del flujo canónico</span></div>
+            <div class="br"><span class="cond">extracted/ como punto de retorno</span><span class="arr">→</span><span class="res">cambiar una regla de limpieza NO obliga a volver a los binarios: se re-corre <code>correct</code> sobre <code>extracted/</code>; y <code>meta</code> lo consulta ÍNTEGRO (el cabecero por página trae los metadatos)</span></div>
           </div>
         </div>
-        <div class="block"><div class="lab">Paso 3e/3f · Confianza, integridad y estado</div>
+        <div class="block"><div class="lab">Paso 3e–3h · GATES de calidad (miden, NO limpian) → confianza y estado</div>
           <div class="formula">confidence = valid_ratio
-si chars(salida) &lt; 500            → confidence = min(confidence, 0.60)
-si pdf_poor_ocr y garble_ratio&gt;0.50 → confidence = min(confidence, 0.55)  (prefijo de orador corrupto)
-si header_suspect_count &gt; 0        → FLAG  (posible falso positivo del stripper)
-si header_removal_ratio &gt; 0.25     → FLAG  (posible sobre-detección)</div>
+si chars(salida) &lt; 500              → confidence = min(confidence, 0.60)
+GATE 3f fragmentación: línea mediana &lt; 25 car o cortes con guion &gt; 2%
+    → probar otro modo de extracción; si persiste, bajar confianza
+GATE 3g (escaneadas): garble_ratio &gt; 0.50 en el prefijo de orador
+    → confidence = min(confidence, 0.55) → HALT (re-OCR obligatorio)
+(sin lógica de cabeceros: en esta etapa no se limpia nada)</div>
           <div class="statusmap" style="margin-top:8px">
             <div class="smap auto"><b>AUTO</b>≥ 0.85 y sin alertas</div>
-            <div class="smap flag"><b>FLAG</b>0.65–0.85 · o alerta de cabeceros</div>
+            <div class="smap flag"><b>FLAG</b>0.65–0.85 · o fragmentación persistente</div>
             <div class="smap halt"><b>HALT</b>&lt; 0.65 · prefijo OCR corrupto</div>
           </div>
+          <div class="note">Gate de salida del batch: &gt; 2% de archivos con &lt; 200 bytes → PARA e investiga el formato. Trampas por origen: charset DECLARADO del HTML, elementos void, el <code>&lt;p&gt;</code> VACÍO como frontera de párrafo, mojibake 2× (PT) y DOCX heterogéneo por archivo.</div>
         </div>
-        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/extracted/{id}.txt</span></div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/extracted/{id}.txt — capa FIEL con ---PAGE N--- (no se limpia NUNCA)</span></div>
       </div>
     </details>
 
     <!-- CORRECT -->
     <details class="skill" id="correct" open>
       <summary><span class="snum">3</span>
-        <span><span class="sname">diaries-correct</span><br><span class="stitle">Corrección tipográfica: párrafos, hifenación, normalización por país</span></span>
+        <span><span class="sname">diaries-correct</span><br><span class="stitle">El ÚNICO limpiador: secuencia de 5 pasos + bucle de residuo + deshifenización de 2ª pasada</span></span>
         <span class="sbadges"><span class="badge">nivel sesión</span><span class="badge thr">0.85 / 0.65</span></span></summary>
       <div class="sbody">
-        <div class="block"><div class="lab">Paso 2c/2d · Pase determinista + resolución LLM</div>
-          <div class="fnode proc"><code>correct_text.py</code>: aplica <code>normalize_replacements</code> (regex por país), une guiones de fin de línea, fusiona líneas cortas. Devuelve <code>ambiguous_breaks</code>.</div>
+        <div class="note crit"><b>Rediseño 2026-08: <code>correct</code> es el ÚNICO limpiador.</b> <code>extract</code> entrega
+        <code>extracted/</code> fiel y SIN limpiar (con los <code>---PAGE N---</code> conservados); TODA la eliminación de
+        cabeceros, folios, mobiliario e hifenización ocurre aquí, una sola vez. Tres partes: <b>Paso 0b</b> DESCUBRIR el
+        mobiliario del país (por frecuencia, por década → <code>country_config</code>) → <b>Paso 2</b> APLICAR →
+        <b>Paso 2-R</b> VERIFICAR EL RESIDUO en bucle.</div>
+        <div class="block"><div class="lab">Secuencia canónica de limpieza — 5 pasos, orden obligatorio</div>
           <div class="branches">
-            <div class="br"><span class="cond">ambiguous_breaks vacío</span><span class="arr">→</span><span class="res">salta el pase LLM</span></div>
+            <div class="br"><span class="cond">1 · identificar el separador de página</span><span class="arr">→</span><span class="res"><code>---PAGE N---</code> (o el del país): el ANCLA de todo lo demás</span></div>
+            <div class="br"><span class="cond">2 · eliminar el mobiliario</span><span class="arr">→</span><span class="res">anclado al separador — CINCO clases: <code>furniture_block/line/masthead/prefix/inline</code>; masthead con keep-first; NUNCA borrar Prolegomena</span></div>
+            <div class="br"><span class="cond">3 · eliminar el separador</span><span class="arr">→</span><span class="res">solo AHORA, ya vacío de mobiliario (quitarlo antes deja el mobiliario huérfano)</span></div>
+            <div class="br"><span class="cond">4 · aislar los marcadores de orador</span><span class="arr">→</span><span class="res">línea en blanco delante de cada <code>speaker_tag_patterns</code>: frontera dura que el paso 5 no cruza</span></div>
+            <div class="br"><span class="cond">5 · restaurar la fluidez</span><span class="arr">→</span><span class="res">deshifenizar y unir las líneas de caja DENTRO de cada turno, sin cruzar los marcadores del paso 4</span></div>
+          </div>
+          <div class="note">El separador, el mobiliario y el marcador son DE CADA PAÍS: se DESCUBREN leyendo su texto (y por década), se GUARDAN en su <code>country_config</code> y se VERIFICAN antes de promover. Nunca en bloque, nunca adivinando ni reusando los de otro país.</div>
+        </div>
+        <div class="block"><div class="lab">Paso 2c/2d · Pase determinista + resolución LLM de saltos ambiguos</div>
+          <div class="fnode proc"><code>correct_text.py --config</code>: corre los 5 pasos con el vocabulario del país; protege los marcadores en el merge y los reensambla (<code>marker_reassembly</code> · <code>marker_join_next</code> con condición de CIERRE — patrones SIMÉTRICOS en género). Devuelve <code>furniture_removed</code>, <code>marker_joins</code> y <code>ambiguous_breaks</code>.</div>
+          <div class="branches">
             <div class="br"><span class="cond">salto = artefacto (corte de columna/justificación)</span><span class="arr">→</span><span class="res">une las dos partes con Edit</span></div>
             <div class="br"><span class="cond">salto = párrafo real (fin de oración + mayúscula)</span><span class="arr">→</span><span class="res">no toca nada</span></div>
+            <div class="br"><span class="cond">batch --all masivo</span><span class="arr">→</span><span class="res">NO se resuelven uno a uno (son mayormente legítimos): pase determinista + confianza por integridad</span></div>
           </div>
         </div>
-        <div class="block"><div class="lab">Paso 2e · Confianza</div>
-          <div class="formula">ratio_ambiguous = n_ambiguous / total_paragraphs
-ratio &lt; 0.05 → 0.95     ratio &lt; 0.10 → 0.88
-ratio &lt; 0.20 → 0.78     ratio ≥ 0.20 → 0.65
-(si corregiste &gt;15% de párrafos como artefactos → −0.05)</div>
+        <div class="block"><div class="lab">Gates 2d-bis / 2d-ter · el marcador ni PARTIDO ni ENTERRADO</div>
+          <div class="branches">
+            <div class="br"><span class="cond">residuo de marcadores partidos ≠ ~0</span><span class="arr">→</span><span class="res"><b>no avanzar a tag</b>: añadir el patrón a <code>marker_join_next</code> y re-correr (PY: saltárselo costó ~100.000 turnos, el 25% del corpus)</span></div>
+            <div class="br"><span class="cond">caída de marcadores &gt; 2% por sesión (extracted vs corrected)</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span> la sesión: el acumulador ENTERRÓ marcadores (BR −28%); el −N ES la señal — verificar con patrones vacíos es ciego</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 2-R · Bucle de residuo de mobiliario (supervisado)</div>
+          <div class="formula">descubrir → aplicar → verificar residuo → refinar … hasta ~0
+DOS detectores: (1) limpiar_mobiliario --medir (patrones conocidos)
+                (2) INDEPENDIENTE por frecuencia: líneas idénticas que
+                    recurren en &gt;20% de sesiones y no cierran frase
+                    — no comparte léxico con el config
+⚠ un 0 limpio es SOSPECHOSO hasta explicarlo (corpus aplanado no se ve)</div>
+        </div>
+        <div class="block"><div class="lab">Paso 2-quater · Deshifenización de 2ª pasada sobre corrected/ completo</div>
+          <div class="fnode proc"><code>deshifenizar.py --textdir</code> — léxico del PROPIO corpus, no un diccionario externo: une el guion+salto residual y el guion+ESPACIO (~209 k solo en ES). La variante espacio exige evidencia positiva del léxico y CONSERVA lo ambiguo. Primero <code>--medir</code>, luego aplicar.</div>
+        </div>
+        <div class="block"><div class="lab">Paso 2e · Confianza — por INTEGRIDAD, no por ratio de ambiguos</div>
+          <div class="formula">⚠ NO usar ratio_ambiguous como proxy: es alto POR GÉNERO del texto
+   (orden del día, listas, marcadores) → FLAG masivo falso
+si out_chars ≥ 0.80·in_chars  y  total_paragraphs &gt; 0  y  out_chars &gt; 300
+    → confidence = 0.95 → complete
+si no (pérdida de contenido / salida vacía o minúscula)
+    → confidence = 0.60 → flag</div>
         </div>
         <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/corrected/{id}.txt</span></div>
       </div>
     </details>
 
+    <!-- META -->
+    <details class="skill" id="meta" open>
+      <summary><span class="snum">4</span>
+        <span><span class="sname">diaries-meta</span><br><span class="stitle">Metadatos: fecha, nº de sesión, tipo, legislatura y la PRESIDENCIA por TRAMOS</span></span>
+        <span class="sbadges"><span class="badge thr">0.85 / 0.65</span></span></summary>
+      <div class="sbody">
+        <div class="note"><b>Posición: justo después de <code>diaries-correct</code>, antes de <code>diaries-tag</code>.</b>
+        Su insumo es <code>extracted/{id}.txt</code> — <b>la capa FIEL</b>: los metadatos de sesión viven a menudo en el
+        cabecero de cada página, que <code>diaries-correct</code> elimina; <code>corrected/</code> queda solo como respaldo
+        por sesión concreta. Ejecutarlo aquí es lo que permite que <code>diaries-dedupe</code>
+        elimine los escaneos duplicados antes de la fase de etiquetado. Además, la <b>presidencia por TRAMOS</b> que extrae
+        (<code>presidency.segments</code>) es el insumo del <b>Paso 3-bis de <code>diaries-merge</code></b>, que atribuye los roles de mesa sin nombre.</div>
+        <div class="note crit">⚠ Paso 0 obligatorio: usar la heurística registrada del país (<code>meta_patterns</code>) o
+        <b>DESCUBRIRLA</b> — muestra de 40 documentos repartidos por TODO el período, validada con cuatro señales (resuelve
+        contra el padrón · contigüidad temporal · cardinalidad · reparto por género). Los regex se anclan a la <b>fórmula de
+        cabecera</b> de la sesión (no a la 1ª fecha del texto, que suele ser un acta/decreto citado). El parser de meses debe
+        cubrir variantes locales (<code>setiembre</code>) y el ordinal de día (<code>1º</code>).</div>
+        <div class="block"><div class="lab">Paso 0c-bis · Presidencia por TRAMOS — no un único presidente</div>
+          <div class="note crit">⚠ «Un presidente por sesión» falla el <b>35,0%</b> de los casos (medido): la presidencia cambia
+          de manos DENTRO de la sesión. Meta registra la SECUENCIA de quién preside y en qué tramo
+          (<code>presidency.segments</code>), no un solo nombre; <code>president</code> (singular) se mantiene por
+          compatibilidad y se DERIVA — es la apertura, <code>segments[0].name</code>.</div>
+          <div class="branches">
+            <div class="br"><span class="cond">mesa de la carátula/Prolegomena</span><span class="arr">→</span><span class="res">presidente de APERTURA (<code>via: prolegomena</code>) + candidatos a relevo (vicepresidentes, secretarios)</span></div>
+            <div class="br"><span class="cond">relevos anunciados en el CUERPO</span><span class="arr">→</span><span class="res">patrón DESCUBIERTO por país («Ocupa la Presidencia el señor X»…) → <code>via: relevo</code></span></div>
+            <div class="br"><span class="cond">«reasume la Presidencia» sin nombre</span><span class="arr">→</span><span class="res"><code>via: back_to_base</code> — el centinela que devuelve la mesa al titular; sin registrarlo, el tramo del vice no se cierra nunca</span></div>
+            <div class="br"><span class="cond">scope del país</span><span class="arr">→</span><span class="res"><code>presidency.scope: session | segments</code> en el country_config — lo consume <code>attribute_presidency.py</code> aguas abajo</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Prioridad de fuentes de <code>date</code> (mayor → menor autoridad)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">1 · cabecero corrido (voto mayoritario)</span><span class="arr">→</span><span class="res">MÁXIMA autoridad: repetido en cada página, robusto</span></div>
+            <div class="br"><span class="cond">2 · masthead de portada</span><span class="arr">→</span><span class="res">válido solo si el cabecero lo corrobora (único punto de fallo)</span></div>
+            <div class="br"><span class="cond">3 · nombre de archivo (session_id)</span><span class="arr">→</span><span class="res">ÚLTIMO RECURSO, puede tener errores; nunca gana al cabecero</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 2d · Resolución de <code>date</code> por voto del cabecero corrido</div>
+          <div class="branches">
+            <div class="br"><span class="cond">cabecero = nombre (≥2 votos)</span><span class="arr">→</span><span class="res">el masthead era el error → <span class="out auto">AUTO</span></span></div>
+            <div class="br"><span class="cond">cabecero = nombre − 1 día</span><span class="arr">→</span><span class="res">nombre corrido +1 → adopta fecha del cabecero (date≠session_id) → <span class="out auto">AUTO</span></span></div>
+            <div class="br"><span class="cond">mismatch/fallback NO resuelto por el cabecero</span><span class="arr">→</span><span class="res">nunca AUTO → <span class="out flag">FLAG</span> (revisión)</span></div>
+            <div class="br"><span class="cond">sin fecha en cabecero, masthead ni nombre</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span></span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 2e · Confianza ponderada (5 campos × 0.20)</div>
+          <div class="formula">cada campo:  regex → 0.20   |   LLM → 0.17   |   no encontrado → 0.0
+confidence = Σ contribuciones de {date, session_number, session_type, legislature, president}
+(el override de date manda sobre el resultado del peso)</div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/meta/{id}.json</span></div>
+      </div>
+    </details>
+
+    <!-- DEDUPE -->
+    <details class="skill" id="dedupe" open>
+      <summary><span class="snum pais">5</span>
+        <span><span class="sname">diaries-dedupe</span><br><span class="stitle">Duplicados en DOS clases: (A) misma sesión bajo &gt;1 session_id · (B) filas dobladas por ingesta multi-track — <b>antes de tag</b></span></span>
+        <span class="sbadges"><span class="badge thr">boletín + fecha</span></span></summary>
+      <div class="sbody">
+        <div class="note crit"><b>Va ANTES de <code>diaries-tag</code>, no antes de <code>matrix</code></b> (corregido 2026-07-24).
+        Su único insumo es <code>meta.date</code>, y <code>diaries-meta</code> lee <code>extracted/</code> (la capa fiel): nada obliga a
+        esperar al etiquetado. Hacerlo después tiene un coste de <b>corrección</b>, no solo de tiempo — el Paso 0c de
+        <code>diaries-tag</code> rankea las formas de marcador por frecuencia sobre TODO el corpus para decidir cuáles entran
+        al léxico; con sesiones duplicadas dentro, sus formas se cuentan dos veces y esa calibración sale sesgada.
+        Deduplicar después ya no lo arregla.</div>
+        <div class="note crit">⚠ Imprescindible antes de <code>matrix</code>: sin esto, los escaneos duplicados <b>doblan el conteo</b> de intervenciones.
+        Señal fiable = nº de <b>boletín</b> + <b>fecha real</b> verificada por el día de la semana; el contenido (Jaccard) da falsos negativos por distinta calidad OCR.</div>
+        <div class="block"><div class="lab">Clase A · Decisión por grupo de sesiones (boletín + fecha real)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">mismo boletín ∧ misma fecha real</span><span class="arr">→</span><span class="res"><span class="out halt">DUPLICADO</span> → cuarentena (conserva el keeper)</span></div>
+            <div class="br"><span class="cond">mismo día, boletín distinto</span><span class="arr">→</span><span class="res">sesiones legítimas (mañana/tarde) → intactas</span></div>
+            <div class="br"><span class="cond">mismo boletín, fecha real distinta, contenido no similar</span><span class="arr">→</span><span class="res">boletín OCR mal leído → <span class="out flag">revisar</span>, no se toca</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Clase B · Paso 1-bis — filas DOBLADAS dentro de una sesión (solo ingesta multi-track)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">desplazamiento CONSTANTE de intervention_order</span><span class="arr">→</span><span class="res">detector preferente: la firma inequívoca de la ingesta doble, sin umbrales (CO 2007-05-02: pares todos a 526 de distancia)</span></div>
+            <div class="br"><span class="cond">solapamiento ≥ 70% · 25–70%</span><span class="arr">→</span><span class="res">duplicada / parcial → deduplicar <b>fila a fila</b> (conserva: con id_dep → texto más largo → track de calidad MEDIDA en ese país)</span></div>
+            <div class="br"><span class="cond">solapamiento &lt; 25%</span><span class="arr">→</span><span class="res"><b>complementaria, NO es duplicado</b> — no tocar. NUNCA descartar una copia entera (CL: ninguna contenía a la otra; la «peor» era la mejor)</span></div>
+            <div class="br"><span class="cond">siempre</span><span class="arr">→</span><span class="res">informa y pide confirmación explícita, incluso con --write/--yes; tras deduplicar, renumerar <code>intervention_order</code> (1-based y continuo)</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Cuarentena reversible + estado POR SESIÓN</div>
+          <div class="formula">Clase A: redundantes → source/{iso2}/_quarantine_duplicates/ (corrected,tagged,extracted,meta,ocr,raw)
+manifest.json: redundant → keeper   ·   restaurar = mover de vuelta   ·   idempotente
+Clase B: filas retiradas → standardize/{ISO2}_quarantine_intrasesion_dups.csv (nunca se borran)
+Estado POR SESIÓN (no _country): cada redundante → skipped · cada keeper → complete</div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/_quarantine_duplicates/ + manifest.json</span> <span class="pathline">standardize/{ISO2}_quarantine_intrasesion_dups.csv (clase B)</span></div>
+      </div>
+    </details>
+
     <!-- TAG -->
     <details class="skill" id="tag" data-crit open>
-      <summary><span class="snum">4</span>
+      <summary><span class="snum">6</span>
         <span><span class="sname">diaries-tag</span> ⚠<br><span class="stitle">Etiqueta oradores — skill crítico, dos niveles de detección</span></span>
         <span class="sbadges"><span class="badge thr">0.80 / 0.60</span></span></summary>
       <div class="sbody">
+        <div class="note crit"><b>Prerequisito: el corpus debe estar YA deduplicado</b> (<code>meta</code> → <code>dedupe</code> → <code>tag</code>).
+        Si el país trae pase de lista nominal, construye además el padrón antes de tagear
+        (<code>diaries-deputies</code>, ruta del pase de lista) y pásalo con <code>--deputies</code>: mejora el scoring del nivel 2
+        probabilístico. Antes esa mejora era inalcanzable porque el padrón se construía cuatro pasos después.</div>
         <div class="note crit">El honorífico y el terminador son específicos de cada país y cambian por OCR/era/taquígrafo.
+        <b>Paso 0 obligatorio</b>: <code>discover_speaker_patterns.py</code> descubre las formas por su FORMA — el vocabulario
+        <b>nunca se adivina</b> (falló en SV y dos veces en GT). <b>Punto de partida: <code>docs/_metodologia/FASE_C_MARCADORES_POR_PAIS.md</code></b>
+        — terminadores, clases de marcador y variantes OCR ya pagados; el descubrimiento los CONFIRMA y amplía, no los reinventa.
+        Semilla de terminadores por país: <code>:</code> (ES·GT·EC) · <code>.—</code> (UY — ignorarlo enterró 7.851 marcadores) ·
+        <code>.-</code> (grafía OCR del anterior, EC) · <code>—</code> standalone (PT); tolerancia OCR: <code>se\S{1,2}or</code>
+        (seflor, sefior…), EL→FL (EC), H.D.→HE. (PA).
         <b>Paso 0b obligatorio la 1ª vez</b>: <code>analyze_speaker_markers.py</code> descubre variantes/errores antes de tagear.</div>
+        <div class="block"><div class="lab">Las CINCO clases de marcador — cada una con tratamiento propio</div>
+          <div class="branches">
+            <div class="br"><span class="cond">FORMAL</span><span class="arr">→</span><span class="res">núcleo VERSAL + terminador del país (<code>:</code>, <code>.—</code>…) — <b>la única clase que abre turno</b> (produce <code>&lt;int&gt;</code>)</span></div>
+            <div class="br"><span class="cond">APARTE</span><span class="arr">→</span><span class="res">interjección entre paréntesis DENTRO del turno de otro — NO abre turno; se separa como turno propio solo si hay TEXTO delante, no por distancia (BR: 18.718)</span></div>
+            <div class="br"><span class="cond">MENCIÓN</span><span class="arr">→</span><span class="res">Titlecase + verbo en el discurso («el señor García afirma…») — ignorar; el discriminador frente al turno real es el núcleo VERSAL</span></div>
+            <div class="br"><span class="cond">VOTO nominal</span><span class="arr">→</span><span class="res">«Por el señor Diputado X», listas de votación — NO abre turno: <code>tag.vote_patterns</code> lo EXCLUYE del tagging y <code>diaries-matrix</code> declara esas filas <code>dm_speech = 0</code></span></div>
+            <div class="br"><span class="cond">NARRATIVA</span><span class="arr">→</span><span class="res">el orador va en una CLÁUSULA en prosa, no en un núcleo versal (DO, CO) — modo propio <code>tagging_style: narrative</code>; el <code>speaker_raw</code> se NORMALIZA a la persona, no a la frase</span></div>
+          </div>
+        </div>
         <div class="block"><div class="lab">Paso 2c/2d · Detección de dos niveles + LLM</div>
           <div class="branches">
             <div class="br"><span class="cond">NIVEL 1 estricto (speaker_tag_patterns)</span><span class="arr">→</span><span class="res">marcador canónico; guion <code>[-–—]</code> (OCR usa em-dash) → etiqueta directa</span></div>
@@ -462,39 +619,15 @@ GUARDIA (fuente escaneada): si source_format ∈ {pdf_poor_ocr, pdf_image}
       </div>
     </details>
 
-    <!-- META -->
-    <details class="skill" id="meta" open>
-      <summary><span class="snum">5</span>
-        <span><span class="sname">diaries-meta</span><br><span class="stitle">Metadatos: fecha, nº de sesión, tipo, legislatura, presidente</span></span>
-        <span class="sbadges"><span class="badge thr">0.85 / 0.65</span></span></summary>
-      <div class="sbody">
-        <div class="note crit">⚠ Paso 0c obligatorio 1ª vez: verificar que los regex están <b>anclados a la fórmula de cabecera</b>
-        de la sesión (no a la 1ª fecha del texto, que suele ser un acta/decreto citado).</div>
-        <div class="block"><div class="lab">Paso 2d · Decisión crítica de <code>date</code> (override del peso)</div>
-          <div class="branches">
-            <div class="br"><span class="cond">date_source = text</span><span class="arr">→</span><span class="res">autoritativa, puede ser <span class="out auto">AUTO</span></span></div>
-            <div class="br"><span class="cond">date_mismatch = true (texto ≠ nombre)</span><span class="arr">→</span><span class="res">confía en el TEXTO, fuerza <span class="out flag">FLAG</span></span></div>
-            <div class="br"><span class="cond">filename_fallback (texto sin fecha)</span><span class="arr">→</span><span class="res">nunca AUTO → <span class="out flag">FLAG</span> obligatorio</span></div>
-            <div class="br"><span class="cond">missing (ni texto ni nombre)</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span></span></div>
-          </div>
-        </div>
-        <div class="block"><div class="lab">Paso 2e · Confianza ponderada (5 campos × 0.20)</div>
-          <div class="formula">cada campo:  regex → 0.20   |   LLM → 0.17   |   no encontrado → 0.0
-confidence = Σ contribuciones de {date, session_number, session_type, legislature, president}
-(el override de date manda sobre el resultado del peso)</div>
-        </div>
-        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/meta/{id}.json</span></div>
-      </div>
-    </details>
-
     <!-- MATRIX -->
     <details class="skill" id="matrix" open>
-      <summary><span class="snum">6</span>
+      <summary><span class="snum">7</span>
         <span><span class="sname">diaries-matrix</span><br><span class="stitle">Parse de texto etiquetado → filas CSV (determinista)</span></span>
         <span class="sbadges"><span class="badge">nivel sesión</span></span></summary>
       <div class="sbody">
-        <div class="block"><div class="lab">Paso 3a/3b · Prerequisitos + auditoría previa</div>
+        <div class="block"><div class="lab">Gate de entrada + Paso 3a/3b · Prerequisitos y auditoría previa</div>
           <div class="branches">
+            <div class="br"><span class="cond">diaries-tag con sesiones en HALT (falsos negativos)</span><span class="arr">→</span><span class="res"><span class="out err">ABSOLUTE FAIL</span> — NO construir la matriz: un marcador sin etiquetar atribuye su intervención entera al orador anterior; volver a /diaries-tag</span></div>
             <div class="br"><span class="cond">falta tagged/ o meta/</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span>, informa qué falta</span></div>
             <div class="br"><span class="cond">n_tags &lt;int&gt; == 0 en fuente</span><span class="arr">→</span><span class="res"><span class="out halt">HALT</span>: archivo sin etiquetas válidas</span></div>
             <div class="br"><span class="cond">intervention_format</span><span class="arr">→</span><span class="res"><code>auto</code> · <code>inline</code> (&lt;int speaker&gt;) · <code>standalone</code> (PT)</span></div>
@@ -510,14 +643,31 @@ si tasa_cobertura &lt; 0.80 → confianza = min(confianza, tasa_cobertura)</div>
             <div class="smap halt"><b>HALT</b>cobertura &lt; 0.20 (fallo sistemático)</div>
           </div>
         </div>
+        <div class="block"><div class="lab">Paso 5 · Auditoría de marcadores INCRUSTADOS en el text (gate de salida)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">ratio ≤ 0,1%</span><span class="arr">→</span><span class="res">aceptable (residuo de OCR irreducible) → <code>split_embedded_markers.py</code> divide las filas residuales y recupera el turno (parte del flujo, decidido 2026-08-23)</span></div>
+            <div class="br"><span class="cond">ratio &gt; 0,1%</span><span class="arr">→</span><span class="res"><b>NO parchear el CSV ni avanzar a deputies/match/merge</b>: corregir la CAPA de origen y re-ejecutar correct → tag → matrix (PA: 4 iteraciones recuperaron +42.132 intervenciones)</span></div>
+            <div class="br"><span class="cond">0,00% con la config por defecto</span><span class="arr">→</span><span class="res">sospechoso hasta explicarlo, no una buena noticia (AR: 7 filas «detectadas» frente al 1,00% real medido a mano — el guion se corrompe en <code>—</code>/<code>_</code>/<code>~</code>/<code>·</code>)</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 5-bis · PROLEGOMENA — la carátula y el sumario del acta</div>
+          <div class="fnode proc"><code>recover_frontmatter.py</code>: todo lo anterior al primer marcador entra como Prolegomena — una fila por acta con <code>intervention_order = 0</code>, <code>dm_speech = 0</code> y sin orador, SIN desplazar la numeración del resto. Sin tope de longitud (los documentos de la cuenta de CL, 1,3 M car., son legítimos). Prueba de aceptación: ningún marcador de intervención dentro del Prolegomena.</div>
+        </div>
+        <div class="block"><div class="lab">Paso 5-ter / 6 · ANEXOS del diario + inventario no-discurso (declarar, NO borrar)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">separador EXPLÍCITO de anexos en el acta</span><span class="arr">→</span><span class="res">todo lo posterior → <code>dm_speech = 0</code> DECLARADO (<code>matrix.annex_separator</code> del config); la fila se queda con su orden y su texto íntegro</span></div>
+            <div class="br"><span class="cond">sin separador marcado en el acta</span><span class="arr">→</span><span class="res"><b>NO se especula</b>: discriminancia ≠ frontera — las filas quedan como están</span></div>
+            <div class="br"><span class="cond">acotaciones / votaciones / cabeceras</span><span class="arr">→</span><span class="res">default <code>dm_speech = 1</code>; el <code>0</code> solo donde está DEMOSTRADO. Se DECLARAN, no se apartan — el sidecar quedó ANULADO como política</span></div>
+          </div>
+        </div>
         <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/matrix/interventions_raw.csv (acumulativo)</span></div>
       </div>
     </details>
 
     <!-- DEPUTIES -->
     <details class="skill" id="deputies" open>
-      <summary><span class="snum pais">7</span>
-        <span><span class="sname">diaries-deputies</span><br><span class="stitle">Construye la BD de diputados + deduplicación obligatoria</span></span>
+      <summary><span class="snum pais">8</span>
+        <span><span class="sname">diaries-deputies</span><br><span class="stitle">Construye la BD de diputados + deduplicación obligatoria + padrón publicable</span></span>
         <span class="sbadges"><span class="badge">nivel país</span><span class="badge">--force · --dry-run</span></span></summary>
       <div class="sbody">
         <div class="block"><div class="lab">Paso 2 · Guardias</div>
@@ -544,16 +694,32 @@ si tasa_cobertura &lt; 0.80 → confianza = min(confianza, tasa_cobertura)</div>
         <div class="block"><div class="lab">Paso 6 · Confianza</div>
           <div class="formula">confianza = 1 − clustered_ambiguous / total_unique     ( &lt; 0.85 → FLAG )</div>
         </div>
-        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/deputies/deputies.csv</span></div>
+        <div class="block"><div class="lab">Prerequisito · depende de la RUTA (matrix NO siempre hace falta)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">A · archivo externo</span><span class="arr">→</span><span class="res">el propio archivo · en cualquier momento</span></div>
+            <div class="br"><span class="cond"><b>Pase de lista nominal</b> (preferente)</span><span class="arr">→</span><span class="res"><code>corrected/</code> · <b>ANTES de diaries-tag</b>, alimenta su scoring con <code>--deputies</code></span></div>
+            <div class="br"><span class="cond">B · desde speakers</span><span class="arr">→</span><span class="res"><code>matrix/interventions_raw.csv</code> · después de diaries-matrix</span></div>
+          </div>
+          <div class="note">El roster desde el pase de lista es <b>estrictamente superior</b>: incluye a quien no habla, el período
+          es explícito y es dato primario del acta. Además el índice fecha→presentes que produce es el insumo de la
+          desambiguación por asistencia de <code>diaries-match</code>: un paso temprano mejora dos posteriores.</div>
+        </div>
+        <div class="block"><div class="lab">Paso 6 · Derivar <code>sex</code> + padrón PUBLICABLE</div>
+          <div class="fnode proc"><code>derive_sex.py</code>: cascada de 6 niveles con procedencia declarada en <code>sex_source</code> (exactitud medida 98,98%; por sexo: M 99,54% · F 97,43%, y eso se declara) — se corre en su momento, tras <code>diaries-standardize</code>. El padrón publicable <b>standardize/{ISO2}_deputies.csv</b> se publica junto a la matriz, unible por <code>id_dep</code> (+ <code>legislature</code>): forma LARGA, una fila por <code>(id_dep, legislature)</code> — <code>id_dep</code> NO es único. Los pares huérfanos matriz→padrón no se corrigen ni se apartan: el acta manda, se declaran en <code>process_report.md</code>.</div>
+        </div>
+        <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/deputies/deputies.csv</span> <span class="pathline">source/{iso2}/standardize/{ISO2}_deputies.csv (publicable)</span></div>
       </div>
     </details>
 
     <!-- MATCH -->
     <details class="skill" id="match" open>
-      <summary><span class="snum pais">8</span>
+      <summary><span class="snum pais">9</span>
         <span><span class="sname">diaries-match</span><br><span class="stitle">Vincula speaker_raw → id_dep (umbrales altos)</span></span>
         <span class="sbadges"><span class="badge">nivel país</span><span class="badge thr">0.90 / 0.70</span></span></summary>
       <div class="sbody">
+        <div class="block"><div class="lab">Paso 0 · La vinculación CONGELADA manda</div>
+          <div class="fnode proc"><b>106.938 decisiones</b> <code>speaker_raw → id_dep</code> congeladas en <b>13 países</b>, con manifiesto <code>sha256</code> (solo BR, CL y PE no tienen tabla: se construyeron fuera del pipeline). <code>frozen_matching.py --check</code> dice ANTES de empezar cuánto trabajo manual hay en juego; en un arranque desde cero el <code>--apply</code> de este paso es un <b>no-op silencioso</b> (la tabla aún no existe) — el que protege de verdad es el <b>Paso 6-final</b>. La clave se casa EXACTAMENTE, sin normalizar tildes ni caja.</div>
+        </div>
         <div class="block"><div class="lab">Cascada de métodos de vinculación</div>
           <div class="flow">
             <div class="fnode proc"><b>Paso 4</b> · <code>fuzzy_match.py</code>: limpia títulos, matchea contra nombre completo Y apellidos (<code>token_set_ratio</code>), filtra por <b>vigencia temporal</b> (mandato vs fecha de sesión).</div>
@@ -566,6 +732,17 @@ si tasa_cobertura &lt; 0.80 → confianza = min(confianza, tasa_cobertura)</div>
             <span class="fdown"></span>
             <div class="fnode proc"><b>Paso 5</b> · LLM resuelve <code>ambiguous</code> + <code>unmatched</code> con contexto (±3 intervenciones, partido, fecha) → <code>llm</code> o <code>unmatched</code> final.</div>
           </div>
+        </div>
+        <div class="block"><div class="lab">Paso 4c-quater · Género del CARGO — solo la forma FEMENINA vincula por sexo</div>
+          <div class="branches">
+            <div class="br"><span class="cond">LA PRESIDENTA / LA SECRETARIA</span><span class="arr">→</span><span class="res">solo la forma femenina del cargo autoriza a vincular a una mujer</span></div>
+            <div class="br"><span class="cond">forma masculina del cargo</span><span class="arr">→</span><span class="res">es GENÉRICA — cubre a cualquiera que ocupe el cargo → NO se vincula en bloque por sexo</span></div>
+            <div class="br"><span class="cond">forma de cargo → persona</span><span class="arr">→</span><span class="res">NUNCA en bloque: el cargo lo ocupan personas distintas según el tramo; la atribución va por TRAMO (merge, Paso 3-bis). Coste medido: 6.514 filas reatribuidas; UY, 16.812 filas de «A PRESIDENTA» en un hombre</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 6-final · RE-IMPONER la vinculación congelada (OBLIGATORIO)</div>
+          <div class="fnode proc">Tras reconstruir y enriquecer la tabla: <code>frozen_matching.py --check</code> + <code>--apply</code>. Es el paso que protege de verdad en el reproceso completo. Lo que ya no casa <b>se INFORMA, no se borra</b>: cada huérfana va a <code>docs/{iso2}/vinculacion_huerfana.csv</code> — una decisión humana a rehacer sobre la forma nueva. Reportar los recuentos del --check (coinciden · contradicen · nuevas · huérfanas).</div>
+          <div class="note">Primacía del diario: una intervención NUNCA se elimina porque su orador no case con el padrón — la fila sin <code>id_dep</code> es un hueco visible y auditable; la borrada, una pérdida silenciosa.</div>
         </div>
         <div class="block"><div class="lab">Paso 7 · Estado por TASA de cobertura</div>
           <div class="formula">confianza_global = n_matched_auto(exact|fuzzy, conf≥0.90) / n_unique_speakers
@@ -582,7 +759,7 @@ sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
 
     <!-- MERGE -->
     <details class="skill" id="merge" open>
-      <summary><span class="snum pais">9</span>
+      <summary><span class="snum pais">10</span>
         <span><span class="sname">diaries-merge</span><br><span class="stitle">Join pandas de raw + matching + deputies</span></span>
         <span class="sbadges"><span class="badge">nivel país</span></span></summary>
       <div class="sbody">
@@ -599,14 +776,46 @@ sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
             <div class="smap halt"><b>HALT</b>match_rate &lt; 0.70 o filas no coinciden</div>
           </div>
         </div>
+        <div class="block"><div class="lab">Paso 3-bis · Atribución de la PRESIDENCIA por TRAMO (<code>attribute_presidency.py</code>)</div>
+          <div class="note crit">El paso de mayor impacto del pipeline y el más fácil de olvidar: hasta el <b>42,1 %</b> del corpus
+          (PE) y el <b>36,5 %</b> (DO) son intervenciones etiquetadas solo con el cargo, sin nombre. El acta declara quién
+          presidió y <code>diaries-meta</code> ya lo extrae como <b>presidencia por TRAMOS</b> (<code>presidency.segments</code>:
+          apertura + relevos + <code>back_to_base</code>). Se ejecuta con la utilidad genérica <code>attribute_presidency.py</code>,
+          parametrizada en el country_config (<code>presidency:</code>) — nunca un script por país. En un reproceso se
+          RE-EJECUTA desde cero: el enriched regenerado pierde estas atribuciones. Se acepta por el ACIERTO medido con el juez
+          de género del vocativo (<code>audit_presidency_gender.py</code>), nunca por la reproducción.</div>
+          <div class="branches">
+            <div class="br"><span class="cond">1 sola presidencia en la sesión</span><span class="arr">→</span><span class="res">atribuye · <code>match_method = president_meta</code></span></div>
+            <div class="br"><span class="cond">scope: segments (la mesa rota dentro)</span><span class="arr">→</span><span class="res">atribuye por TRAMO siguiendo las marcas de relevo del propio acta; el relevo sin nombre (<code>back_to_base</code>) cierra el tramo del vice</span></div>
+            <div class="br"><span class="cond">varias, de distinto sexo</span><span class="arr">→</span><span class="res">desempata PRESIDENTE/PRESIDENTA contra el sexo del padrón</span></div>
+            <div class="br"><span class="cond">titular + «en funciones» juntos, o 2+ del mismo sexo</span><span class="arr">→</span><span class="res"><b>NO atribuir</b> — el acta nombra a quienes presidieron, no cuándo se relevaron. Ante la duda, no atribuir: la fila sin id_dep es un hueco visible; la mal atribuida, un error silencioso</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 3d · Consistencia temporal (obligatoria)</div>
+          <div class="formula">fecha_inicio ≤ date ≤ fecha_fin   para toda fila con id_dep
+referencias medidas:  DO 99,96%   ·   PE 97,40%        &lt; 99% → FLAG
+
+desalineadas · dos clases con tratamiento distinto:
+  hueco intermedio del roster (hay filas antes Y después) → añadir fila,
+      heredar partido/distrito, notas: periodo:inferido-servicio-continuo
+  extremo (habla fuera de todo mandato conocido) → posible error de match,
+      NO arreglar en automático: sacarlo al informe</div>
+        </div>
+        <div class="block"><div class="lab">Paso 3-ter · Gate de INTEGRIDAD REFERENCIAL matriz ↔ padrón (obligatorio antes de standardize)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">id_dep inexistente en el padrón</span><span class="arr">→</span><span class="res">error duro: errata de id o fila que falta en <code>deputies.csv</code> — se corrige o se completa el padrón, no pasa al canónico</span></div>
+            <div class="br"><span class="cond">par (id_dep, legislatura) huérfano</span><span class="arr">→</span><span class="res">el acta manda: la fila NUNCA se elimina — se completa el padrón (suplencias, tomas de posesión a media legislatura) o se declara en <code>process_report.md</code></span></div>
+          </div>
+          <div class="note">El padrón está en forma LARGA (una fila por <code>id_dep</code> + legislatura): el join es por <code>id_dep + legislatura</code> — solo por <code>id_dep</code> multiplica las filas de la matriz. Y la confianza del Paso 4 se RECALCULA sobre el enriched FINAL, tras el 3-bis (el match_rate del join solo puede dejar en flag filas que 3-bis ya resolvió).</div>
+        </div>
         <div class="block"><div class="lab">Salida</div><span class="pathline">source/{iso2}/merge/interventions_enriched.csv</span></div>
       </div>
     </details>
 
     <!-- STANDARDIZE -->
     <details class="skill" id="standardize" open>
-      <summary><span class="snum pais">10</span>
-        <span><span class="sname">diaries-standardize</span><br><span class="stitle">Esquema canónico final (10 columnas) — salida del corpus</span></span>
+      <summary><span class="snum pais">11</span>
+        <span><span class="sname">diaries-standardize</span><br><span class="stitle">Esquema canónico final (16 columnas) + padrón auxiliar — salida del corpus</span></span>
         <span class="sbadges"><span class="badge">nivel país</span></span></summary>
       <div class="sbody">
         <div class="block"><div class="lab">Paso 1 · GUARDIA de sobreescritura (antes que nada)</div>
@@ -621,7 +830,35 @@ sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
             <div class="smap flag"><b>FLAG</b>errores &gt; 5% de filas</div>
             <div class="smap halt"><b>HALT</b>errores &gt; 20% de filas</div>
           </div>
-          <div class="note"><code>session_number</code> acepta entero o alfanumérico (<code>12</code>, <code>12A</code>, <code>001O</code>); <code>date</code> debe ser ISO <code>YYYY-MM-DD</code>.</div>
+          <div class="note"><b>Esquema canónico = 16 columnas</b>, en este orden: <code>id_session · id_int · legislature ·
+          legislative_session · session_number · date · session_type · intervention_order · speaker_raw · id_dep ·
+          speaker_name · sex · party · district · dm_speech · text</code>. <code>session_number</code> acepta entero o
+          alfanumérico (<code>12</code>, <code>12A</code>, <code>001O</code>); <code>date</code> debe ser ISO
+          <code>YYYY-MM-DD</code>; separador <code>,</code> salvo <b>ES y GT, que usan <code>;</code></b>.
+          <code>standardize_csv.py</code> declara las 16 (crea <code>id_session</code>/<code>id_int</code> vacías y las
+          preserva); el Paso 4-ter las RELLENA.</div>
+        </div>
+        <div class="block"><div class="lab">Paso 4-ter · TRES sub-pasos en orden fijo: desdoblar → asignar → verificar VALORES</div>
+          <div class="branches">
+            <div class="br"><span class="cond">a · desdoblar Prolegomena duplicados</span><span class="arr">→</span><span class="res"><code>desdoblar_prolegomena_duplicado.py</code> (primero <code>--medir</code>): dos carátulas con orden 0 en la misma clave colisionan en <code>id_int …00000</code> — elimina las copias EXACTAS y sufija las distintas (<code>104</code> → <code>104B</code>, sesión propia con carátula y sin turnos). 7 países las tenían (CR 7.678 · ES 1.650 …)</span></div>
+            <div class="br"><span class="cond">b · asignar los ids</span><span class="arr">→</span><span class="res"><code>asignar_ids.py</code>: <code>id_session</code> = <code>{ISO2}{leg:03d}{ses:04d}</code> (9 car.) · <code>id_int</code> = +<code>{orden:05d}</code> (14 car.; orden 0 → …00000). Se NIEGA a escribir si detecta <code>id_int</code> repetidos</span></div>
+            <div class="br"><span class="cond">c · verificación de VALORES</span><span class="arr">→</span><span class="res">obligatoria — la cabecera no basta: <code>asignar_ids</code> termina con rc=0 incluso al negarse (buscar «✗» en su salida) y los ids quedan VACÍOS. Comprobar <code>id_int</code> vacíos = 0 y duplicados = 0; con vacíos, resolver las claves repetidas; con duplicados, PARA y restaura el backup</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">⚠ Seguridad de reejecución — qué destruye un <code>--force</code></div>
+          <div class="formula">El guardia protege el archivo, pero NO avisa de lo que se pierde. Sobre un corpus
+ya cerrado suele haber operaciones POSTERIORES al pipeline estándar:
+
+  1 · sidecar — LEGADO de la línea base, YA NO es política vigente:
+      nada se aparta, se DECLARA con dm_speech = 0. Si existe un
+      *_sidecar.csv, al regenerar sus filas se REINTEGRAN al canónico
+      con dm_speech = 0; no se re-extraen a un sidecar nuevo
+  2 · atribuciones post-merge         → viven solo en el enriched,
+      (match_method = president_meta)    no en la matching_table
+  3 · correcciones humanas            → manual / NOT_SPEAKER / role
+
+Compara SIEMPRE el recuento antes y después. Si al regenerar bajan las filas
+vinculadas, has perdido trabajo: recupéralo del backup antes de continuar.</div>
         </div>
         <div class="block"><div class="lab">Salida ⚠ canónica</div><span class="pathline">source/{iso2}/standardize/{ISO2}_interventions.csv</span></div>
       </div>
@@ -629,7 +866,7 @@ sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
 
     <!-- DOCUMENT -->
     <details class="skill" id="document" open>
-      <summary><span class="snum pais">11</span>
+      <summary><span class="snum pais">12</span>
         <span><span class="sname">diaries-document</span><br><span class="stitle">Documentación del corpus (entrevista + README canónico)</span></span>
         <span class="sbadges"><span class="badge">nivel país</span></span></summary>
       <div class="sbody">
@@ -660,7 +897,7 @@ sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
     <details class="skill" id="status" open>
       <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-status</span><br><span class="stitle">Tabla de estado (solo lectura)</span></span></summary>
       <div class="sbody"><div class="block">
-        <div class="fnode proc">Lee <code>pipeline_state.json</code> y agrega por skill: total · OK · FLAG · HALT · Pend · confianza media. Skills país: entrada <code>_country</code>.</div>
+        <div class="fnode proc">Lee <code>pipeline_state.json</code> y agrega por skill: total · OK · FLAG · HALT · Pend · confianza media. Skills país: entrada <code>_country</code>. ⚠ <code>diaries-dedupe</code> se cuenta POR SESIÓN aunque sea de nivel país: marca complete/skipped en cada sesión afectada, no en <code>_country</code>.</div>
         <div class="branches">
           <div class="br"><span class="cond">hay HALT</span><span class="arr">→</span><span class="res">«revisa errores y re-ejecuta con --force»</span></div>
           <div class="br"><span class="cond">hay FLAG</span><span class="arr">→</span><span class="res">deriva a <code>/diaries-review</code></span></div>
@@ -671,9 +908,16 @@ sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
     </details>
 
     <details class="skill" id="review" open>
-      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-review</span><br><span class="stitle">Bucle interactivo de resolución de FLAGs</span></span>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-review</span><br><span class="stitle">Bucle interactivo de FLAGs + listado y resolución de HALTs</span></span>
         <span class="sbadges"><span class="badge">--skill (filtro opcional)</span></span></summary>
-      <div class="sbody"><div class="block"><div class="lab">Por cada caso FLAG (en orden de pipeline) — menú de opciones</div>
+      <div class="sbody"><div class="block"><div class="lab">Paso 2-bis · Casos HALT — listar con su error y marcar resueltos</div>
+        <div class="branches">
+          <div class="br"><span class="cond">lista cada HALT con su error_message</span><span class="arr">→</span><span class="res">la intervención manual se hace FUERA del skill; los HALT no entran al bucle de FLAGs</span></div>
+          <div class="br"><span class="cond">intervención ya realizada</span><span class="arr">→</span><span class="res">registra CorrectionRecord punctual + marca <span class="out auto">complete</span> (o <span class="out flag">flag</span> si debe pasar por el bucle)</span></div>
+          <div class="br"><span class="cond">no realizada</span><span class="arr">→</span><span class="res">se mantiene en <span class="out halt">halt</span>; seguirá apareciendo aquí y en /diaries-status</span></div>
+        </div>
+      </div>
+      <div class="block"><div class="lab">Por cada caso FLAG (en orden de pipeline) — menú de opciones</div>
         <div class="branches">
           <div class="br"><span class="cond">[A] Aceptar</span><span class="arr">→</span><span class="res">marca <span class="out auto">complete</span> con la confianza actual</span></div>
           <div class="br"><span class="cond">[C] Corregir</span><span class="arr">→</span><span class="res">registra CorrectionRecord puntual + marca complete</span></div>
@@ -706,11 +950,29 @@ sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
           <div class="br"><span class="cond">ROJO</span><span class="arr">→</span><span class="res">cualquier otra combinación</span></div>
         </div>
         <div class="note">Incluye histogramas ASCII de confianza por skill e historial de correcciones (punctual/rule/strategy). Salida: <span class="mono">docs/{iso2}/process_report.md</span></div>
+        <div class="note"><strong>Lee antes lo que registró <code>/diaries-decide</code></strong> (<span class="mono">decisions.jsonl</span>) en vez de reconstruir el razonamiento: cada entrada trae qué se decidió, qué se descartó, con qué evidencia y qué cambió.</div>
+      </div></div>
+    </details>
+
+    <details class="skill" id="decide" open>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-decide</span><br><span class="stitle">Registra una decisión metodológica con su evidencia</span></span>
+        <span class="sbadges"><span class="badge">--pais {iso2} | transversal</span><span class="badge">--supersede</span></span></summary>
+      <div class="sbody"><div class="block"><div class="lab">Cuándo — decisiones que alguien podría cuestionar después</div>
+        <div class="branches">
+          <div class="br"><span class="cond">umbral, criterio o definición</span><span class="arr">→</span><span class="res">registrar por qué ESE valor</span></div>
+          <div class="br"><span class="cond">se aparta / divide / transforma</span><span class="arr">→</span><span class="res">registrar qué se descartó y con qué prueba</span></div>
+          <div class="br"><span class="cond">fuentes que discrepan</span><span class="arr">→</span><span class="res">registrar cuál mandó y por qué</span></div>
+          <div class="br"><span class="cond">se CORRIGE una decisión previa</span><span class="arr">→</span><span class="res"><code>--supersede</code> · el caso más valioso</span></div>
+          <div class="br"><span class="cond">trabajo rutinario</span><span class="arr">→</span><span class="res">NO registrar</span></div>
+        </div>
+        <div class="note"><strong>La evidencia es obligatoria y se valida</strong> (mínimo 40 caracteres). Existe para impedir que se registre una preferencia como si fuera un hallazgo: «se usó el umbral 0,5» no sirve; «se usó 0,5 porque con controles independientes daba ratios de 400× a 4.500× sobre 40.000 filas» sí. Si no se midió nada, hay que decirlo así.</div>
+        <div class="note"><strong>Las superadas no se borran:</strong> se marcan y se enlazan desde la que las anula. Ejemplo real: <code>cr-0001</code> (dividir las filas con marcador incrustado) → <code>cr-0002</code> (era el índice del acta; apartarlo). Esa cadena es el historial de correcciones del corpus.</div>
+        <div class="note">Salida: <span class="mono">state/{iso2}/decisions.jsonl</span> · <span class="mono">state/_transversal/decisions.jsonl</span> → <span class="mono">docs/_metodologia/generados/METODOLOGIA.md</span> (generado con <span class="mono">scripts/generar_metodologia.py</span>, no se edita a mano)</div>
       </div></div>
     </details>
 
     <details class="skill" id="teach" open>
-      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-teach</span><br><span class="stitle">Guía interactiva — 7 caminos</span></span></summary>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-teach</span><br><span class="stitle">Guía interactiva — 8 caminos</span></span></summary>
       <div class="sbody"><div class="block"><div class="lab">Caminos</div>
         <div class="opts">
           <span class="opt">1 · qué es el sistema</span><span class="opt">2 · país nuevo desde cero</span>
@@ -733,6 +995,7 @@ sin_resolver = (n_unique − n_matched_auto) / n_unique</div>
     ParlaIbero · pipeline de diarios parlamentarios. Fuente: los <code>SKILL.md</code> en
     <code>~/.claude/skills/diaries-*</code>. Documento generado para visualización del árbol de procedimiento.
     Las rutas usan <code>{iso2}</code> en minúsculas y <code>{ISO2}</code> en mayúsculas.
+    Actualizado el 2026-08-23 conforme a los <code>SKILL.md</code> reparados (fuente de verdad).
   </div>
 </main>
 </div>

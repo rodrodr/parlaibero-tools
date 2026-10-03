@@ -765,7 +765,7 @@
     <li><a href="#flujos">Flujos</a></li>
     <li><a href="#instalar">Instalar</a></li>
   </ul>
-  <span class="nav-pill">18 skills nativos</span>
+  <span class="nav-pill">21 skills nativos</span>
 </nav>
 
 <main>
@@ -777,24 +777,25 @@
       <p class="hero-eyebrow">Pipeline de Diarios Parlamentarios · ParlaIbero</p>
       <h1 class="hero-title">diaries-<span>*</span></h1>
       <p class="hero-desc">
-        18 skills nativos de Claude Code que transforman diarios de sesiones parlamentarias
-        —PDF escaneados o HTML— en matrices estandarizadas de intervenciones. Desde el OCR
-        hasta el esquema canónico final, con un sistema de confianza de tres niveles que
-        mantiene al investigador en control de cada decisión automática.
+        21 skills nativos de Claude Code que transforman diarios de sesiones parlamentarias
+        —PDF escaneado o digital, HTML, XML, DOCX o texto plano— en matrices estandarizadas
+        de intervenciones. Desde el OCR hasta el esquema canónico final, con un sistema de
+        confianza de tres niveles que mantiene al investigador en control de cada decisión
+        automática.
       </p>
       <div class="hero-stats">
         <div class="stat">
-          <span class="stat-num">18</span>
+          <span class="stat-num">21</span>
           <span class="stat-label">skills nativos</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat">
-          <span class="stat-num">12</span>
+          <span class="stat-num">13</span>
           <span class="stat-label">en pipeline</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat">
-          <span class="stat-num">6</span>
+          <span class="stat-num">8</span>
           <span class="stat-label">de control</span>
         </div>
         <div class="stat-divider"></div>
@@ -804,7 +805,7 @@
         </div>
         <div class="stat-divider"></div>
         <div class="stat">
-          <span class="stat-num">10</span>
+          <span class="stat-num">16</span>
           <span class="stat-label">columnas canónicas</span>
         </div>
       </div>
@@ -818,10 +819,10 @@
     <div class="section-label">Arquitectura</div>
     <div class="diagram-header">
       <h2 class="diagram-title">Mapa del pipeline</h2>
-      <span class="diagram-subtitle">De la fuente al corpus · 12 skills en secuencia</span>
+      <span class="diagram-subtitle">De la fuente al corpus · 13 skills en secuencia · 8 de control</span>
     </div>
     <div class="diagram-wrap">
-      <pre><span class="d-path">source/{iso2}/raw/</span>  <span class="d-comment">(PDF / HTML fuente)</span>
+      <pre><span class="d-path">source/{iso2}/raw/</span>  <span class="d-comment">(PDF / HTML / XML / DOCX / TXT fuente)</span>
         │
         ▼
   <span class="d-skill">/diaries-bootstrap</span> ──► <span class="d-path">country_config/{iso2}.yaml</span>
@@ -829,40 +830,52 @@
         │
         ▼
   <span class="d-skill">/diaries-ocr</span> ──────────► <span class="d-path">source/{iso2}/ocr/{id}/page_NNNN.txt</span>
-  <span class="d-comment">(solo si pdf_image)</span>       <span class="d-comment">[LightOnOCR-2:1b → glm-ocr fallback]</span>
+  <span class="d-comment">(solo si pdf_image)</span>       <span class="d-comment">[LightOnOCR-2:1b → fallback por país: glm-ocr]</span>
         │
         ▼
   <span class="d-skill">/diaries-extract</span> ──────► <span class="d-path">source/{iso2}/extracted/{id}.txt</span>
-  <span class="d-comment">(texto limpio, NFC + quita cabeceros/pies)</span>
+  <span class="d-comment">(texto FIEL — NO limpia)</span>      <span class="d-comment">[consolida OCR/PDF/HTML/XML/DOCX/txt · conserva ---PAGE N---]</span>
         │
         ▼
   <span class="d-skill">/diaries-correct</span> ──────► <span class="d-path">source/{iso2}/corrected/{id}.txt</span>
-  <span class="d-comment">(párrafos + hifenación)</span>   <span class="d-comment">[determinista + Claude para ambiguos]</span>
+  <span class="d-comment">(ÚNICO limpiador: 5 pasos)</span>  <span class="d-comment">[mobiliario por país + deshifenización + reflujo]</span>
         │
-        ├────────────► <span class="d-skill">/diaries-meta</span> ──► <span class="d-path">source/{iso2}/meta/{id}.json</span>
-        │              <span class="d-comment">(fecha, nº, tipo,   [regex + Claude para faltantes]</span>
-        │               <span class="d-comment">legislatura, pdte)</span>
+  <span class="d-skill">/diaries-meta</span> ────────► <span class="d-path">source/{iso2}/meta/{id}.json</span>
+  <span class="d-comment">(fecha, nº, tipo, legislatura,</span> <span class="d-comment">[heurística registrada o DESCUBIERTA]</span>
+  <span class="d-comment">presidencia por TRAMOS)</span>    <span class="d-comment">lee extracted/ — la capa fiel, con el cabecero íntegro</span>
+        │
+        ▼
+  <span class="d-skill">/diaries-dedupe</span> ──────► <span class="d-path">source/{iso2}/_quarantine_duplicates/</span>
+  <span class="d-warn">(⚠ ANTES de tag)</span>          <span class="d-comment">[boletín + fecha real · reversible]</span>
+  <span class="d-comment">dos clases: (A) misma sesión bajo &gt;1 id · (B) filas dobladas</span>
+  <span class="d-comment">por ingesta multi-track · después de tag, su inventario sale sesgado</span>
+        │
+        ├────────────► <span class="d-skill">/diaries-deputies</span> ──► <span class="d-path">source/{iso2}/deputies/deputies.csv</span>
+        │              <span class="d-comment">(opcional aquí: si hay pase de lista nominal, el padrón</span>
+        │               <span class="d-comment">sale de corrected/ y alimenta a tag con --deputies)</span>
         ▼
   <span class="d-skill">/diaries-tag</span> ──────────► <span class="d-path">source/{iso2}/tagged/{id}.txt</span>
-  <span class="d-warn">(⚠ crítico, 0.80/0.60)</span>   <span class="d-comment">[regex pase 1 → Claude para sospechosos]</span>
+  <span class="d-warn">(⚠ crítico, 0.80/0.60)</span>   <span class="d-comment">[regex 2 niveles → Claude para sospechosos]</span>
+  <span class="d-comment">Paso 0c: inventario estructural por FORMA (gate anti-falsos negativos)</span>
         │
         ▼
-  <span class="d-skill">/diaries-matrix</span> ────────► <span class="d-path">source/{iso2}/interventions_raw.csv</span>
-  <span class="d-comment">(parse &lt;int&gt; → CSV)</span>        <span class="d-comment">[acumulativo por sesión]</span>
+  <span class="d-skill">/diaries-matrix</span> ────────► <span class="d-path">source/{iso2}/matrix/interventions_raw.csv</span>
+  <span class="d-comment">(parse &lt;int&gt; → CSV)</span>        <span class="d-comment">[gate incrustados ≤0,1% · Prolegomena orden 0]</span>
         │
-        ├────────────► <span class="d-skill">/diaries-deputies</span> ──► <span class="d-path">source/{iso2}/deputies.csv</span>
+        ├────────────► <span class="d-skill">/diaries-deputies</span> ──► <span class="d-path">source/{iso2}/deputies/deputies.csv</span>
         │              <span class="d-comment">(BD de diputados)</span>      <span class="d-comment">[externo o RapidFuzz+Claude]</span>
         ▼
-  <span class="d-skill">/diaries-match</span> ─────────► <span class="d-path">source/{iso2}/matching_table.csv</span>
-  <span class="d-warn">(⚠ crítico, 0.90/0.70)</span>     <span class="d-comment">[exact → fuzzy → Claude → unmatched]</span>
+  <span class="d-skill">/diaries-match</span> ─────────► <span class="d-path">source/{iso2}/match/matching_table.csv</span>
+  <span class="d-warn">(⚠ crítico, 0.90/0.70)</span>     <span class="d-comment">[congelado + exact → fuzzy → Claude]</span>
         │
         ▼
-  <span class="d-skill">/diaries-merge</span> ─────────► <span class="d-path">source/{iso2}/interventions_enriched.csv</span>
-  <span class="d-comment">(join pandas)</span>
+  <span class="d-skill">/diaries-merge</span> ─────────► <span class="d-path">source/{iso2}/merge/interventions_enriched.csv</span>
+  <span class="d-comment">(join pandas, period-aware)</span>  <span class="d-comment">[Paso 3-bis: presidencia por TRAMO</span>
+  <span class="d-comment">(president_meta) — hasta el 42% del corpus · gate de integridad referencial]</span>
         │
         ▼
   <span class="d-skill">/diaries-standardize</span> ───► <span class="d-path">source/{iso2}/standardize/{ISO2}_interventions.csv</span>  <span class="d-warn">⚠ canónico</span>
-  <span class="d-comment">(10 columnas canónicas)</span>
+  <span class="d-comment">(16 columnas canónicas + {ISO2}_deputies.csv)</span>
         │
         ▼
   <span class="d-skill">/diaries-document</span> ──────► <span class="d-path">docs/{iso2}/README.md</span>
@@ -873,9 +886,13 @@
   <span class="d-comment">CONTROL  (disponibles en cualquier momento)</span>
 
   <span class="d-skill">/diaries-status</span>    <span class="d-comment">→ tabla de estado del pipeline</span>
-  <span class="d-skill">/diaries-review</span>    <span class="d-comment">→ revisar FLAGs interactivamente [A/C/E/S/Q]</span>
+  <span class="d-skill">/diaries-review</span>    <span class="d-comment">→ revisar FLAGs y HALTs interactivamente [A/C/E/S/Q]</span>
   <span class="d-skill">/diaries-feedback</span>  <span class="d-comment">→ inyectar corrección (punctual/rule/strategy)</span>
-  <span class="d-skill">/diaries-report</span>    <span class="d-comment">→ informe completo del proceso</span>
+  <span class="d-skill">/diaries-decide</span>    <span class="d-comment">→ registrar una decisión metodológica CON SU EVIDENCIA</span>
+                       <span class="d-path">state/{iso2}/decisions.jsonl · state/_transversal/</span>
+                       <span class="d-path">docs/_metodologia/generados/METODOLOGIA.md</span> <span class="d-comment">(generado)</span>
+  <span class="d-skill">/diaries-report</span>    <span class="d-comment">→ informe completo del proceso (lee lo que registró decide)</span>
+  <span class="d-skill">/diaries-validate</span>  <span class="d-comment">→ validación estructural por muestreo + calibración de fuga</span>
   <span class="d-skill">/diaries-teach</span>     <span class="d-comment">→ guía interactiva del sistema</span>
   <span class="d-skill">/diaries-refine</span>    <span class="d-comment">→ mejorar un skill a partir de testing real</span>
 <span class="d-muted">──────────────────────────────────────────────────────────────────</span></pre>
@@ -939,7 +956,7 @@
         </div>
         <div class="conf-formula-item">
           <span class="conf-formula-skill">/diaries-correct</span>
-          <span class="conf-formula-expr">1 − (correcciones_llm / párrafos_totales)</span>
+          <span class="conf-formula-expr">integridad: 0.95 si out_chars ≥ 0.80 × in_chars (si no, 0.60 → FLAG)</span>
         </div>
         <div class="conf-formula-item">
           <span class="conf-formula-skill">/diaries-match &nbsp;⚠ 0.90/0.70</span>
@@ -971,7 +988,7 @@
   <div class="page">
     <div class="section-label">Referencia técnica</div>
     <div class="skills-section-header">
-      <h2 class="skills-section-title">Pipeline principal · 12 skills</h2>
+      <h2 class="skills-section-title">Pipeline principal · 13 skills</h2>
       <p class="skills-section-sub">Haz clic en cualquier skill para ver entradas, salidas, fórmula de confianza e invocación.</p>
     </div>
     <div class="skills-grid">
@@ -1039,7 +1056,7 @@
               <span class="phase-badge phase-ingesta">Ingesta</span>
               <span class="level-badge">· Sesión</span>
             </div>
-            <p class="skill-desc">Aplica OCR a PDFs de imagen con Ollama (LightOnOCR-2:1b primario, fallback a glm-ocr). Se salta automáticamente si el formato es pdf_digital o html.</p>
+            <p class="skill-desc">Aplica OCR a PDFs de imagen con Ollama: LightOnOCR-2:1b primario y fallback glm-ocr POR DEFECTO, configurable por país (<code>ocr.fallback_model</code>; EC usa deepseek-ocr). Se salta automáticamente si el formato es pdf_digital o html.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
@@ -1075,7 +1092,7 @@
               <div class="detail-block">
                 <span class="detail-label">Parámetros OCR relevantes en country_config</span>
                 <div class="conf-formula-box">
-                  <div class="conf-formula-expr">ocr.dpi: 150 &nbsp;· &nbsp;ocr.workers: 6 &nbsp;· &nbsp;ocr.min_page_confidence: 60</div>
+                  <div class="conf-formula-expr">ocr.dpi: 150 &nbsp;· &nbsp;ocr.workers: 6 &nbsp;· &nbsp;ocr.primary_model &nbsp;· &nbsp;ocr.fallback_model (default: glm-ocr)</div>
                 </div>
               </div>
               <div class="invocation-block">
@@ -1084,6 +1101,7 @@
 /diaries-ocr --country {iso2} --session 1931-07-14
 /diaries-ocr --country {iso2} --batch 1931-07<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
               </div>
+              <p class="card-note"><strong>Control de la ñ:</strong> tras cada lote se miden las variantes rotas de «señor» (<code>seflor</code>, <code>sefior</code>, <code>senor</code>…). Un ratio &gt; 1–2% indica que el primario no preserva la ñ en esa fuente: pasar al fallback y registrar las variantes en <code>ocr.enye_variants</code> para que <code>correct</code> y <code>tag</code> las toleren.</p>
             </div>
           </div>
         </div>
@@ -1098,7 +1116,7 @@
               <span class="phase-badge phase-ingesta">Ingesta</span>
               <span class="level-badge">· Sesión</span>
             </div>
-            <p class="skill-desc">Extrae texto limpio de PDFs digitales (PyMuPDF), une páginas OCR ya producidas, o procesa texto ya extraído (<code>text_flat</code>). Normaliza a Unicode NFC y elimina cabeceros/pies recurrentes.</p>
+            <p class="skill-desc">Consolida el raw —páginas OCR, PDF digital (PyMuPDF), HTML, XML (parser de país), DOCX o texto plano— en un texto de trabajo FIEL que conserva los marcadores de página <code>---PAGE N---</code>. <strong>NO limpia nada</strong>: cabeceros, mobiliario, hifenización y reflujo son de <code>diaries-correct</code>.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
@@ -1116,7 +1134,7 @@
                   <div class="detail-value">
                     <span class="path-tag">source/{iso2}/raw/{id}.pdf &nbsp;(pdf_digital)</span>
                     <span class="path-tag">source/{iso2}/ocr/{id}/ &nbsp;(pdf_image)</span>
-                    <span class="path-tag">source/{iso2}/raw/{id}.txt &nbsp;(text_flat)</span>
+                    <span class="path-tag">source/{iso2}/raw/{id}.{html,xml,docx,txt}</span>
                   </div>
                 </div>
                 <div class="detail-block">
@@ -1130,14 +1148,14 @@
                 <span class="detail-label">Confianza</span>
                 <div class="conf-formula-box">
                   <div class="conf-formula-expr">proporción de caracteres Unicode válidos en el texto extraído</div>
-                  <div class="conf-formula-expr" style="margin-top:4px; color: var(--text-faint);">FLAG si el detector de cabeceros marca sospechas (header_suspect_count &gt; 0) o elimina &gt; 25%</div>
+                  <div class="conf-formula-expr" style="margin-top:4px; color: var(--text-faint);">Gates que MIDEN, no limpian: fragmentación por ancho de columna (línea mediana &lt; 25 car o &gt; 2% de cortes con guion) y garble del prefijo de orador (&gt; 50% en escaneadas → HALT)</div>
                 </div>
               </div>
               <div class="invocation-block">
                 <span class="detail-label">Invocación</span>
                 <pre class="inv-code">/diaries-extract --country {iso2} --all<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
               </div>
-              <p class="card-note"><strong>Cabeceros/pies:</strong> elimina cabeceros y pies recurrentes — page-aware en PDF/OCR; por frecuencia o marcador <code>---PAGE BREAK---</code> en <code>text_flat</code>. Validado en UY/ES con 0 falsos positivos. Config por país: <code>extract.strip_headers</code> · <code>extract.page_break_marker</code>.</p>
+              <p class="card-note"><strong>Capa fiel:</strong> <code>extracted/</code> es el punto de retorno reproducible y no se limpia NUNCA; <code>--strip-headers</code> queda como legado opt-in, fuera del flujo canónico. <strong>XML por parser de país:</strong> la ruta de CL (<code>parse_cl_xml.py</code>) entra ya etiquetada y vinculada directo a <code>matrix</code> — esas sesiones se saltan extract/correct/tag. Config: <code>extract.emit_page_marker</code> · <code>extract.page_marker_format</code> · <code>extract.page_break_marker</code>.</p>
             </div>
           </div>
         </div>
@@ -1152,7 +1170,7 @@
               <span class="phase-badge phase-ingesta">Ingesta</span>
               <span class="level-badge">· Sesión</span>
             </div>
-            <p class="skill-desc">Corrige hifenaciones y párrafos rotos: pase determinista vía script, luego resolución LLM para los saltos ambiguos (lotes de hasta 20 por sesión).</p>
+            <p class="skill-desc">El ÚNICO limpiador del pipeline: secuencia fija de 5 pasos — identificar el separador de página · quitar el mobiliario anclado a él · quitar el separador · aislar los marcadores de orador · restaurar la fluidez (deshifenización + reflujo por ancho de caja).</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
@@ -1179,15 +1197,135 @@
                 </div>
               </div>
               <div class="detail-block">
+                <span class="detail-label">Limpieza por país · descubrimiento + bucle de residuo</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">El mobiliario se DESCUBRE por frecuencia y por década (5 clases: block · line ·
+masthead · prefix · inline) y se guarda en country_config. El config inicial NUNCA
+basta: bucle supervisado descubrir → aplicar → verificar residuo → refinar, con un
+detector independiente del propio config. Deshifenización en dos variantes (salto Y
+guion+espacio, 2ª pasada --textdir con léxico del corpus) · join_split_titles opt-in.
+
+Gates de salida: ningún marcador partido en corrected/ (si no, marker_join_next y
+re-correr) · caída de marcadores extracted → corrected &gt; 2% en una sesión = HALT
+(el acumulador los ENTIERRA — el −N ES la señal). Los Prolegomena JAMÁS se borran.</div>
+                </div>
+              </div>
+              <div class="detail-block">
                 <span class="detail-label">Confianza</span>
                 <div class="conf-formula-box">
-                  <div class="conf-formula-expr">1 − (correcciones_LLM / párrafos_totales)</div>
+                  <div class="conf-formula-expr">integridad del texto: 0.95 si out_chars ≥ 0.80 × in_chars (y salida no vacía); si no, 0.60 → FLAG</div>
                 </div>
               </div>
               <div class="invocation-block">
                 <span class="detail-label">Invocación</span>
                 <pre class="inv-code">/diaries-correct --country {iso2} --all<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- diaries-meta -->
+      <div class="skill-card" id="diaries-meta">
+        <button class="skill-header" aria-expanded="false" aria-controls="body-meta">
+          <div class="skill-header-left">
+            <div class="skill-name-row">
+              <span class="skill-cmd"><span class="skill-cmd-accent">/diaries-</span>meta</span>
+              <span class="phase-badge phase-ingesta">Ingesta</span>
+              <span class="level-badge">· Sesión</span>
+            </div>
+            <p class="skill-desc">Extrae fecha, nº de sesión, tipo, legislatura y la PRESIDENCIA — <strong>por TRAMOS</strong>: la secuencia de quién preside (apertura + relevos), no un solo nombre. <strong>Lee <code>extracted/</code></strong>, la capa fiel: los metadatos viven en el cabecero que <code>correct</code> elimina.</p>
+          </div>
+          <div class="skill-header-right">
+            <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
+            <svg class="expand-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+        </button>
+        <div class="card-body" id="body-meta">
+          <div class="card-body-inner">
+            <div class="card-content">
+              <div class="detail-row">
+                <div class="detail-block">
+                  <span class="detail-label">Entrada</span>
+                  <div class="detail-value">
+                    <span class="path-tag">source/{iso2}/extracted/{session_id}.txt</span>
+                    <span class="path-tag">(respaldo por sesión: corrected/)</span>
+                  </div>
+                </div>
+                <div class="detail-block">
+                  <span class="detail-label">Salida</span>
+                  <div class="detail-value">
+                    <span class="path-tag">source/{iso2}/meta/{session_id}.json</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Confianza · campos extraídos</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">campos_extraídos / 5  &nbsp; <span style="color:var(--diag-muted)"># fecha · número · tipo · presidente · legislatura</span></div>
+                </div>
+              </div>
+              <div class="invocation-block">
+                <span class="detail-label">Invocación</span>
+                <pre class="inv-code">/diaries-meta --country {iso2} --all<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
+              </div>
+              <p class="card-note"><strong>Sin heurística no se asume formato:</strong> se usa la registrada en <code>meta_patterns</code> del config o se DESCUBRE y valida (resolución contra el padrón, contigüidad temporal, cardinalidad, reparto por género). El JSON registra <code>presidency.segments</code> — la lista de tramos, incluido el relevo sin nombre («reasume la Presidencia»). Si <code>date</code> no se resuelve, se deriva al menos el AÑO del <code>session_id</code> (<code>date_year_only</code> + <code>date_source: "session_id_year"</code>) — nunca se inventan día y mes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- diaries-dedupe -->
+      <div class="skill-card" id="diaries-dedupe">
+        <button class="skill-header" aria-expanded="false" aria-controls="body-dedupe">
+          <div class="skill-header-left">
+            <div class="skill-name-row">
+              <span class="skill-cmd"><span class="skill-cmd-accent">/diaries-</span>dedupe</span>
+              <span class="phase-badge phase-entidad">Entidades</span>
+              <span class="level-badge">· País</span>
+            </div>
+            <p class="skill-desc">Detecta y pone en cuarentena las DOS clases de duplicado: <strong>(A)</strong> la misma sesión bajo &gt;1 <code>session_id</code> y <strong>(B)</strong> las filas dobladas por ingesta multi-track dentro de un solo id. <strong>DESPUÉS de <code>meta</code>, ANTES de <code>tag</code></strong>: hacerlo después sesga el inventario estructural del etiquetado.</p>
+          </div>
+          <div class="skill-header-right">
+            <span class="threshold-badge">boletín + fecha</span>
+            <svg class="expand-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+        </button>
+        <div class="card-body" id="body-dedupe">
+          <div class="card-body-inner">
+            <div class="card-content">
+              <div class="detail-row">
+                <div class="detail-block">
+                  <span class="detail-label">Entrada</span>
+                  <div class="detail-value">
+                    <span class="path-tag">source/{iso2}/{corrected,meta,ocr,raw}/</span>
+                    <span class="path-tag">(lee boletín + masthead)</span>
+                  </div>
+                </div>
+                <div class="detail-block">
+                  <span class="detail-label">Salida</span>
+                  <div class="detail-value">
+                    <span class="path-tag">source/{iso2}/_quarantine_duplicates/ + manifest.json</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Regla de duplicado</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">Clase A: mismo boletín  ∧  misma fecha real  &nbsp; <span style="color:var(--diag-muted)"># mismo día con boletín distinto = sesiones legítimas (mañana/tarde)</span>
+Clase B: desplazamiento constante de orden, o solapamiento ≥ 25% → dedup fila a fila  <span style="color:var(--diag-muted)"># &lt; 25% = complementaria, NO se toca</span></div>
+                </div>
+              </div>
+              <div class="invocation-block">
+                <span class="detail-label">Invocación</span>
+                <pre class="inv-code">/diaries-dedupe --country {iso2}            # dry-run
+/diaries-dedupe --country {iso2} --write    # cuarentena (reversible, idempotente)<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
+              </div>
+              <p class="card-note">El estado se registra <strong>POR SESIÓN</strong>: <code>detect_duplicates.py</code> marca <code>complete</code> en cada keeper y <code>skipped</code> en cada redundante — no hay entrada <code>_country</code>. La Clase B siempre informa y pide confirmación explícita; las filas retiradas van a cuarentena reversible con manifiesto, nunca se borran.</p>
             </div>
           </div>
         </div>
@@ -1203,7 +1341,7 @@
               <span class="level-badge">· Sesión</span>
               <span class="critical-tag">⚠ crítico</span>
             </div>
-            <p class="skill-desc">Etiqueta bloques de orador con <code>&lt;int speaker="NOMBRE"&gt;</code>. Pase regex primero; Claude resuelve los spans sospechosos con contexto de 3 líneas.</p>
+            <p class="skill-desc">Etiqueta bloques de orador con <code>&lt;int speaker="NOMBRE"&gt;</code>. Las formas de marcador se DESCUBREN sobre el corpus, nunca se adivinan; pase regex de dos niveles y Claude resuelve los spans sospechosos.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.80</span> / <span class="halt">0.60</span></span>
@@ -1243,61 +1381,38 @@ thresholds.diaries-tag.threshold_flag: 0.60
 speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de oradores, en orden de prioridad</span></div>
                 </div>
               </div>
-              <div class="invocation-block">
-                <span class="detail-label">Invocación</span>
-                <pre class="inv-code">/diaries-tag --country {iso2} --all
-/diaries-tag --country {iso2} --session 1931-07-14 --dry-run<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              <div class="detail-block">
+                <span class="detail-label">Las CINCO clases de marcador · semilla por país</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">FORMAL (la única que abre turno) · APARTE (queda en el texto del anfitrión) ·
+MENCIÓN (se ignora) · VOTO nominal (tag.vote_patterns → dm_speech = 0) ·
+NARRATIVA (tagging_style: narrative — DO/CO: el orador va en una cláusula en prosa).
 
-      <!-- diaries-meta -->
-      <div class="skill-card" id="diaries-meta">
-        <button class="skill-header" aria-expanded="false" aria-controls="body-meta">
-          <div class="skill-header-left">
-            <div class="skill-name-row">
-              <span class="skill-cmd"><span class="skill-cmd-accent">/diaries-</span>meta</span>
-              <span class="phase-badge phase-ingesta">Ingesta</span>
-              <span class="level-badge">· Sesión</span>
-            </div>
-            <p class="skill-desc">Extrae metadatos de sesión (fecha, número, tipo, presidente, legislatura) de las primeras y últimas líneas. LLM solo para campos que el regex no encontró.</p>
-          </div>
-          <div class="skill-header-right">
-            <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
-            <svg class="expand-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-        </button>
-        <div class="card-body" id="body-meta">
-          <div class="card-body-inner">
-            <div class="card-content">
-              <div class="detail-row">
-                <div class="detail-block">
-                  <span class="detail-label">Entrada</span>
-                  <div class="detail-value">
-                    <span class="path-tag">source/{iso2}/corrected/{session_id}.txt</span>
-                  </div>
-                </div>
-                <div class="detail-block">
-                  <span class="detail-label">Salida</span>
-                  <div class="detail-value">
-                    <span class="path-tag">source/{iso2}/meta/{session_id}.json</span>
-                  </div>
+Semilla del descubrimiento: docs/_metodologia/FASE_C_MARCADORES_POR_PAIS.md. Terminadores
+verificados: ES·GT·EC «:» · UY «.—» · EC también «.-» (grafía OCR) · PT «—» solo.
+Tolerancia OCR obligatoria: la ñ rota (seflor, sefior, senor…) · EL→FL · H.D.→HE.</div>
                 </div>
               </div>
               <div class="detail-block">
-                <span class="detail-label">Confianza · campos extraídos</span>
+                <span class="detail-label">⚠ Prerequisito · el corpus debe estar YA deduplicado</span>
                 <div class="conf-formula-box">
-                  <div class="conf-formula-expr">campos_extraídos / 5  &nbsp; <span style="color:var(--diag-muted)"># fecha · número · tipo · presidente · legislatura</span></div>
+                  <div class="conf-formula-expr">/diaries-meta   →  /diaries-dedupe  →  <strong>/diaries-tag</strong>
+
+<span style="color: var(--diag-muted);">El Paso 0c rankea las formas de marcador por frecuencia sobre TODO el corpus
+para decidir cuáles entran al léxico. Con sesiones duplicadas dentro, sus formas
+se cuentan dos veces y la calibración sale sesgada. Deduplicar después NO lo
+arregla: la decisión ya se tomó sobre datos inflados.</span></div>
                 </div>
               </div>
               <div class="invocation-block">
                 <span class="detail-label">Invocación</span>
-                <pre class="inv-code">/diaries-meta --country {iso2} --all<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
+                <pre class="inv-code"># si hay pase de lista, construye antes el padrón y pásalo:
+/diaries-deputies --country {iso2}
+
+/diaries-tag --country {iso2} --all
+/diaries-tag --country {iso2} --session 1931-07-14 --dry-run<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
               </div>
+              <p class="card-warn">⚠ Gate anti-falsos-negativos (<code>verify_tagging.py</code>): una sesión con <code>n_residual_markers ≥ 1</code> va a HALT — ABSOLUTE FAIL, nunca a complete ni a flag. <code>diaries-matrix</code> aborta mientras exista una sola sesión así: un marcador sin etiquetar atribuye su intervención entera al orador anterior, en silencio.</p>
             </div>
           </div>
         </div>
@@ -1312,7 +1427,7 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
               <span class="phase-badge phase-ingesta">Ingesta</span>
               <span class="level-badge">· Sesión</span>
             </div>
-            <p class="skill-desc">Parsea bloques <code>&lt;int&gt;</code> del texto etiquetado y los convierte en filas CSV, enriquecidas con los metadatos de sesión. El CSV es acumulativo por país.</p>
+            <p class="skill-desc">Parsea bloques <code>&lt;int&gt;</code> del texto etiquetado y los convierte en filas CSV con los metadatos de sesión. El CSV es acumulativo por país. Recoge los Prolegomena (orden 0), declara los anexos y audita los marcadores incrustados.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
@@ -1335,14 +1450,32 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
                 <div class="detail-block">
                   <span class="detail-label">Salida</span>
                   <div class="detail-value">
-                    <span class="path-tag">source/{iso2}/interventions_raw.csv</span>
+                    <span class="path-tag">source/{iso2}/matrix/interventions_raw.csv</span>
                   </div>
                 </div>
               </div>
               <div class="detail-block">
                 <span class="detail-label">Confianza</span>
                 <div class="conf-formula-box">
-                  <div class="conf-formula-expr">1 − (bloques_sin_orador / bloques_totales)</div>
+                  <div class="conf-formula-expr">1 − (bloques_sin_orador / bloques_totales)   <span style="color:var(--diag-muted)"># penalizada si la cobertura de tags &lt; 80%</span></div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Gates de la matriz</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">Entrada: ABORTA si alguna sesión de diaries-tag está en HALT por falsos negativos.
+
+Incrustados (marcador absorbido en el text de otra fila): ratio ≤ 0,1% → aceptable,
+split_embedded_markers.py divide el residuo; &gt; 0,1% → NO se parchea el CSV: se
+corrige la capa de origen y se re-corre correct → tag → matrix.
+
+Prolegomena: todo lo anterior al primer marcador entra como fila con
+intervention_order = 0 y dm_speech = 0, sin desplazar la numeración
+(recover_frontmatter.py). Sin tope de longitud.
+
+ANEXOS del diario: dm_speech = 0 SOLO donde el acta marca separador explícito
+(matrix.annex_separator); sin marca no se especula. Default: dm_speech = 1 —
+el 0 solo donde está demostrado.</div>
                 </div>
               </div>
               <div class="invocation-block">
@@ -1363,7 +1496,7 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
               <span class="phase-badge phase-entidad">Entidades</span>
               <span class="level-badge">· País</span>
             </div>
-            <p class="skill-desc">Construye la base de datos de diputados únicos desde fichero externo (si existe) o desde los <code>speaker_raw</code> del CSV con deduplicación RapidFuzz y clustering LLM.</p>
+            <p class="skill-desc">Construye el padrón de diputados. <strong>El prerequisito depende de la ruta</strong>: archivo externo (cualquier momento), <strong>pase de lista nominal desde <code>corrected/</code> (antes de <code>tag</code>)</strong>, o desde los speakers de la matriz. Incluye deduplicación profunda.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
@@ -1379,14 +1512,15 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
                 <div class="detail-block">
                   <span class="detail-label">Entrada</span>
                   <div class="detail-value">
-                    <span class="path-tag">source/{iso2}/interventions_raw.csv</span>
+                    <span class="path-tag">source/{iso2}/matrix/interventions_raw.csv</span>
                     <span class="path-tag">o fichero externo (deputies.external_file)</span>
                   </div>
                 </div>
                 <div class="detail-block">
                   <span class="detail-label">Salida</span>
                   <div class="detail-value">
-                    <span class="path-tag">source/{iso2}/deputies.csv</span>
+                    <span class="path-tag">source/{iso2}/deputies/deputies.csv</span>
+                    <span class="path-tag canonical">source/{iso2}/standardize/{ISO2}_deputies.csv (publicable)</span>
                   </div>
                 </div>
               </div>
@@ -1394,6 +1528,17 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
                 <span class="detail-label">Confianza</span>
                 <div class="conf-formula-box">
                   <div class="conf-formula-expr">1 − (n_diputados_ambiguos / n_diputados_total)</div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Precedencia de fuentes · sex derivada</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">manual &gt; camara:oficial &gt; acta:bloque &gt; registro (jce:) &gt; web &gt; *:inferido &gt; (vacío)
+
+sex es variable DERIVADA: cascada con procedencia declarada en sex_source
+(manual · official_registry · roster · honorific …). El padrón publicable
+standardize/{ISO2}_deputies.csv acompaña a la matriz y se une por
+id_dep + legislature (una fila por persona EN una legislatura).</div>
                 </div>
               </div>
               <div class="invocation-block">
@@ -1415,7 +1560,7 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
               <span class="level-badge">· País</span>
               <span class="critical-tag">⚠ crítico</span>
             </div>
-            <p class="skill-desc">Vincula cada <code>speaker_raw</code> con un <code>id_dep</code>: exacto → RapidFuzz ≥ umbral → Claude con contexto de sesión. Los de baja confianza se marcan FLAG.</p>
+            <p class="skill-desc">Vincula cada <code>speaker_raw</code> con un <code>id_dep</code>: exacto → RapidFuzz ≥ umbral → Claude con contexto de sesión. La tabla CONGELADA de decisiones humanas manda sobre cualquier re-ejecución.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.90</span> / <span class="halt">0.70</span></span>
@@ -1431,14 +1576,14 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
                 <div class="detail-block">
                   <span class="detail-label">Entrada</span>
                   <div class="detail-value">
-                    <span class="path-tag">source/{iso2}/interventions_raw.csv</span>
+                    <span class="path-tag">source/{iso2}/matrix/interventions_raw.csv</span>
                     <span class="path-tag">source/{iso2}/deputies.csv</span>
                   </div>
                 </div>
                 <div class="detail-block">
                   <span class="detail-label">Salida</span>
                   <div class="detail-value">
-                    <span class="path-tag">source/{iso2}/matching_table.csv</span>
+                    <span class="path-tag">source/{iso2}/match/matching_table.csv</span>
                   </div>
                 </div>
               </div>
@@ -1447,6 +1592,20 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
                 <div class="conf-formula-box">
                   <div class="conf-formula-expr">n_vinculados_automáticamente / n_oradores_únicos</div>
                   <div class="conf-formula-expr" style="margin-top:4px; color: var(--text-faint);">Estrategia: exacto → token_sort_ratio ≥ umbral_fuzzy → LLM → unmatched</div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Reglas que mandan sobre el fuzzy</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">CONGELADO: 106.938 decisiones speaker_raw → id_dep en 13 países
+(frozen_matching.py). Se comprueban al inicio (--check) y se RE-IMPONEN al FINAL
+(--apply, Paso 6-final): un reproceso no puede revertirlas. Lo que ya no casa se
+INFORMA en docs/{iso2}/vinculacion_huerfana.csv — nunca se borra.
+
+VENTANA de sesión (match_ventana.py): umbral calibrado POR PAÍS, no transferible.
+GÉNERO del cargo: solo la forma FEMENINA (LA PRESIDENTA) autoriza a vincular por
+sexo; la masculina es genérica, y una forma de cargo nunca se vincula en bloque.
+PRIMACÍA del diario: una intervención NUNCA se elimina porque su orador no case.</div>
                 </div>
               </div>
               <div class="invocation-block">
@@ -1468,7 +1627,7 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
               <span class="phase-badge phase-entidad">Entidades</span>
               <span class="level-badge">· País</span>
             </div>
-            <p class="skill-desc">Join pandas: <code>interventions_raw</code> ⋈ <code>matching_table</code> ⋈ <code>deputies</code>. Completamente determinista, sin LLM. Añade todas las columnas del diputado a cada fila.</p>
+            <p class="skill-desc">Join period-aware de matriz + tabla de vinculación + padrón. Incluye el <strong>Paso 3-bis</strong>: atribuye los roles de mesa sin nombre por TRAMO de presidencia (<code>attribute_presidency.py</code>) — hasta el 42&nbsp;% del corpus — y el gate de integridad referencial matriz ↔ padrón.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
@@ -1492,14 +1651,55 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
                 <div class="detail-block">
                   <span class="detail-label">Salida</span>
                   <div class="detail-value">
-                    <span class="path-tag">source/{iso2}/interventions_enriched.csv</span>
+                    <span class="path-tag">source/{iso2}/merge/interventions_enriched.csv</span>
                   </div>
                 </div>
               </div>
               <div class="detail-block">
                 <span class="detail-label">Confianza</span>
                 <div class="conf-formula-box">
-                  <div class="conf-formula-expr">n_filas_con_id_dep / n_filas_totales</div>
+                  <div class="conf-formula-expr">n_filas_con_id_dep / n_filas_totales   <span style="color:var(--diag-muted)"># recalculada sobre el enriched FINAL, tras 3-bis</span></div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Paso 3-bis · Atribución de la presidencia por TRAMO (president_meta)</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">Muchas cámaras etiquetan a quien preside solo con el cargo (PRESIDENTE,
+PRESIDENTA, O SR. PRESIDENTE), sin nombre. Sin este paso esas filas se
+quedan sin id_dep para siempre:   PE 42,1%   ·   DO 36,5%   del corpus.
+
+Se ejecuta con attribute_presidency.py (--apply / --check), parametrizado en
+country_config (presidency: scope session|segments · sources · target_exclude ·
+back_to_base) — NO se escribe un script por país. El modo por tramos sigue los
+relevos que el propio acta declara (meta los registra en presidency.segments):
+un solo presidente por sesión falla el 35,0% de los casos (UY, medido).
+Marca match_method = "president_meta" para que el origen quede auditable.
+
+<span style="color: var(--diag-critical);">⚠ REGLA DE PARADA — no inventes cuando hay varias presidencias:</span>
+  1 sola presidencia .................. atribuye
+  varias, distinto sexo ............... desempata con PRESIDENTE/PRESIDENTA
+                                        contra el sexo del padrón
+  conviven titular y «en funciones»,
+  o 2+ del mismo sexo ................. <span style="color: var(--diag-critical);">NO atribuyas</span> — el acta nombra a
+                                        quienes presidieron, pero no dice
+                                        cuándo se produjo el relevo</div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Paso 3d · Consistencia temporal (obligatoria)</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">fecha_inicio ≤ date ≤ fecha_fin   para toda fila con id_dep
+referencias: DO 99,96%   ·   PE 97,40%      <span style="color: var(--diag-muted);">&lt; 99% → FLAG</span></div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Paso 3-ter · Integridad referencial matriz ↔ padrón (Gate E)</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">Todo id_dep del enriched debe existir en deputies.csv, y todo par
+(id_dep, legislatura) debe existir en el padrón. Se comprueba ANTES de standardize.
+id_dep inexistente → error duro: se corrige, no pasa al canónico. Par huérfano →
+la fila NUNCA se elimina (primacía del diario): se completa el padrón o se declara
+en process_report.md como medida de completitud.</div>
                 </div>
               </div>
               <div class="invocation-block">
@@ -1520,7 +1720,7 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
               <span class="phase-badge phase-final">Finalización</span>
               <span class="level-badge">· País</span>
             </div>
-            <p class="skill-desc">Reordena al esquema canónico de 10 columnas, valida cada fila con Pydantic v2 y aplica el separador del país. Protege el archivo canónico final con guardia <code>--force</code>.</p>
+            <p class="skill-desc">Reordena al esquema canónico de 16 columnas, valida cada fila con Pydantic v2 y asigna <code>id_session</code>/<code>id_int</code> con <code>asignar_ids.py</code>. Protege el archivo canónico final con guardia <code>--force</code>.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge"><span class="auto">0.85</span> / <span class="halt">0.65</span></span>
@@ -1540,23 +1740,57 @@ speaker_tag_patterns: [...]   <span style="color: var(--diag-muted);"># regex de
                   </div>
                 </div>
                 <div class="detail-block">
-                  <span class="detail-label">Salida ⚠ canónica</span>
+                  <span class="detail-label">Salida ⚠ canónica · la entrega son DOS archivos</span>
                   <div class="detail-value">
                     <span class="path-tag canonical">source/{iso2}/standardize/{ISO2}_interventions.csv</span>
+                    <span class="path-tag">source/{iso2}/standardize/{ISO2}_deputies.csv (padrón, join por id_dep)</span>
                   </div>
                 </div>
               </div>
               <div class="detail-block">
-                <span class="detail-label">Columnas canónicas (en orden)</span>
+                <span class="detail-label">Columnas canónicas — 16 (en orden)</span>
                 <div class="conf-formula-box">
-                  <div class="conf-formula-expr">legislature · session_number · date · session_type · speaker_raw
-id_dep · speaker_name · party · district · text</div>
+                  <div class="conf-formula-expr">id_session · id_int · legislature · legislative_session · session_number · date
+session_type · intervention_order · speaker_raw · id_dep · speaker_name · sex
+party · district · dm_speech · text
+
+id_session/id_int los asigna asignar_ids.py · dm_speech binaria (el 0 solo donde
+está demostrado) · Prolegomena = intervention_order 0 · separador «;» SOLO ES y GT</div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">Paso 4-bis · legislature &nbsp;·&nbsp; Paso 4-ter · ids en TRES sub-pasos</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">4-bis: legislature se normaliza al PERÍODO CONSTITUCIONAL — comprobar la
+cardinalidad (en DO la fuente daba 145 valores para 7 legislaturas reales).
+
+4-ter, en orden fijo:
+  a) desdoblar Prolegomena duplicados (desdoblar_prolegomena_duplicado.py:
+     copias exactas fuera, las distintas se sufijan 104 → 104B)
+  b) asignar_ids.py — {ISO2}{leg:03d}{ses:04d}{orden:05d}; se niega si hay colisión
+  c) verificar VALORES: id_int no vacío y único (rc=0 no basta — buscar «✗»)</div>
                 </div>
               </div>
               <div class="detail-block">
                 <span class="detail-label">Confianza</span>
                 <div class="conf-formula-box">
                   <div class="conf-formula-expr">1 − (errores_validación_pydantic / n_filas)</div>
+                </div>
+              </div>
+              <div class="detail-block">
+                <span class="detail-label">⚠ Seguridad de reejecución · qué destruye un --force</span>
+                <div class="conf-formula-box">
+                  <div class="conf-formula-expr">El guardia protege el archivo, pero NO avisa de lo que se pierde. Sobre un
+corpus ya cerrado suele haber operaciones POSTERIORES al pipeline estándar:
+
+  1 · sidecar LEGADO                   → sus filas se reintegran con dm_speech=0;
+                                          nada se vuelve a apartar
+  2 · atribuciones post-merge          → viven solo en el enriched, no en
+      (match_method = president_meta)     la matching_table
+  3 · correcciones humanas             → manual / NOT_SPEAKER / role
+
+<span style="color: var(--diag-critical);">Compara SIEMPRE el recuento antes y después.</span> Si al regenerar bajan las filas
+vinculadas, has perdido trabajo: recupéralo del backup antes de continuar.</div>
                 </div>
               </div>
               <div class="invocation-block">
@@ -1579,7 +1813,7 @@ id_dep · speaker_name · party · district · text</div>
               <span class="phase-badge phase-final">Finalización</span>
               <span class="level-badge">· País</span>
             </div>
-            <p class="skill-desc">Genera la documentación completa del corpus: metodología, diccionario de datos, fuentes y metadatos JSON-LD (Schema.org). Completamente determinista, sin LLM.</p>
+            <p class="skill-desc">Entrevista al procesador (<code>corpus_info.json</code> reutilizable) y genera README, diccionario de datos y metadatos JSON-LD (Schema.org). Documenta la entrega de DOS archivos y publica la vinculación bruta Y la efectiva.</p>
           </div>
           <div class="skill-header-right">
             <span class="threshold-badge">1.0 · determinista</span>
@@ -1598,6 +1832,8 @@ id_dep · speaker_name · party · district · text</div>
                     <span class="path-tag">country_config/{iso2}.yaml</span>
                     <span class="path-tag">state/{iso2}/pipeline_state.json</span>
                     <span class="path-tag">source/{iso2}/standardize/{ISO2}_interventions.csv</span>
+                    <span class="path-tag">source/{iso2}/standardize/{ISO2}_deputies.csv</span>
+                    <span class="path-tag">match/matching_table.csv (vinculación efectiva)</span>
                   </div>
                 </div>
                 <div class="detail-block">
@@ -1614,6 +1850,7 @@ id_dep · speaker_name · party · district · text</div>
                 <span class="detail-label">Invocación</span>
                 <pre class="inv-code">/diaries-document --country {iso2}<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
               </div>
+              <p class="card-note"><strong>Dos tasas, dos archivos:</strong> el README enuncia la vinculación <strong>bruta</strong> (filas con id_dep / total) Y la <strong>efectiva</strong> (excluido el denominador no vinculable: mesa sin persona, NOT_SPEAKER, no-discurso). <code>dataset.jsonld</code> declara los DOS archivos de la distribución: <code>{ISO2}_interventions.csv</code> + <code>{ISO2}_deputies.csv</code> (unible por <code>id_dep</code> + <code>legislature</code>). La documentación se regenera SIEMPRE entera y por una sola puerta.</p>
             </div>
           </div>
         </div>
@@ -1634,13 +1871,13 @@ id_dep · speaker_name · party · district · text</div>
 
       <div class="ctrl-card">
         <div class="ctrl-cmd"><span class="accent">/diaries-</span>status</div>
-        <p class="ctrl-desc">Muestra el estado actual del pipeline en tabla: skills × niveles (completo / flag / halt / pendiente) para todos los países activos.</p>
+        <p class="ctrl-desc">Muestra el estado del pipeline en tabla: los 13 skills en su orden canónico (bootstrap → ocr → extract → correct → meta → dedupe → tag → matrix → deputies → match → merge → standardize → document) × niveles (completo / flag / halt / pendiente). <code>dedupe</code> se cuenta POR SESIÓN.</p>
         <pre class="ctrl-usage">/diaries-status --country {iso2}</pre>
       </div>
 
       <div class="ctrl-card">
         <div class="ctrl-cmd"><span class="accent">/diaries-</span>review</div>
-        <p class="ctrl-desc">Revisión interactiva de casos FLAG. Para cada caso: muestra evidencia y confianza, y pide decisión: <code>[A]</code>ceptar · <code>[C]</code>orregir · <code>[E]</code>scalar · <code>[S]</code>altar.</p>
+        <p class="ctrl-desc">Revisión interactiva de casos FLAG <strong>y HALT</strong>. Para cada FLAG: evidencia, confianza y decisión <code>[A]</code>ceptar · <code>[C]</code>orregir · <code>[E]</code>scalar · <code>[S]</code>altar. Los HALT se listan con su error y se marcan resueltos tras la intervención manual.</p>
         <pre class="ctrl-usage">/diaries-review --country {iso2}</pre>
       </div>
 
@@ -1661,9 +1898,29 @@ id_dep · speaker_name · party · district · text</div>
 # Salida: docs/{iso2}/process_report.md</pre>
       </div>
 
+      <div class="ctrl-card" style="border-color: var(--accent-subtle);">
+        <div class="ctrl-cmd"><span class="accent">/diaries-</span>decide</div>
+        <p class="ctrl-desc">Registra una decisión metodológica <strong>en el momento</strong>, con su evidencia. Capturar e informar son cosas distintas: lo que no se captura cuando se decide, se pierde. La <strong>evidencia es obligatoria y se valida</strong> — existe para impedir que se registre una preferencia como si fuera un hallazgo. Las decisiones <strong>superadas no se borran</strong>: se marcan y se enlazan desde la que las anula, y esa cadena es el historial de correcciones del corpus.</p>
+        <pre class="ctrl-usage">/diaries-decide   # modo interactivo
+
+# consultar lo registrado
+python3 ~/.claude/skills/diaries-lib/lib/utils/record_decision.py \
+  --pais {iso2} --listar
+
+# regenerar el documento metodológico
+python3 scripts/generar_metodologia.py
+# Salida: docs/_metodologia/generados/METODOLOGIA.md</pre>
+      </div>
+
+      <div class="ctrl-card">
+        <div class="ctrl-cmd"><span class="accent">/diaries-</span>validate</div>
+        <p class="ctrl-desc">Valida la integridad estructural del corpus por muestreo, con auto-filtro PASS/FLAG y <strong>calibración empírica de la tasa de fuga</strong>. Produce la cifra de calidad que el corpus puede afirmar, no la que se supone.</p>
+        <pre class="ctrl-usage">/diaries-validate --country {iso2}</pre>
+      </div>
+
       <div class="ctrl-card">
         <div class="ctrl-cmd"><span class="accent">/diaries-</span>teach</div>
-        <p class="ctrl-desc">Guía interactiva del sistema. Ofrece 7 caminos: visión general, nuevo país, retomar pipeline, problemas por skill, sistema AUTO/FLAG/HALT, correcciones, mapa completo.</p>
+        <p class="ctrl-desc">Guía interactiva del sistema. Ofrece 8 caminos: visión general, nuevo país, retomar pipeline, problemas por skill, sistema AUTO/FLAG/HALT, correcciones, mapa completo y registro de decisiones metodológicas.</p>
         <pre class="ctrl-usage">/diaries-teach</pre>
       </div>
 
@@ -1713,9 +1970,16 @@ id_dep · speaker_name · party · district · text</div>
 /diaries-extract --country {iso2} --all
 /diaries-correct --country {iso2} --all
 /diaries-review --country {iso2}
+
+# meta y dedupe ANTES de tag
+/diaries-meta --country {iso2} --all
+/diaries-dedupe --country {iso2}
+
+# opcional: si hay pase de lista nominal
+/diaries-deputies --country {iso2}
+
 /diaries-tag --country {iso2} --all
 /diaries-review --country {iso2}
-/diaries-meta --country {iso2} --all
 /diaries-matrix --country {iso2} --all</code>
           </div>
         </div>
@@ -1800,7 +2064,7 @@ id_dep · speaker_name · party · district · text</div>
             <span class="install-num">1</span>
             <span class="install-step-title">Clonar el repositorio</span>
           </div>
-          <p class="install-step-desc">El repositorio incluye las utilidades Python y el instalador. Los 18 skills se mantienen aparte, en <code>~/.claude/skills/</code> (fuente única, versionada con git ahí).</p>
+          <p class="install-step-desc">El repositorio incluye las utilidades Python y el instalador. Los 21 skills se mantienen aparte, en <code>~/.claude/skills/</code> (fuente única, versionada con git ahí).</p>
           <pre class="install-code">git clone &lt;repo-url&gt; diaries<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
         </div>
 
@@ -1809,7 +2073,7 @@ id_dep · speaker_name · party · district · text</div>
             <span class="install-num">2</span>
             <span class="install-step-title">Ejecutar el instalador</span>
           </div>
-          <p class="install-step-desc">Un único script instala las dependencias Python, verifica que los 18 skills estén en <code>~/.claude/skills/</code> y crea la estructura de directorios.</p>
+          <p class="install-step-desc">Un único script instala las dependencias Python, verifica que los 21 skills estén en <code>~/.claude/skills/</code> y crea la estructura de directorios.</p>
           <pre class="install-code">cd diaries
 bash install.sh<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
         </div>
@@ -1825,14 +2089,14 @@ bash install.sh<button class="copy-btn" onclick="copyCode(this)">Copiar</button>
 
         <div style="background: var(--bg-alt); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s4) var(--s6); font-size: 13px; display: flex; flex-direction: column; gap: var(--s3);">
           <p style="font-family: var(--ff-display); font-weight: 600; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint);">Skills · fuente única</p>
-          <p style="color: var(--text-muted); line-height: 1.6;">Los 18 SKILL.md son la <strong>fuente única</strong> en <code>~/.claude/skills/diaries-*/</code> (versionada con git ahí, disponible a cualquier harness). <strong>No hay copia en el repo.</strong> Se editan directamente allí — p.ej. con <code>/diaries-refine</code>, cuyo cambio queda activo de inmediato y se registra en <code>REFINEMENTS.md</code>. No hay que copiar ni sincronizar.</p>
+          <p style="color: var(--text-muted); line-height: 1.6;">Los 21 SKILL.md son la <strong>fuente única</strong> en <code>~/.claude/skills/diaries-*/</code> (versionada con git ahí, disponible a cualquier harness). <strong>No hay copia en el repo.</strong> Se editan directamente allí — p.ej. con <code>/diaries-refine</code>, cuyo cambio queda activo de inmediato y se registra en <code>REFINEMENTS.md</code>. No hay que copiar ni sincronizar.</p>
         </div>
 
         <div style="background: var(--secondary-subtle); border: 1px solid oklch(85% 0.030 230); border-radius: var(--r-md); padding: var(--s4) var(--s6); font-size: 13px;">
           <p style="font-family: var(--ff-display); font-weight: 600; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--secondary); margin-bottom: var(--s3);">Ollama · OCR local</p>
           <p style="color: var(--text-muted); margin-bottom: var(--s3);">Necesario solo para PDFs escaneados (<code>pdf_image</code>). El instalador avisa si falta.</p>
           <pre style="font-family: var(--ff-mono); font-size: 12px; color: var(--text-muted); background: none; padding: 0; line-height: 1.7;">ollama pull Maternion/LightOnOCR-2:1b  # primario
-ollama pull glm-ocr                    # fallback</pre>
+ollama pull glm-ocr                    # fallback por defecto (por país)</pre>
         </div>
 
       </div>
@@ -1843,7 +2107,7 @@ ollama pull glm-ocr                    # fallback</pre>
         <pre style="font-family: var(--ff-mono); font-size: 12px; color: var(--text-muted); line-height: 1.7;">source/{iso2}/
 ├── raw/                  ← fuentes originales (tú las colocas)
 ├── ocr/{session_id}/     ← páginas OCR por sesión
-├── extracted/            ← texto limpio (sin cabeceros/pies)
+├── extracted/            ← texto FIEL (conserva ---PAGE N---)
 ├── corrected/            ← párrafos corregidos
 ├── tagged/               ← texto con &lt;int&gt; tags
 ├── meta/                 ← JSON de metadatos
@@ -1851,7 +2115,8 @@ ollama pull glm-ocr                    # fallback</pre>
 ├── deputies/             ← deputies.csv
 ├── match/                ← matching_table.csv
 ├── merge/                ← interventions_enriched.csv
-└── standardize/          ← {ISO2}_interventions.csv  (canónico ⚠)
+└── standardize/          ← {ISO2}_interventions.csv (canónico ⚠)
+                            + {ISO2}_deputies.csv (padrón publicable)
 
 docs/{iso2}/
 ├── README.md          ← documentación principal del corpus
@@ -1874,7 +2139,7 @@ docs/{iso2}/
             </div>
             <div style="display: flex; gap: var(--s3);">
               <span style="color: var(--auto); flex-shrink: 0;">✓</span>
-              <span>Verifica los 18 skills en <code>~/.claude/skills/</code> (fuente única; no los copia)</span>
+              <span>Verifica los 21 skills en <code>~/.claude/skills/</code> (fuente única; no los copia)</span>
             </div>
             <div style="display: flex; gap: var(--s3);">
               <span style="color: var(--auto); flex-shrink: 0;">✓</span>
@@ -1905,7 +2170,7 @@ docs/{iso2}/
     <div class="footer-inner">
       <div>
         <div class="footer-brand">Parla<span>Ibero</span> · diaries-<span>*</span></div>
-        <p class="footer-copy">Pipeline de Diarios Parlamentarios · 18 skills nativos de Claude Code</p>
+        <p class="footer-copy">Pipeline de Diarios Parlamentarios · 21 skills nativos de Claude Code</p>
       </div>
       <div class="footer-links">
         <a href="#pipeline">Arquitectura</a>
