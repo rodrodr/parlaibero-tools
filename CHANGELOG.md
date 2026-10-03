@@ -2,6 +2,10 @@
 
 ## Sin publicar
 
+- Todas las herramientas de análisis devuelven el DOI y la edición de los conjuntos que usaron
+  (antes, solo `ngram_viewer`, `term_counter` y `share_of_voice`).
+- Varias variantes con `+` ya no se combinan en una sola alternancia RE2: un `regexp_matches` por
+  variante, unidas con OR. «cambio climático» con cuatro formas en los 16 países: de más de 10 min a 16 s.
 - `download` en la terminal: una sola línea de progreso por fichero de datos; los de documentación
   se resumen en una línea en vez de imprimirse dos veces con «0 / 0 MB».
 

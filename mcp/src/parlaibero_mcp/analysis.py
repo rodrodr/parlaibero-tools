@@ -156,6 +156,11 @@ def _undated_note(f: Filters) -> list[str]:
             ", ".join(f"{r['country']} {r['n']:,} rows in {r['s']} sessions" for r in rows) + "."]
 
 
+def _scope(f: "Filters") -> list[str]:
+    """Countries an analysis touched: the ones asked for, or every loaded one."""
+    return f.countries or sorted(store.loaded())
+
+
 def _versions(isos) -> dict:
     loaded = store.loaded()
     return {i: {"doi": COUNTRIES[i][2], "version": (loaded.get(i) or {}).get("version")} for i in sorted(isos)}
@@ -581,7 +586,7 @@ def distinctive_words(f: Filters, field: str, a: str, b: str | None = None, top:
             "words_a": na, "words_b": nb, "method": "unigram index" if use_uni else "exact scan",
             "distinctive_of_a": [{k_: v for k_, v in r.items() if k_ != "side"} for r in rows if r["side"] == "a"],
             "distinctive_of_b": [{k_: v for k_, v in r.items() if k_ != "side"} for r in rows if r["side"] == "b"],
-            "notes": notes}
+            "notes": notes, "datasets": _versions(_scope(f))}
 
 
 # ── concordances and collocations ─────────────────────────────────────────────
@@ -622,7 +627,7 @@ def kwic(pattern: str, f: Filters, regex: bool = False, whole_word: bool = True,
     view = "\n".join(f"{l['date']} {l['country']} | {l['left']:>{width}} [[{l['match']}]] {l['right']}"
                      for l in lines)
     return {"pattern": pattern, "total_matching_interventions": total, "sampled_interventions": len(rows),
-            "order": order, "lines": lines, "text_view": view}
+            "order": order, "lines": lines, "text_view": view, "datasets": _versions(_scope(f))}
 
 
 def collocations(pattern: str, f: Filters, window: int = 5, top: int = 30, min_count: int = 5,
@@ -684,7 +689,7 @@ def collocations(pattern: str, f: Filters, window: int = 5, top: int = 30, min_c
     out.sort(key=lambda x: -x["log_likelihood"])
     return {"pattern": pattern, "window": window, "total_matching_interventions": total,
             "sampled_interventions": len(rows), "term_occurrences_in_sample": hits,
-            "collocates": out[:top],
+            "collocates": out[:top], "datasets": _versions(_scope(f)),
             "note": "Dunning log-likelihood of each word inside the window versus elsewhere in the same "
                     "interventions; G² > 10.8 ≈ p < 0.001. Run twice with different dates to compare periods."}
 
@@ -734,6 +739,7 @@ def coverage(f: Filters, by: str = "year") -> dict:
             pass
         summary[c] = info
     return {"by": by, "filters": _filters_dict(f), "summary": summary, "rows": rows,
+            "datasets": _versions(per_country),
             "notes": ["linked_pct: speech rows with an id_dep (gross linkage). corpus_linkage.effective "
                       "discounts speakers who cannot hold a seat; read known_limitations for each country.",
                       f"low_base: under {LOW_BASE_WORDS:,} speech words or {LOW_BASE_SESSIONS} sessions.",
@@ -841,4 +847,5 @@ def term_frequency(pattern: str, f: Filters, by: str = "year", max_rows: int = 3
     rows = _q(sql, pre + occ_params + p, max_rows=max_rows)
     return {"term": s["label"], "variants": s["variants"], "by": by, "filters": _filters_dict(f),
             "rows": [{k: store.jsonable(v) for k, v in r.items()} for r in rows],
-            "note": "Whole-word, case- and accent-insensitive; '+' sums variants, '*' ends a prefix."}
+            "note": "Whole-word, case- and accent-insensitive; '+' sums variants, '*' ends a prefix.",
+            "datasets": _versions(_scope(f))}
