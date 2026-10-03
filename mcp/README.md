@@ -11,18 +11,20 @@ Nothing is sent anywhere except plain GET requests to Dataverse.
 
 ## Install
 
-You need [uv](https://docs.astral.sh/uv/getting-started/installation/). No clone is required.
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/). The package is on
+[PyPI](https://pypi.org/project/parlaibero-mcp/); no clone is required. For the development version,
+replace `parlaibero-mcp` with `--from "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp" parlaibero-mcp`.
 
 **Claude Code**
 
 ```bash
-claude mcp add parlaibero -s user -- uvx --from "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp" parlaibero-mcp
+claude mcp add parlaibero -s user -- uvx parlaibero-mcp
 ```
 
 **Codex CLI**
 
 ```bash
-codex mcp add parlaibero -- uvx --from "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp" parlaibero-mcp
+codex mcp add parlaibero -- uvx parlaibero-mcp
 ```
 
 **Claude Desktop** (`claude_desktop_config.json`), **Cursor** (`~/.cursor/mcp.json`), **Gemini CLI**
@@ -33,7 +35,7 @@ codex mcp add parlaibero -- uvx --from "git+https://github.com/rodrodr/parlaiber
   "mcpServers": {
     "parlaibero": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp", "parlaibero-mcp"]
+      "args": ["parlaibero-mcp"]
     }
   }
 }
@@ -42,7 +44,7 @@ codex mcp add parlaibero -- uvx --from "git+https://github.com/rodrodr/parlaiber
 Desktop apps do not always see your shell's `PATH`: if the server fails to start, replace `"uvx"` with
 the full path printed by `which uvx` (e.g. `/Users/you/.local/bin/uvx`).
 
-To install it as a regular command instead: `uv tool install "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp"`,
+To install it as a regular command instead: `uv tool install parlaibero-mcp`,
 then use `parlaibero-mcp` as the command.
 
 ## Tools

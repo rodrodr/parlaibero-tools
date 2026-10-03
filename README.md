@@ -29,7 +29,7 @@ Requisito: [uv](https://docs.astral.sh/uv/getting-started/installation/) (instal
 **Claude Code**
 
 ```bash
-claude mcp add parlaibero -s user -- uvx --from "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp" parlaibero-mcp
+claude mcp add parlaibero -s user -- uvx parlaibero-mcp
 ```
 
 **Claude Desktop, Cursor, Gemini CLI y otros** (bloque `mcpServers` de su configuración):
@@ -39,7 +39,7 @@ claude mcp add parlaibero -s user -- uvx --from "git+https://github.com/rodrodr/
   "mcpServers": {
     "parlaibero": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp", "parlaibero-mcp"]
+      "args": ["parlaibero-mcp"]
     }
   }
 }
@@ -76,7 +76,7 @@ Los datos se guardan en `~/.parlaibero` (o en `PARLAIBERO_HOME`). Los 16 países
 grandes pueden descargarse desde la terminal, para no depender del tiempo de espera del cliente:
 
 ```bash
-uvx --from "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp" parlaibero-mcp download ES MX
+uvx parlaibero-mcp download ES MX
 ```
 
 Más detalles en [`mcp/README.md`](mcp/README.md).
@@ -138,7 +138,7 @@ This repository provides:
 - **[`mcp/`](mcp/), an MCP server** that downloads the datasets and lets any MCP-capable agent
   (Claude Code, Claude Desktop, Cursor, Codex, Gemini CLI…) search, count and read them. Install it
   in Claude Code with
-  `claude mcp add parlaibero -s user -- uvx --from "git+https://github.com/rodrodr/parlaibero-tools#subdirectory=mcp" parlaibero-mcp`.
+  `claude mcp add parlaibero -s user -- uvx parlaibero-mcp`.
   See [`mcp/README.md`](mcp/README.md) for other clients.
 - **[`skills/`](skills/), the 21 `diaries-*` Claude Code skills** and their Python code: the
   pipeline that turned session diaries (PDF/HTML) into the corpus, from OCR to the canonical
@@ -179,3 +179,14 @@ Grant PID2022-141706NB-C22 funded by MICIU/AEI/10.13039/501100011033 and by ERDF
 investigador, y `python3 maintainer/sync_skills.py` la exporta excluyendo respaldos y estado de
 proyecto, convierte las rutas absolutas en relativas y falla si queda alguna ruta personal o algo
 con aspecto de credencial.
+
+**Publicar una versión nueva del MCP en PyPI.** Sube el número en `mcp/pyproject.toml`,
+`mcp/src/parlaibero_mcp/__init__.py` y `CITATION.cff`, añade la entrada a `CHANGELOG.md`, y luego:
+
+```bash
+cd mcp && rm -rf dist && uv build --out-dir dist && uvx twine check dist/*
+cd .. && set -a && source .env && set +a && cd mcp && uv publish dist/*
+```
+
+`.env` (fuera de git) contiene `UV_PUBLISH_TOKEN`. Una versión publicada no se puede volver a subir:
+cualquier corrección sale con un número nuevo.
