@@ -180,19 +180,14 @@ def _variant_count_rx(variant: str) -> str:
     return " " + "  ".join(parts) + " "
 
 
-def _series_sql(variants: list[str], params: list) -> tuple[str, str]:
-    """(prefilter condition, occurrence expression) for a series made of summed variants."""
-    pre = "(?:" + "|".join(search_regex(v, whole_word=True)[4:] for v in variants) + ")"
-    params_pre = ["(?i)" + pre]
-    occ_parts = []
-    occ_params = []
-    for v in variants:
-        occ_parts.append(f"len(regexp_extract_all({_NORM}, ?))")
-        occ_params.append(_variant_count_rx(v))
-    params.extend(params_pre)
-    cond = "regexp_matches(text, ?)"
-    occ = " + ".join(occ_parts)
-    return cond, occ, occ_params
+def _series_sql(variants: list[str], params: list) -> tuple[str, str, list]:
+    """(prefilter condition, occurrence expression, occurrence params) for a series of summed
+    variants. The prefilter params are appended to `params`. One regexp_matches per variant joined
+    with OR: a single RE2 alternation of accent-tolerant classes is ~60× slower (38 s vs 0.6 s)."""
+    cond = "(" + " OR ".join("regexp_matches(text, ?)" for _ in variants) + ")"
+    params.extend(search_regex(v, whole_word=True) for v in variants)
+    occ = " + ".join(f"len(regexp_extract_all({_NORM}, ?))" for _ in variants)
+    return cond, occ, [_variant_count_rx(v) for v in variants]
 
 
 # ── ngram viewer ──────────────────────────────────────────────────────────────
@@ -833,17 +828,17 @@ def term_frequency(pattern: str, f: Filters, by: str = "year", max_rows: int = 3
     if by not in GROUPS:
         raise ValueError(f"by must be one of {', '.join(GROUPS)}")
     s = parse_terms(pattern.replace(",", "+"))[0]
+    pre: list = []
+    cond, occ, occ_params = _series_sql(s["variants"], pre)
     p: list = []
-    _, occ, occ_params = _series_sql(s["variants"], p)
-    pre = p[0]
-    w = f.where(p := [])
-    sql = (f"WITH t AS (SELECT {GROUPS[by]} AS grp, n_words, CASE WHEN regexp_matches(text, ?) "
+    w = f.where(p)
+    sql = (f"WITH t AS (SELECT {GROUPS[by]} AS grp, n_words, CASE WHEN {cond} "
            f"THEN {occ} ELSE 0 END AS occ FROM interventions WHERE text IS NOT NULL{w}) "
            f"SELECT grp AS {by}, sum(occ) AS occurrences, count(*) FILTER (WHERE occ > 0) AS "
            f"interventions_using, sum(n_words) AS total_words, "
            f"round(sum(occ) * 1e6 / nullif(sum(n_words), 0), 2) AS per_million_words "
            f"FROM t GROUP BY grp ORDER BY " + ("occurrences DESC" if by in ("speaker", "party") else "grp"))
-    rows = _q(sql, [pre] + occ_params + p, max_rows=max_rows)
+    rows = _q(sql, pre + occ_params + p, max_rows=max_rows)
     return {"term": s["label"], "variants": s["variants"], "by": by, "filters": _filters_dict(f),
             "rows": [{k: store.jsonable(v) for k, v in r.items()} for r in rows],
             "note": "Whole-word, case- and accent-insensitive; '+' sums variants, '*' ends a prefix."}

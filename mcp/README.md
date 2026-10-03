@@ -27,6 +27,28 @@ claude mcp add parlaibero -s user -- uvx parlaibero-mcp
 codex mcp add parlaibero -- uvx parlaibero-mcp
 ```
 
+**ChatGPT desktop app** and **Codex** share one configuration (`~/.codex/config.toml`). The command above
+writes it; or add by hand:
+
+```toml
+[mcp_servers.parlaibero]
+command = "uvx"
+args = ["parlaibero-mcp"]
+```
+
+ChatGPT on the web only accepts remote servers, so it cannot use this one.
+
+**OpenCode** (`~/.config/opencode/opencode.json`):
+
+```json
+{
+  "mcp": {
+    "parlaibero": { "type": "local", "command": ["uvx", "parlaibero-mcp"], "enabled": true }
+  }
+}
+```
+
+**Antigravity** (`~/.gemini/config/mcp_config.json`, or *MCP Servers → Manage → View raw config*),
 **Claude Desktop** (`claude_desktop_config.json`), **Cursor** (`~/.cursor/mcp.json`), **Gemini CLI**
 (`~/.gemini/settings.json`), **Windsurf** and most other clients use the same block:
 

@@ -17,7 +17,7 @@ Este repositorio ofrece dos cosas:
 
 | | qué es | para quién |
 |---|---|---|
-| [`mcp/`](mcp/) | **Servidor MCP** que descarga los datos de Dataverse y permite consultarlos desde Claude Code, Claude Desktop, Cursor, Codex, Gemini CLI o cualquier agente compatible con MCP | quien quiere **usar** los datos |
+| [`mcp/`](mcp/) | **Servidor MCP** que descarga los datos de Dataverse y permite consultarlos desde Claude, ChatGPT (aplicación de escritorio), Antigravity, OpenCode, Cursor, Codex o cualquier agente compatible con MCP | quien quiere **usar** los datos |
 | [`skills/`](skills/) | Los **21 skills `diaries-*`** y su código (`diaries-lib`): la tubería que convirtió los diarios de sesiones (PDF y HTML) en esas matrices | quien quiere **reproducir** el corpus o **construir** uno nuevo |
 
 *[English below](#english).*
@@ -32,7 +32,7 @@ Requisito: [uv](https://docs.astral.sh/uv/getting-started/installation/) (instal
 claude mcp add parlaibero -s user -- uvx parlaibero-mcp
 ```
 
-**Claude Desktop, Cursor, Gemini CLI y otros** (bloque `mcpServers` de su configuración):
+**Claude Desktop, Cursor, Antigravity, Gemini CLI y otros** (bloque `mcpServers` de su configuración; ChatGPT de escritorio, OpenCode y Codex, en [`mcp/README.md`](mcp/README.md)):
 
 ```json
 {
