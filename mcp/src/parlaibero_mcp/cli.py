@@ -8,13 +8,20 @@ from . import __version__
 from .catalog import COUNTRIES
 
 
+_done: set[str] = set()
+
+
 def _bar(name: str, done: int, total: int | None) -> None:
+    """One updating line per data file; small documentation files are not shown."""
+    if name in _done or (total is not None and total < 2**20):
+        return
     if total:
         sys.stderr.write(f"\r  {name}: {done / 2**20:7.0f} / {total / 2**20:.0f} MB ({done / total:5.1%})")
     else:
         sys.stderr.write(f"\r  {name}: {done / 2**20:7.0f} MB")
     if total and done >= total:
         sys.stderr.write("\n")
+        _done.add(name)
     sys.stderr.flush()
 
 
@@ -48,6 +55,9 @@ def main(argv: list[str] | None = None) -> int:
         for c in isos:
             print(f"▸ {c}", file=sys.stderr)
             r = store.download_country(c, args.force, _bar)
+            docs = [f for f in r["downloaded_files"] if not f.endswith(".csv")]
+            if docs:
+                print(f"  + {len(docs)} documentation files", file=sys.stderr)
             print(f"  ✓ {r['country']} v{r['version']}: {r['rows']:,} rows, {r['sessions']:,} sessions, "
                   f"{r['date_min']} → {r['date_max']}", file=sys.stderr)
     elif args.cmd == "import":

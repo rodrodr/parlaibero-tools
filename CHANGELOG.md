@@ -1,5 +1,10 @@
 # Changelog
 
+## Sin publicar
+
+- `download` en la terminal: una sola línea de progreso por fichero de datos; los de documentación
+  se resumen en una línea en vez de imprimirse dos veces con «0 / 0 MB».
+
 ## 0.2.0 · 2026-10-03
 
 Analysis tools for the MCP server.
