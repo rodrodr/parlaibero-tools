@@ -4,7 +4,7 @@ from __future__ import annotations
 COLLECTION_URL = "https://dataverse.harvard.edu/dataverse/parlaibero"
 
 # ISO2 → (English name, Spanish/Portuguese name, DOI)
-COUNTRIES: dict[str, tuple[str, str, str]] = {
+PARLAIBERO: dict[str, tuple[str, str, str]] = {
     "AR": ("Argentina", "Argentina", "10.7910/DVN/IVNYID"),
     "BR": ("Brazil", "Brasil", "10.7910/DVN/VTXNW3"),
     "CL": ("Chile", "Chile", "10.7910/DVN/IKBNRL"),
@@ -22,6 +22,10 @@ COUNTRIES: dict[str, tuple[str, str, str]] = {
     "SV": ("El Salvador", "El Salvador", "10.7910/DVN/MUJU6A"),
     "UY": ("Uruguay", "Uruguay", "10.7910/DVN/KI1AOC"),
 }
+
+# The datasets of the collection being served (the active profile, see profile.py). Modules import
+# this dict by name: profile.activate refills it in place.
+COUNTRIES: dict[str, tuple[str, str, str]] = dict(PARLAIBERO)
 
 # Documentation files deposited with every dataset: key → (file stem, has es/pt translations)
 DOCUMENTS: dict[str, tuple[str, bool]] = {

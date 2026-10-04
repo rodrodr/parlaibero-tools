@@ -20,7 +20,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from . import __version__, store
+from . import __version__, profile, store
 from .analysis import (CHAIR_RX, LONG_TURN, NOT_CHAIR_RX, PORTUGUESE, Filters, _date, _filters_dict, _q,
                        _series_sql)
 from .catalog import COUNTRIES, normalize_iso
@@ -258,6 +258,37 @@ def add(name: str, id_ints: list[str] | None = None, sql: str | None = None) -> 
         con.execute("COMMIT")
     return {"library": lib["name"], "requested": len(ids), "found": n_found, "not_found": len(ids) - n_found,
             "added": after - before, "items": after}
+
+
+def create_from_query(name: str, sql: str, description: str = "", color: str = "indigo",
+                      definition: dict | None = None, replace: bool = False) -> dict:
+    """A library holding the interventions a read-only query returns (column id_int). For tools
+    built on the engine that group interventions by something other than a definition (a network
+    role, say). The query is recorded; rebuilding finds the items again by their text."""
+    ids = _ids_from(None, sql)
+    loaded = _loaded_editions()
+    with store.library_connection() as con:
+        con.execute("BEGIN TRANSACTION")
+        try:
+            old = con.execute("SELECT id FROM lib.libraries WHERE lower(name) = lower(?)", [name.strip()]).fetchone()
+            if old and replace:
+                for t in ("library_items", "library_excl", "library_parts"):
+                    con.execute(f"DELETE FROM lib.{t} WHERE library_id = ?", [old[0]])
+                con.execute("DELETE FROM lib.libraries WHERE id = ?", [old[0]])
+            lib_id = _new_library(con, name, description, color)
+            con.execute("""INSERT OR IGNORE INTO lib.library_items
+                           SELECT ?, country, id_int, row_n, md5(coalesce(text, '')), '', '[]', 'query', ?
+                           FROM interventions WHERE id_int IN (SELECT unnest(?::VARCHAR[]))""", [lib_id, _now(), ids])
+            d = {"query": sql, **(definition or {}), "created_at": _now().isoformat(timespec="seconds")}
+            for (iso,) in con.execute("SELECT DISTINCT country FROM lib.library_items WHERE library_id = ?",
+                                      [lib_id]).fetchall():
+                _upsert_part(con, lib_id, iso, loaded.get(iso), d)
+            n = con.execute("SELECT count(*) FROM lib.library_items WHERE library_id = ?", [lib_id]).fetchone()[0]
+            con.execute("COMMIT")
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
+    return {"library": name.strip(), "items": n}
 
 
 def remove(name: str, id_ints: list[str] | None = None, sql: str | None = None) -> dict:
@@ -607,14 +638,18 @@ def export(name: str, folder: str, table_format: str | None = None, overwrite: b
             continue
         cols = {"fuente_cita": _short_citation(rec), "fuente_doi": rec.get("url") or ""}
         country = COUNTRIES[iso][1]
+        P = profile.ACTIVE
+        single = len(COUNTRIES) == 1        # a one-corpus collection: no country in names
         payload = {
-            "format": FORMAT, "exported_at": stamp, "corpus": f"Diarios_{iso}", "fuente": _source_block(rec),
+            "format": FORMAT, "exported_at": stamp, "corpus": P.explorer_corpus(iso), "fuente": _source_block(rec),
             "collection": {
-                "name": f"{lib['name']} · {country} ({iso})",
+                "name": lib["name"] if single else f"{lib['name']} · {country} ({iso})",
                 "description": ((lib["description"] + "\n\n") if lib["description"] else "") +
-                               f"{country} ({iso}): importar con {iso}_interventions.csv, {rec.get('version_cita') or ''} "
-                               f"(doi:{COUNTRIES[iso][2]}), cargado. Parte de la biblioteca «{lib['name']}» "
-                               f"(parlaibero-mcp {__version__}).",
+                               ("" if single else f"{country} ({iso}): ") +
+                               f"importar con {P.interventions_file(iso)}, {rec.get('version_cita') or ''} "
+                               f"(doi:{COUNTRIES[iso][2]}), cargado. " +
+                               ("" if single else f"Parte de la biblioteca «{lib['name']}» ") +
+                               f"({P.package} {__version__}).",
                 "color": lib["color"]},
             "items": [{"speech_id": r["row_n"], "note": r["note"] or "", "tags": json.loads(r["tags"] or "[]"),
                        "date": store.jsonable(r["date"]), "rep_name": _explorer_name(r["speaker_name"]),
@@ -622,7 +657,7 @@ def export(name: str, folder: str, table_format: str | None = None, overwrite: b
                       for r in rows],
         }
         data = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
-        path = out / f"{base}_{iso}.2replib"
+        path = out / (f"{base}.2replib" if single else f"{base}_{iso}.2replib")
         _write(path, data, overwrite)
         files.append(str(path))
         parts.append({"country": iso, "file": path.name, "items": len(rows), "edition": edition,
@@ -631,17 +666,19 @@ def export(name: str, folder: str, table_format: str | None = None, overwrite: b
     index = {"format": INDEX_FORMAT, "exported_at": stamp, "exported_by": f"parlaibero-mcp {__version__}",
              "name": lib["name"], "description": lib["description"], "color": lib["color"], "time": "calendar",
              "parts": parts,
-             "how_to_use": "Each .2replib is one country's part, for the explorer (Diarios Explorer): load that "
-                           "country's CSV, then 'Importar .2replib…'. The explorer does not check which country a "
-                           "file belongs to: import each file only with its own country's CSV loaded. "
-                           "parlaibero-mcp library_import reads this index and rebuilds the whole library."}
+             "how_to_use": f"Each .2replib is one dataset's part, for the explorer ({profile.ACTIVE.explorer_name}): "
+                           "load that dataset's CSV, then 'Importar .2replib…'. The explorer does not check which "
+                           "dataset a file belongs to: import each file only with its own CSV loaded. "
+                           f"{profile.ACTIVE.package} library_import reads this index and rebuilds the whole library."}
     ipath = out / f"{base}.parlaibero-biblioteca.json"
     _write(ipath, json.dumps(index, ensure_ascii=False, indent=2).encode("utf-8"), overwrite)
     result = {"library": lib["name"], "folder": str(out), "index": str(ipath), "files": files,
               "items": {p["country"]: p["items"] for p in parts}, "warnings": warnings,
-              "note": "Import each .2replib in the explorer ONLY with its own country's CSV loaded: the explorer "
-                      "does not check, and a file imported on another country's corpus points to unrelated "
-                      "interventions."}
+              "note": ("Import each .2replib in the explorer ONLY with its own country's CSV loaded: the explorer "
+                       "does not check, and a file imported on another country's corpus points to unrelated "
+                       "interventions." if len(COUNTRIES) > 1 else
+                       "Import the .2replib in the explorer only with the same version of the CSV loaded: the "
+                       "explorer does not check, and on another version it points to other interventions.")}
     if table_format:
         result["table"] = _export_table(lib_id, out / f"{base}.{table_format}", table_format, overwrite)
     return result
@@ -666,9 +703,10 @@ def _export_table(lib_id: int, path: Path, fmt: str, overwrite: bool) -> dict:
 # ── importing ─────────────────────────────────────────────────────────────────
 
 def _country_of(payload: dict) -> str:
-    m = re.fullmatch(r"Diarios_([A-Z]{2})", str(payload.get("corpus") or ""))
-    if m and m.group(1) in COUNTRIES:
-        return m.group(1)
+    corpus = str(payload.get("corpus") or "")
+    for iso in COUNTRIES:
+        if profile.ACTIVE.explorer_corpus(iso) == corpus:
+            return iso
     doi = str((payload.get("fuente") or {}).get("doi") or "")
     for iso, (_, _, d) in COUNTRIES.items():
         if d.lower() == doi.lower():

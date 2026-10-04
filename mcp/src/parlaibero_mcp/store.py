@@ -1,6 +1,6 @@
-"""Local store: downloaded files plus one DuckDB database with every imported country.
+"""Local store: downloaded files plus one DuckDB database with every imported dataset.
 
-Layout (PARLAIBERO_HOME, default ~/.parlaibero):
+Layout (the active profile's home: PARLAIBERO_HOME, default ~/.parlaibero, for ParlaIbero):
     data/{ISO}/                 files exactly as deposited in Dataverse
     parlaibero.duckdb           tables `interventions`, `deputies`, `deputies_{iso}`, `datasets`
     bibliotecas.duckdb          the user's libraries (subsets); kept apart so that re-downloading or
@@ -22,13 +22,22 @@ import sys
 
 import duckdb
 
-from . import dataverse
+from . import dataverse, profile
 from .catalog import COUNTRIES, document_filename, normalize_iso
 
-HOME = Path(os.environ.get("PARLAIBERO_HOME", Path.home() / ".parlaibero")).expanduser()
-DATA = HOME / "data"
-DB = HOME / "parlaibero.duckdb"
-LIBDB = HOME / "bibliotecas.duckdb"
+HOME = DATA = DB = LIBDB = Path()
+
+
+def set_home(home: Path) -> None:
+    """Where the active collection keeps its files (profile.activate calls it)."""
+    global HOME, DATA, DB, LIBDB
+    HOME = Path(home).expanduser()
+    DATA = HOME / "data"
+    DB = HOME / ("parlaibero.duckdb" if profile.ACTIVE.name == "parlaibero" else f"{profile.ACTIVE.name}.duckdb")
+    LIBDB = HOME / "bibliotecas.duckdb"
+
+
+set_home(profile.ACTIVE.home)
 
 LOG_DISABLED = os.environ.get("PARLAIBERO_LOG", "1") in ("0", "false", "no")
 
@@ -44,6 +53,15 @@ DEPUTY_CORE = [
     "id_dep", "speaker_name", "first_name", "last_name", "sex", "sex_source", "party",
     "parliamentary_group", "district", "legislature", "start_date", "end_date", "notes",
 ]
+
+def _extra_columns_ddl() -> str:
+    return "".join(f", {name} {typ}" for name, (typ, _, _) in profile.ACTIVE.extra_columns.items())
+
+
+def schema() -> str:
+    """The tables, with the active profile's extra columns at the end of `interventions`."""
+    return SCHEMA.replace("n_words INTEGER, row_n BIGINT", "n_words INTEGER, row_n BIGINT" + _extra_columns_ddl())
+
 
 SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS interventions (
@@ -118,7 +136,7 @@ def connect(read_only: bool = True) -> Iterator[duckdb.DuckDBPyConnection]:
             HOME.mkdir(parents=True, exist_ok=True)
             con = duckdb.connect(str(DB))
             con.execute("SET enable_progress_bar = false")
-            con.execute(SCHEMA)
+            con.execute(schema())
         try:
             yield con
         finally:
@@ -233,7 +251,7 @@ def _source_folder(iso: str, source: str | None) -> Path | None:
     candidates = [country_dir(iso)]
     if source and source.startswith("local folder "):
         candidates.insert(0, Path(source[len("local folder "):]))
-    return next((c for c in candidates if (c / f"{iso}_interventions.csv").exists()), None)
+    return next((c for c in candidates if (c / profile.ACTIVE.interventions_file(iso)).exists()), None)
 
 
 def schema_version() -> str | None:
@@ -282,23 +300,37 @@ def download_country(country: str, force: bool = False,
     return result
 
 
+def _canonical_select() -> str:
+    """The canonical columns over the raw CSV, mapped by the active profile."""
+    p = profile.ACTIVE
+    out = []
+    for c in INTERVENTION_COLUMNS:
+        e = p.column_sql.get(c, c)
+        out.append(f"TRY_CAST({e} AS DATE)" if c == "date" else
+                   f"TRY_CAST({e} AS INTEGER)" if c == "intervention_order" else
+                   f"TRY_CAST({e} AS TINYINT)" if c == "dm_speech" else e)
+    return ", ".join(out)
+
+
 def import_country(country: str, folder: Path, source: str | None = None,
                    version: str | None = None, title: str | None = None) -> dict:
-    """Import {ISO}_interventions.csv and {ISO}_deputies.csv from `folder` (replacing old rows)."""
+    """Import a dataset's interventions (and, if the profile has them, deputies) from `folder`,
+    replacing its old rows."""
+    p = profile.ACTIVE
     iso = normalize_iso(country)
     folder = Path(folder).expanduser()
-    inter = folder / f"{iso}_interventions.csv"
-    deps = folder / f"{iso}_deputies.csv"
+    inter = folder / p.interventions_file(iso)
+    dname = p.deputies_file(iso)
+    deps = folder / dname if dname else None
     if not inter.exists():
         raise FileNotFoundError(f"{inter} not found")
-    read = (f"read_csv({{path}}, header=true, all_varchar=true, delim=',', quote='\"', "
+    delim = p.delimiter.replace("'", "''")
+    read = (f"read_csv({{path}}, header=true, all_varchar=true, delim='{delim}', quote='\"', "
             f"escape='\"', max_line_size=67108864)")
-    cols = ", ".join(
-        "TRY_CAST(date AS DATE)" if c == "date" else
-        "TRY_CAST(intervention_order AS INTEGER)" if c == "intervention_order" else
-        "TRY_CAST(dm_speech AS TINYINT)" if c == "dm_speech" else c
-        for c in INTERVENTION_COLUMNS)
-    words = N_WORDS_SQL
+    cols = _canonical_select()
+    extra = "".join(f", {expr}" for _, (_, expr, _) in p.extra_columns.items())
+    # the word count runs on the raw CSV, where the text column may have another name
+    words = N_WORDS_SQL.replace("regexp_extract_all(text,", f"regexp_extract_all({p.column_sql.get('text', 'text')},")
     with connect(read_only=False) as con:
         con.execute("BEGIN TRANSACTION")
         try:
@@ -306,17 +338,19 @@ def import_country(country: str, folder: Path, source: str | None = None,
             # row_n: DuckDB keeps the file order (preserve_insertion_order); checked below against an
             # independent reading of the file, the way the explorer numbers it
             con.execute(f"INSERT INTO interventions SELECT {_sql_str(iso)}, {cols}, {words}, "
-                        f"row_number() OVER () FROM {read.format(path=_sql_str(str(inter)))}")
+                        f"row_number() OVER (){extra} FROM {read.format(path=_sql_str(str(inter)))}")
             check_row_numbers(con, iso, inter)
             con.execute("DELETE FROM deputies WHERE country = ?", [iso])
             con.execute(f"DROP TABLE IF EXISTS deputies_{iso.lower()}")
-            if deps.exists():
+            if deps is not None and deps.exists():
                 con.execute(f"CREATE TABLE deputies_{iso.lower()} AS SELECT * FROM "
                             f"{read.format(path=_sql_str(str(deps)))}")
                 have = {r[0] for r in con.execute(f"DESCRIBE deputies_{iso.lower()}").fetchall()}
                 sel = ", ".join(c if c in have else f"NULL AS {c}" for c in DEPUTY_CORE)
                 con.execute(f"INSERT INTO deputies SELECT {_sql_str(iso)}, {sel} FROM deputies_{iso.lower()}")
             index_country(con, iso)
+            if p.after_import:
+                p.after_import(con, iso, folder)
             stats = con.execute(
                 "SELECT count(*), sum(CASE WHEN dm_speech = 1 THEN 1 ELSE 0 END), "
                 "count(DISTINCT id_session), min(date), max(date) FROM interventions WHERE country = ?",
@@ -334,15 +368,15 @@ def import_country(country: str, folder: Path, source: str | None = None,
 
 
 def csv_id_sequence_digest(path: Path) -> tuple[int, str]:
-    """(records, sha256 of the id_int column in file order), read with Python's csv module and
+    """(records, sha256 of the record key column in file order), read with Python's csv module and
     counted as the explorer counts them: the header and blank lines are not records."""
     csv.field_size_limit(sys.maxsize)
     h = hashlib.sha256()
     n = 0
     with open(path, newline="", encoding="utf-8-sig") as fh:
-        rows = csv.reader(fh)
+        rows = csv.reader(fh, delimiter=profile.ACTIVE.delimiter)
         header = next(rows)
-        k = header.index("id_int")
+        k = header.index(profile.ACTIVE.row_key_csv)
         for row in rows:
             if not row:
                 continue
@@ -355,7 +389,8 @@ def check_row_numbers(con: duckdb.DuckDBPyConnection, iso: str, path: Path) -> N
     """row_n must be the record number of the published file: the explorer's speech_id."""
     n, digest = csv_id_sequence_digest(path)
     h = hashlib.sha256()
-    cur = con.execute("SELECT id_int FROM interventions WHERE country = ? ORDER BY row_n", [iso])
+    cur = con.execute(f"SELECT {profile.ACTIVE.row_key_sql} FROM interventions WHERE country = ? ORDER BY row_n",
+                      [iso])
     m = 0
     while batch := cur.fetchmany(100_000):
         for (i,) in batch:
@@ -367,16 +402,16 @@ def check_row_numbers(con: duckdb.DuckDBPyConnection, iso: str, path: Path) -> N
 
 
 def import_folder(folder: str) -> list[dict]:
-    """Import every {ISO}_interventions.csv found in `folder` or its immediate subfolders."""
+    """Import every dataset whose interventions file is in `folder` or its immediate subfolders."""
     root = Path(folder).expanduser()
-    found = sorted(set(root.glob("*_interventions.csv")) | set(root.glob("*/*_interventions.csv")))
     out = []
-    for f in found:
-        iso = f.name.split("_")[0].upper()
-        if iso in COUNTRIES:
+    for iso in COUNTRIES:
+        name = profile.ACTIVE.interventions_file(iso)
+        f = next((f for f in [root / name, *sorted(root.glob(f"*/{name}"))] if f.exists()), None)
+        if f is not None:
             out.append(import_country(iso, f.parent, source=f"local folder {f.parent}"))
     if not out:
-        raise FileNotFoundError(f"No {{ISO}}_interventions.csv files found in {root}")
+        raise FileNotFoundError(f"No interventions files ({profile.ACTIVE.interventions_file('XX')}) found in {root}")
     return out
 
 

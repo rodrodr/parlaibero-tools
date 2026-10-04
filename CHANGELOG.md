@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 · 2026-10-04
+
+El motor sirve también otras colecciones: perfiles de colección (`profile.py`).
+
+- Un perfil dice qué conjuntos hay, cómo se lee y se mapea cada CSV, qué columnas extra se filtran y
+  comparan, dónde vive el almacén y cómo se llaman las bibliotecas en el explorador. ParlaIbero es el
+  perfil por defecto; [luz-mcp](https://github.com/rodrodr/luz-tools) es el segundo.
+- **Ningún resultado de ParlaIbero cambia**: una batería de 21 llamadas sobre ES y SV da la misma salida
+  con 0.3.0 y 0.4.0, salvo el orden de los empates de `term_frequency(by='session')`, que antes era
+  arbitrario y ahora sigue el nombre de la sesión.
+- `analysis.search_text`, `library.create_from_query` y la clase `Tools(server, before)`, para que otros
+  paquetes reutilicen el motor sin copiarlo.
+
 ## 0.3.0 · 2026-10-03
 
 Bibliotecas: subconjuntos con nombre, de uno o varios países (plan: `docs/PLAN_bibliotecas.md`).

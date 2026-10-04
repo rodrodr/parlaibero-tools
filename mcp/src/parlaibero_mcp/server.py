@@ -70,18 +70,29 @@ LOGGED = {"query_sql", "search_text", "term_frequency", "ngram_viewer", "term_co
           "library_delete", "library_rebuild", "library_export", "library_import"}
 
 
-def _before(name: str, kwargs: dict) -> None:
-    if name in LOGGED:
-        if store.DB.exists() and store.schema_version() != store.SCHEMA_VERSION:
-            raise ToolError("The local database was built by an older parlaibero-mcp. Run "
-                            "`parlaibero-mcp reindex` in a terminal (about 2 minutes, no re-download) "
-                            "and try again (it reloads each country from the files already on disk).")
-        analysis.log_call(name, {k: v for k, v in kwargs.items() if k != "ctx"})
+def make_before(logged: set[str], command: str):
+    """Before an analysis tool: refuse a database built by an older engine, and log the call."""
+    def before(name: str, kwargs: dict) -> None:
+        if name in logged:
+            if store.DB.exists() and store.schema_version() != store.SCHEMA_VERSION:
+                raise ToolError(f"The local database was built by an older version. Run `{command} reindex` in a "
+                                f"terminal and try again (it reloads each dataset from the files already on disk, "
+                                f"no download).")
+            analysis.log_call(name, {k: v for k, v in kwargs.items() if k != "ctx"})
+    return before
+
+
+_before = make_before(LOGGED, "parlaibero-mcp")
 
 
 class _Tools:
     """Register tools so that any failure reaches the agent as a readable ToolError
-    (mcp 2.x otherwise reports only "Error executing tool")."""
+    (mcp 2.x otherwise reports only "Error executing tool"). Other packages built on this engine
+    create their own: Tools(their_server, their_before)."""
+
+    def __init__(self, server=None, before=None):
+        self.server = server if server is not None else _server
+        self.before = before if before is not None else _before
 
     def tool(self, **kw):
         def deco(fn):
@@ -89,7 +100,7 @@ class _Tools:
                 @functools.wraps(fn)
                 async def wrapped(*a, **k):
                     try:
-                        _before(fn.__name__, k)
+                        self.before(fn.__name__, k)
                         return await fn(*a, **k)
                     except ToolError:
                         raise
@@ -99,18 +110,22 @@ class _Tools:
                 @functools.wraps(fn)
                 def wrapped(*a, **k):
                     try:
-                        _before(fn.__name__, k)
+                        self.before(fn.__name__, k)
                         return fn(*a, **k)
                     except ToolError:
                         raise
                     except Exception as e:
                         raise ToolError(f"{type(e).__name__}: {e}") from e
-            _server.tool(**kw)(wrapped)
+            self.server.tool(**kw)(wrapped)
             return fn
         return deco
 
     def resource(self, *a, **kw):
-        return _server.resource(*a, **kw)
+        return self.server.resource(*a, **kw)
+
+
+Tools = _Tools
+Server = _Server
 
 
 mcp = _Tools()
@@ -144,16 +159,6 @@ def _rows(cols: list[str], rows: list[tuple], max_cell: int | None = None) -> li
             d[c] = v
         out.append(d)
     return out
-
-
-def _snippet(text: str, rx: re.Pattern, width: int = 220) -> str:
-    if not text:
-        return ""
-    m = rx.search(text)
-    if m is None:
-        return text[: 2 * width] + ("…" if len(text) > 2 * width else "")
-    a, b = max(0, m.start() - width), min(len(text), m.end() + width)
-    return ("…" if a else "") + text[a:b] + ("…" if b < len(text) else "")
 
 
 # Common parameter types of the analysis tools
@@ -346,29 +351,8 @@ def search_text(
     """Find interventions containing a word, phrase or regex, newest first, with a snippet
     around the first match and the total number of matching rows. Plain searches ignore case
     and accents ('nacion' finds 'Nación')."""
-    rx = search_regex(pattern, regex, whole_word)
-    params: list = [rx]
-    where = "regexp_matches(text, ?)" + _F(countries, date_from, date_to, party, sex, id_dep,
-                                           speech_only, library=library).where(params)
-    _, total, _ = store.run_query(f"SELECT count(*) FROM interventions WHERE {where}", params)
-    _, ids, _ = store.run_query(
-        f"SELECT id_int FROM interventions WHERE {where} ORDER BY date DESC, id_int "
-        f"LIMIT {int(limit)} OFFSET {int(offset)}", params, max_rows=limit)
-    hits = []
-    py_rx = analysis._py_regex(pattern, regex, whole_word)
-    if ids:
-        id_list = [r[0] for r in ids]
-        cols, rows, _ = store.run_query(
-            f"SELECT country, id_int, id_session, date, speaker_name, speaker_raw, party, sex, n_words, "
-            f"text FROM interventions WHERE id_int IN ({', '.join('?' * len(id_list))})", id_list,
-            max_rows=limit)
-        by_id = {r[1]: dict(zip(cols, r)) for r in rows}
-        for i in id_list:
-            d = by_id[i]
-            d["snippet"] = _snippet(d.pop("text") or "", py_rx)
-            hits.append({k: store.jsonable(v) for k, v in d.items()})
-    return {"regex_used": rx, "total_matching_rows": total[0][0], "returned": len(hits),
-            "offset": offset, "hits": hits}
+    return analysis.search_text(pattern, _F(countries, date_from, date_to, party, sex, id_dep, speech_only,
+                                            library=library), regex, whole_word, limit, offset)
 
 
 @mcp.tool(annotations=READ)

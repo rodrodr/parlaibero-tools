@@ -13,7 +13,7 @@ from statistics import median
 
 import duckdb
 
-from . import charts, store
+from . import charts, profile, store
 from .catalog import COUNTRIES, normalize_iso
 from .textutil import STOPWORDS, fold, parse_terms, search_regex, tokens
 
@@ -44,12 +44,18 @@ class Filters:
     max_turn_words: int | None = None
     library: int | None = None          # id of a library (library.resolve): only its interventions
     library_name: str | None = None
+    extra: dict | None = None           # the profile's extra columns: {column: ILIKE pattern}
 
     def __post_init__(self):
         if self.countries:
             self.countries = [normalize_iso(c) for c in self.countries]
         if self.sex:
             self.sex = self.sex.upper()[:1]
+        if self.extra:
+            unknown = set(self.extra) - set(profile.ACTIVE.extra_columns)
+            if unknown:
+                raise ValueError(f"Unknown filter column(s): {', '.join(sorted(unknown))}")
+            self.extra = {k: v for k, v in self.extra.items() if v not in (None, "")} or None
 
     def where(self, params: list, alias: str = "") -> str:
         a = f"{alias}." if alias else ""
@@ -81,6 +87,9 @@ class Filters:
             w += f" AND {a}n_words <= {int(self.max_turn_words)}"
         if self.library is not None:
             w += f" AND {a}id_int IN (SELECT id_int FROM lib.library_items WHERE library_id = {int(self.library)})"
+        for col, value in (self.extra or {}).items():
+            w += f" AND {a}{col} ILIKE ?"
+            params.append(value)
         return w
 
     def year_bounds(self) -> tuple[int | None, int | None] | None:
@@ -99,7 +108,8 @@ class Filters:
 
     def unigram_ok(self) -> bool:
         return (self.speech_only and not self.party and not self.id_dep and not self.exclude_chair
-                and not self.max_turn_words and self.library is None and self.year_bounds() is not None)
+                and not self.max_turn_words and self.library is None and not self.extra
+                and self.year_bounds() is not None)
 
     def unigram_where(self, params: list) -> str:
         w = ""
@@ -312,17 +322,17 @@ _LABELS = {
     "es": {"per_million": "apariciones por millón de palabras", "count": "apariciones",
            "interventions_pct": "% de intervenciones que lo usan", "smooth": "media móvil de {k} años",
            "low": "año con base escasa (menos de 250 000 palabras o de 10 sesiones)",
-           "source": "Fuente: ParlaIbero, Harvard Dataverse", "speech": "solo habla parlamentaria",
+           "source": "Fuente: {title}, Harvard Dataverse", "speech": "solo habla parlamentaria",
            "cap": "sin turnos de más de {n} palabras", "chair": "sin la presidencia"},
     "en": {"per_million": "occurrences per million words", "count": "occurrences",
            "interventions_pct": "% of interventions using it", "smooth": "{k}-year moving average",
            "low": "low-base year (under 250,000 words or 10 sessions)",
-           "source": "Source: ParlaIbero, Harvard Dataverse", "speech": "parliamentary speech only",
+           "source": "Source: {title}, Harvard Dataverse", "speech": "parliamentary speech only",
            "cap": "turns over {n} words left out", "chair": "chair left out"},
     "pt": {"per_million": "ocorrências por milhão de palavras", "count": "ocorrências",
            "interventions_pct": "% de intervenções que o usam", "smooth": "média móvel de {k} anos",
            "low": "ano com base escassa (menos de 250 000 palavras ou de 10 sessões)",
-           "source": "Fonte: ParlaIbero, Harvard Dataverse", "speech": "apenas fala parlamentar",
+           "source": "Fonte: {title}, Harvard Dataverse", "speech": "apenas fala parlamentar",
            "cap": "sem turnos de mais de {n} palavras", "chair": "sem a presidência"},
 }
 
@@ -347,9 +357,12 @@ def _ngram_chart(result: dict, path: str, title: str | None, language: str, over
     for k in ("party", "sex"):
         if result["filters"].get(k):
             sub.append(f'{k}: {result["filters"][k]}')
+    for k, v in (result["filters"].get("extra") or {}).items():
+        sub.append(f"{k}: {v}")
     dois = " · ".join(f"{i} doi:{d['doi']}" + (f" v{d['version']}" if d["version"] else "")
                       for i, d in result["datasets"].items())
-    note = f"{L['source']} · {dois}" if len(isos) <= 3 else f"{L['source']} · {len(isos)} datasets"
+    source = L["source"].format(title=profile.ACTIVE.title)
+    note = f"{source} · {dois}" if len(isos) <= 3 else f"{source} · {len(isos)} datasets"
     low = any(p["low"] for pts in series.values() for p in pts)
     default_title = " · ".join(result["terms"])
     return charts.write_chart(path, series, title or default_title,
@@ -434,8 +447,8 @@ def term_counter(terms, f: Filters, top_parties: int = 8) -> dict:
 # ── share of voice ────────────────────────────────────────────────────────────
 
 def share_of_voice(f: Filters, by: str = "sex", per: str = "legislature", unit: str = "words") -> dict:
-    if by not in ("sex", "party"):
-        raise ValueError("by must be 'sex' or 'party'")
+    if by not in profile.ACTIVE.groups():
+        raise ValueError(f"by must be one of {', '.join(profile.ACTIVE.groups())}")
     if unit not in ("words", "turns"):
         raise ValueError("unit must be 'words' or 'turns'")
     if per not in ("legislature", "year", "all"):
@@ -519,8 +532,10 @@ def distinctive_words(f: Filters, field: str, a: str, b: str | None = None, top:
                       min_count: int = 20, alpha0: float = 1000.0) -> dict:
     """Weighted log-odds ratio with an informative Dirichlet prior (Monroe, Colaresi & Quinn 2008)."""
     field = field.lower()
-    if field not in ("sex", "party", "period", "country", "id_dep", "library"):
-        raise ValueError("field must be sex, party, period, country, id_dep or library")
+    fields = ("party", "period", "country", "id_dep", "library") + (("sex",) if profile.ACTIVE.has_sex else ()) \
+        + tuple(profile.ACTIVE.extra_columns)
+    if field not in fields:
+        raise ValueError(f"field must be one of {', '.join(fields)}")
     if field == "library":
         from . import library as _lib     # late: library imports this module
         lib_a, isos_a = _lib.resolve(a)
@@ -537,7 +552,7 @@ def distinctive_words(f: Filters, field: str, a: str, b: str | None = None, top:
             y0, _, y1 = str(value).partition("-")
             params.extend([int(y0), int(y1 or y0)])
             return f"{col} BETWEEN ? AND ?" if alias != "i." else "year(i.date) BETWEEN ? AND ?"
-        if field == "party":
+        if field == "party" or field in profile.ACTIVE.extra_columns:
             params.append(value)
             return f"{col} ILIKE ?"
         params.append(normalize_iso(value) if field == "country" else
@@ -592,7 +607,7 @@ def distinctive_words(f: Filters, field: str, a: str, b: str | None = None, top:
     notes = ["Method: weighted log-odds ratio with an informative Dirichlet prior (Monroe, Colaresi & "
              f"Quinn 2008, 'Fightin' Words'), prior = pooled frequencies, alpha0 = {alpha0:g}. |z| > 1.96 "
              "is the usual threshold; with corpora this size most of the top words clear it by far."]
-    if field in ("sex", "party") and not f.exclude_chair:
+    if field not in ("period", "country", "id_dep", "library") and not f.exclude_chair:
         notes.append("The chair's procedural speech (calling votes, giving the floor) can dominate a group "
                      "— e.g. when the Speaker is a woman, 'votación' turns up as a women's word. Re-run "
                      "with exclude_chair=true.")
@@ -616,6 +631,45 @@ def _py_regex(pattern: str, regex: bool, whole_word: bool) -> re.Pattern:
             .replace(r"[^\pL\pN]+", r"[\W_]+").replace(r"[\pL\pN]*", r"[^\W_]*")
             .replace(r"\pM*", "[\u0300-\u036f]*"))
     return re.compile(rx, re.IGNORECASE)
+
+
+def _snippet(text: str, rx: re.Pattern, width: int = 220) -> str:
+    if not text:
+        return ""
+    m = rx.search(text)
+    if m is None:
+        return text[: 2 * width] + ("…" if len(text) > 2 * width else "")
+    a, b = max(0, m.start() - width), min(len(text), m.end() + width)
+    return ("…" if a else "") + text[a:b] + ("…" if b < len(text) else "")
+
+
+def search_text(pattern: str, f: Filters, regex: bool = False, whole_word: bool = False, limit: int = 20,
+                offset: int = 0) -> dict:
+    """Interventions matching a word, phrase or regex, newest first, with a snippet around the
+    first match and the total number of matching rows."""
+    rx = search_regex(pattern, regex, whole_word)
+    params: list = [rx]
+    where = "regexp_matches(text, ?)" + f.where(params)
+    _, total, _ = store.run_query(f"SELECT count(*) FROM interventions WHERE {where}", params)
+    _, ids, _ = store.run_query(
+        f"SELECT id_int FROM interventions WHERE {where} ORDER BY date DESC, id_int "
+        f"LIMIT {int(limit)} OFFSET {int(offset)}", params, max_rows=limit)
+    hits = []
+    py_rx = _py_regex(pattern, regex, whole_word)
+    if ids:
+        id_list = [r[0] for r in ids]
+        extra = "".join(f", {c}" for c in profile.ACTIVE.extra_columns)
+        cols, rows, _ = store.run_query(
+            f"SELECT country, id_int, id_session, date, speaker_name, speaker_raw, party, sex{extra}, n_words, "
+            f"text FROM interventions WHERE id_int IN ({', '.join('?' * len(id_list))})", id_list,
+            max_rows=limit)
+        by_id = {r[1]: dict(zip(cols, r)) for r in rows}
+        for i in id_list:
+            d = by_id[i]
+            d["snippet"] = _snippet(d.pop("text") or "", py_rx)
+            hits.append({k: store.jsonable(v) for k, v in d.items()})
+    return {"regex_used": rx, "total_matching_rows": total[0][0], "returned": len(hits),
+            "offset": offset, "hits": hits}
 
 
 def _matching_sample(pattern, f: Filters, regex, whole_word, n, order, seed, cols):
@@ -814,12 +868,14 @@ def query_log(last: int = 50, methods_path: str | None = None, overwrite: bool =
     result = {"log_file": str(f), "entries": entries}
     if methods_path:
         isos = sorted({k for e in entries for k in e.get("datasets", {})})
+        p = profile.ACTIVE
         lines = ["# Data and queries", "",
-                 "Data: ParlaIbero (Harvard Dataverse, CC BY 4.0), one dataset per country:", ""]
+                 f"Data: {p.title} (Harvard Dataverse, CC BY 4.0)" +
+                 (", one dataset per country:" if p.name == "parlaibero" else ":"), ""]
         for i in isos:
             v = next((e["datasets"][i] for e in reversed(entries) if e["datasets"].get(i)), None)
             lines.append(f"- {COUNTRIES[i][0]}: https://doi.org/{COUNTRIES[i][2]}" + (f", version {v}" if v else ""))
-        lines += ["", "Analyses run with parlaibero-mcp (https://github.com/rodrodr/parlaibero-tools):", ""]
+        lines += ["", f"Analyses run with {p.package} ({p.repository}):", ""]
         for e in entries:
             lines.append(f"- {e['time']} · `{e['tool']}` · `{json.dumps(e['args'], ensure_ascii=False)}`")
         out = Path(methods_path).expanduser()
@@ -849,22 +905,31 @@ GROUPS = {
 }
 
 
+def groups() -> dict[str, str]:
+    """GROUPS, without sex if the collection has none, plus the profile's extra columns."""
+    g = {k: v for k, v in GROUPS.items() if k != "sex" or profile.ACTIVE.has_sex}
+    for col in profile.ACTIVE.extra_columns:
+        g[col] = f"coalesce({col}, '(unlinked)')"
+    return g
+
+
 def term_frequency(pattern: str, f: Filters, by: str = "year", max_rows: int = 300) -> dict:
     """Same whole-word, accent-insensitive count as ngram_viewer, grouped by any dimension."""
-    if by not in GROUPS:
-        raise ValueError(f"by must be one of {', '.join(GROUPS)}")
+    G = groups()
+    if by not in G:
+        raise ValueError(f"by must be one of {', '.join(G)}")
     s = parse_terms(pattern.replace(",", "+"))[0]
     pre: list = []
     cond, occ, occ_params = _series_sql(s["variants"], pre)
     p: list = []
     w = f.where(p)
-    sql = (f"WITH t AS (SELECT {GROUPS[by]} AS grp, n_words, CASE WHEN {cond} "
+    sql = (f"WITH t AS (SELECT {G[by]} AS grp, n_words, CASE WHEN {cond} "
            f"THEN {occ} ELSE 0 END AS occ FROM interventions WHERE text IS NOT NULL{w}) "
            f"SELECT grp AS {by}, sum(occ) AS occurrences, count(*) FILTER (WHERE occ > 0) AS "
            f"interventions_using, sum(n_words) AS total_words, "
            f"round(sum(occ) * 1e6 / nullif(sum(n_words), 0), 2) AS per_million_words "
            f"FROM t GROUP BY grp " + ("HAVING sum(occ) > 0 " if by == "session" else "") + "ORDER BY " +
-           ("occurrences DESC" if by in ("speaker", "party", "session") else "grp"))
+           ("occurrences DESC, grp" if by in ("speaker", "party", "session") else "grp"))
     rows = _q(sql, pre + occ_params + p, max_rows=max_rows)
     return {"term": s["label"], "variants": s["variants"], "by": by, "filters": _filters_dict(f),
             "rows": [{k: store.jsonable(v) for k, v in r.items()} for r in rows],
