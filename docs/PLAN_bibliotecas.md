@@ -1,6 +1,6 @@
 # Plan · Bibliotecas en `parlaibero-mcp` (v0.3.0)
 
-> **Estado: CONSTRUIDO** (2026-10-03), fases A-D; falta la E (publicar 0.3.0, que publica el investigador). Aprobado con las decisiones del §7.
+> **Estado: TERMINADO** (2026-10-03): 0.3.0 publicada en PyPI por el investigador. Aprobado con las decisiones del §7.
 > Origen: conversación del 3-oct. Idea del investigador: antes del análisis temático, una herramienta de **subconjuntos**
 > como las bibliotecas del explorador, que además **cruce países** para el análisis comparado. Decidido: exportar a
 > archivos del explorador **por país** (opción 1); el explorador no se toca.

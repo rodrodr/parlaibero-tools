@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 · sin publicar
+## 0.3.0 · 2026-10-03
 
 Bibliotecas: subconjuntos con nombre, de uno o varios países (plan: `docs/PLAN_bibliotecas.md`).
 
