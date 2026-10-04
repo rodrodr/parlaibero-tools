@@ -89,7 +89,7 @@ then use `parlaibero-mcp` as the command.
 |---|---|
 | `ngram_viewer` | Google Books Ngram-style series: several words or phrases at once (`,` separates series, `+` sums variants, `*` ends a prefix), per million words, raw counts or % of interventions, optional smoothing, one line per country if wanted. Every point carries its base (words, sessions) and low-base years are flagged. Can write the chart as **`.svg`** (figure for a paper or slide) or **`.html`** (hover read-out, dark mode, data table) |
 | `term_counter` | totals for one or more terms: occurrences, interventions, sessions, speakers, by sex and party with per-million rates, and the **first and last use in each country** |
-| `term_frequency` | one term grouped by year, decade, country, legislature, party, sex, speaker or session type |
+| `term_frequency` | one term grouped by year, decade, country, legislature, party, sex, speaker, session type or session (`by='session'` shows where a term concentrates — a way to date an event in each chamber) |
 
 **Who speaks and how**
 
@@ -109,6 +109,28 @@ then use `parlaibero-mcp` as the command.
 | `query_sql` | read-only DuckDB SQL; the connection cannot write, read other files or reach the network |
 | `export_result` | save a query's full result as CSV or Parquet for R, Python or Stata |
 | `query_log` | every analysis run (tool, parameters, dataset versions); can write a Markdown methods note |
+
+**Libraries: subsets for focused and comparative work**
+
+| tool | what it does |
+|---|---|
+| `library_create` | gather the interventions on a topic, in a period or of a group, in **one or several countries**: one definition per country (terms — `min_occurrences` keeps those that discuss the topic rather than mention it —, filters, time window), recorded with the edition of the data. `event_dates` aligns each country's window on its own event |
+| `library_describe` | what is in a library, per country: interventions, sessions, dates, speakers, words, linkage, share of the chair and of very long turns, years too thin to read as trends, the definitions — and warnings for comparing countries. Without a name, lists the libraries |
+| `library_edit` | add or remove interventions (by id or by a query), or attach a note and tags; removed ones stay out when the library is rebuilt |
+| `library_combine` | union, intersection or difference of two libraries |
+| `library_rebuild` | after downloading a new edition: run the definitions again, find hand-added items and notes again by their text, report what came in and what was lost |
+| `library_export` · `library_import` | for the [Diarios Explorer](https://rodrodr.github.io/parlaibero-explorer/): **one `.2replib` per country** (the explorer holds one country at a time) plus an index (`.parlaibero-biblioteca.json`) that rebuilds the comparative library; optionally the items with metadata as CSV or Parquet. Importing checks every item (row → intervention → date and speaker) and reports what does not match |
+| `delete` | `library_delete` (asks for `confirm=true`) |
+
+Every analysis tool takes **`library=`** to work inside one; `distinctive_words` also compares a library
+with the rest of its chambers (`field='library'`). Libraries are kept in their own file
+(`~/.parlaibero/bibliotecas.duckdb`) and attached to every connection as `lib`, so `query_sql` can join
+`lib.library_items` with `interventions`.
+
+⚠ The explorer does not check which country a `.2replib` belongs to: import each file **with its own
+country's CSV loaded**. The country is in the file name, the library name and its description. The
+compatibility of the files is tested against the explorer's real engine, not a copy of it
+(`diaries_explorer/explorer_src/test/ida_y_vuelta_mcp.mjs`).
 
 The resource `parlaibero://about` summarises the collection.
 
@@ -143,12 +165,14 @@ from a precomputed table (instant); phrases and filters by party or deputy scan 
 ```
 interventions   country · id_session · id_int · legislature · legislative_session · session_number ·
                 date · session_type · intervention_order · speaker_raw · id_dep · speaker_name ·
-                sex · party · district · dm_speech · text · n_words
+                sex · party · district · dm_speech · text · n_words · row_n
+                (row_n = record number in the published CSV, the explorer's speech_id)
 unigrams        word counts of speech rows by country, year and sex (accent-folded)
 vocab           display form of each folded word
 deputies        country + the core columns of every deputy register
 deputies_{iso}  the full register of one country, with its own extra columns
 datasets        what is loaded: DOI, version, source, rows, sessions, date range
+lib.libraries · lib.library_items · lib.library_parts   the user's libraries (bibliotecas.duckdb)
 ```
 
 Things worth knowing before drawing conclusions (the server also tells the agent):
@@ -168,14 +192,14 @@ parlaibero-mcp                    # serve MCP over stdio (what clients run)
 parlaibero-mcp download SV ES     # download and load countries ('all' for the 16)
 parlaibero-mcp import ~/Downloads/parlaibero
 parlaibero-mcp status
-parlaibero-mcp reindex             # after upgrading from an older version (no re-download)
+parlaibero-mcp reindex             # after upgrading: reloads each country from the files on disk
 parlaibero-mcp remove SV
 ```
 
 Large countries (Brazil, Mexico, Portugal, Ecuador, Spain: 1-1.5 GB each) are best downloaded from
 the terminal so a client time-out does not interrupt them. All 16 take about 12 GB of downloads
-plus 15 GB of database; the downloaded CSVs can be deleted afterwards to save space
-(`~/.parlaibero/data/{ISO}/*.csv`), but they are needed to re-import.
+plus 15 GB of database. Keep the downloaded CSVs (`~/.parlaibero/data/{ISO}/*.csv`): `reindex` reloads
+from them after an upgrade, and without them a country has to be downloaded again.
 
 ## Configuration
 

@@ -107,3 +107,31 @@ def download(file_id: int, dest: Path, md5: str | None = None,
         raise IOError(f"MD5 mismatch downloading file {file_id}: got {h.hexdigest()}, expected {md5}")
     part.replace(dest)
     return dest
+
+
+def source_record(doi: str) -> dict:
+    """The dataset's bibliographic record in the form the explorer (Diarios Explorer) uses for its
+    country sources: same fields and the same citation string as its tools/fuentes_parlaibero.py,
+    so a library written here is recognised there as coming from the same source."""
+    d = dataset(doi)
+    v = d.get("latestVersion") or {}
+    fields = (v.get("metadataBlocks") or {}).get("citation", {}).get("fields", [])
+
+    def field(name):
+        return next((f.get("value") for f in fields if f.get("typeName") == name), None)
+
+    title = field("title") or ""
+    authors = [{"nombre": a.get("authorName", {}).get("value", ""),
+                "afiliacion": a.get("authorAffiliation", {}).get("value")} for a in (field("author") or [])]
+    version = f"V{v['versionNumber']}" if v.get("versionNumber") is not None else None
+    lic = v.get("license") if isinstance(v.get("license"), dict) else {"name": v.get("license")}
+    url = f"https://doi.org/{doi}"
+    year = str(d.get("publicationDate") or "")[:4]
+    names = "; ".join(a["nombre"] for a in authors)
+    return {
+        "titulo": title, "autores": authors, "anio": int(year) if year.isdigit() else None,
+        "editor": "Harvard Dataverse", "doi": doi, "url": url, "version_cita": version,
+        "edition": f"{v.get('versionNumber')}.{v.get('versionMinorNumber')}",
+        "licencia": (lic or {}).get("name"), "licencia_url": (lic or {}).get("uri"),
+        "cita": f'{names}, {year}, "{title}", {url}, Harvard Dataverse{", " + version if version else ""}',
+    }

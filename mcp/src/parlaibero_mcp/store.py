@@ -3,6 +3,8 @@
 Layout (PARLAIBERO_HOME, default ~/.parlaibero):
     data/{ISO}/                 files exactly as deposited in Dataverse
     parlaibero.duckdb           tables `interventions`, `deputies`, `deputies_{iso}`, `datasets`
+    bibliotecas.duckdb          the user's libraries (subsets); kept apart so that re-downloading or
+                                re-indexing the data never touches them. Attached as `lib`.
 """
 from __future__ import annotations
 
@@ -13,6 +15,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
+import csv
+import hashlib
+import json
+import sys
+
 import duckdb
 
 from . import dataverse
@@ -21,6 +28,7 @@ from .catalog import COUNTRIES, document_filename, normalize_iso
 HOME = Path(os.environ.get("PARLAIBERO_HOME", Path.home() / ".parlaibero")).expanduser()
 DATA = HOME / "data"
 DB = HOME / "parlaibero.duckdb"
+LIBDB = HOME / "bibliotecas.duckdb"
 
 LOG_DISABLED = os.environ.get("PARLAIBERO_LOG", "1") in ("0", "false", "no")
 
@@ -43,7 +51,7 @@ CREATE TABLE IF NOT EXISTS interventions (
     legislative_session VARCHAR, session_number VARCHAR, date DATE, session_type VARCHAR,
     intervention_order INTEGER, speaker_raw VARCHAR, id_dep VARCHAR, speaker_name VARCHAR,
     sex VARCHAR, party VARCHAR, district VARCHAR, dm_speech TINYINT, text VARCHAR,
-    n_words INTEGER
+    n_words INTEGER, row_n BIGINT
 );
 CREATE TABLE IF NOT EXISTS deputies (country VARCHAR, {", ".join(c + " VARCHAR" for c in DEPUTY_CORE)});
 CREATE TABLE IF NOT EXISTS unigrams (country VARCHAR, year SMALLINT, sex VARCHAR, fold VARCHAR, n BIGINT);
@@ -57,7 +65,34 @@ CREATE TABLE IF NOT EXISTS datasets (
 """
 
 
-SCHEMA_VERSION = "3"   # 3: n_words = letter/digit/mark tokens; unigrams + vocab tables
+SCHEMA_VERSION = "4"   # 3: n_words = letter/digit/mark tokens; unigrams + vocab tables
+                       # 4: row_n = record number in the published CSV (the explorer's speech_id)
+
+# Libraries live in their own file. An item is a row of `interventions` (id_int is unique across
+# countries: it starts with the ISO code); row_n is kept so a library can be written for the
+# explorer, and the md5 of the text (fingerprint) so it can be found again in a later edition.
+LIB_SCHEMA = """
+CREATE SEQUENCE IF NOT EXISTS library_id_seq;
+CREATE TABLE IF NOT EXISTS libraries (
+    id INTEGER PRIMARY KEY DEFAULT nextval('library_id_seq'), name VARCHAR UNIQUE NOT NULL,
+    description VARCHAR DEFAULT '', color VARCHAR DEFAULT 'indigo',
+    created_at TIMESTAMP, updated_at TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS library_parts (
+    library_id INTEGER, country VARCHAR, edition VARCHAR, doi VARCHAR,
+    definitions VARCHAR DEFAULT '[]',
+    PRIMARY KEY (library_id, country)
+);
+CREATE TABLE IF NOT EXISTS library_items (
+    library_id INTEGER, country VARCHAR, id_int VARCHAR, row_n BIGINT, fingerprint VARCHAR,
+    note VARCHAR DEFAULT '', tags VARCHAR DEFAULT '[]', origin VARCHAR, added_at TIMESTAMP,
+    PRIMARY KEY (library_id, id_int)
+);
+CREATE TABLE IF NOT EXISTS library_excl (
+    library_id INTEGER, country VARCHAR, id_int VARCHAR, fingerprint VARCHAR,
+    PRIMARY KEY (library_id, id_int)
+);
+"""
 
 
 class NoData(RuntimeError):
@@ -71,9 +106,13 @@ def connect(read_only: bool = True) -> Iterator[duckdb.DuckDBPyConnection]:
         if read_only:
             if not DB.exists():
                 raise NoData("No country has been downloaded yet. Use download_country first.")
-            con = duckdb.connect(str(DB), read_only=True, config={"enable_external_access": False})
+            _ensure_libdb()
+            con = duckdb.connect(str(DB), read_only=True)
             # never print a progress bar: on an MCP stdio server, stdout is the protocol channel
             con.execute("SET enable_progress_bar = false")
+            con.execute(f"ATTACH {_sql_str(str(LIBDB))} AS lib (READ_ONLY)")
+            # attach first, then close every door: no other file, no network, no settings change
+            con.execute("SET enable_external_access = false")
             con.execute("SET lock_configuration = true")
         else:
             HOME.mkdir(parents=True, exist_ok=True)
@@ -92,8 +131,10 @@ def export_connection(directory: Path) -> Iterator[duckdb.DuckDBPyConnection]:
     with _LOCK:
         if not DB.exists():
             raise NoData("No country has been downloaded yet. Use download_country first.")
+        _ensure_libdb()
         con = duckdb.connect(str(DB), read_only=True)
         con.execute("SET enable_progress_bar = false")
+        con.execute(f"ATTACH {_sql_str(str(LIBDB))} AS lib (READ_ONLY)")
         # order matters: allow the folder first, then close external access and lock the settings
         con.execute("SET allowed_directories = ?", [[str(Path(directory).resolve()) + os.sep]])
         con.execute("SET enable_external_access = false")
@@ -106,6 +147,38 @@ def export_connection(directory: Path) -> Iterator[duckdb.DuckDBPyConnection]:
 
 def _sql_str(s: str) -> str:
     return "'" + s.replace("'", "''") + "'"
+
+
+def _ensure_libdb() -> None:
+    if not LIBDB.exists():
+        HOME.mkdir(parents=True, exist_ok=True)
+        con = duckdb.connect(str(LIBDB))
+        try:
+            con.execute(LIB_SCHEMA)
+        finally:
+            con.close()
+
+
+@contextmanager
+def library_connection() -> Iterator[duckdb.DuckDBPyConnection]:
+    """Write connection for the library functions (never for user SQL): the libraries attached
+    read-write as `lib`, the data read-only and as the default catalog, so the same SQL (and the
+    same Filters.where) runs here and on the sandboxed connection."""
+    with _LOCK:
+        if not DB.exists():
+            raise NoData("No country has been downloaded yet. Use download_country first.")
+        HOME.mkdir(parents=True, exist_ok=True)
+        con = duckdb.connect()
+        con.execute("SET enable_progress_bar = false")
+        con.execute(f"ATTACH {_sql_str(str(LIBDB))} AS lib")
+        con.execute("USE lib")
+        con.execute(LIB_SCHEMA)
+        con.execute(f"ATTACH {_sql_str(str(DB))} AS pi (READ_ONLY)")
+        con.execute("USE pi")
+        try:
+            yield con
+        finally:
+            con.close()
 
 
 # A word is a maximal run of letters, digits and combining marks (so a decomposed 'ç' does not
@@ -131,18 +204,36 @@ def index_country(con: duckdb.DuckDBPyConnection, iso: str) -> None:
 
 
 def reindex_all(progress=None) -> list[str]:
-    """Upgrade a database built by an older version: recompute n_words and the word tables."""
-    done = []
+    """Upgrade a database built by an older version. Every country is loaded again from the files
+    already on disk (no download): that recomputes n_words, the word tables and row_n."""
     with connect(read_only=False) as con:
-        isos = [r[0] for r in con.execute("SELECT country FROM datasets ORDER BY 1").fetchall()]
-        for iso in isos:
-            if progress:
-                progress(iso)
-            con.execute(f"UPDATE interventions SET n_words = {N_WORDS_SQL} WHERE country = ?", [iso])
-            index_country(con, iso)
-            done.append(iso)
+        try:
+            con.execute("ALTER TABLE interventions ADD COLUMN IF NOT EXISTS row_n BIGINT")
+        except duckdb.Error:
+            pass
+        sets = con.execute("SELECT country, source, version, title FROM datasets ORDER BY 1").fetchall()
+    done = []
+    for iso, source, version, title in sets:
+        folder = _source_folder(iso, source)
+        if folder is None:
+            raise FileNotFoundError(f"{iso}: the CSV files are no longer on disk. Run `parlaibero-mcp download "
+                                    f"{iso}` (or import_from_folder) to load it again.")
+        if progress:
+            progress(iso)
+        import_country(iso, folder, source=source, version=version, title=title)
+        done.append(iso)
+    with connect(read_only=False) as con:
+        con.execute("INSERT OR REPLACE INTO meta VALUES ('schema_version', ?)", [SCHEMA_VERSION])
         con.execute("CHECKPOINT")
     return done
+
+
+def _source_folder(iso: str, source: str | None) -> Path | None:
+    """Where a loaded country's CSV files are: the download folder, or the folder it was imported from."""
+    candidates = [country_dir(iso)]
+    if source and source.startswith("local folder "):
+        candidates.insert(0, Path(source[len("local folder "):]))
+    return next((c for c in candidates if (c / f"{iso}_interventions.csv").exists()), None)
 
 
 def schema_version() -> str | None:
@@ -182,6 +273,9 @@ def download_country(country: str, force: bool = False,
         dataverse.download(f["id"], dest, f["md5"], cb)
         downloaded.append(f["filename"])
     stamp.write_text(info["version"])
+    # the bibliographic record of exactly this edition, for library exports (works offline later)
+    (folder / ".source.json").write_text(json.dumps(dataverse.source_record(doi), ensure_ascii=False, indent=1),
+                                         encoding="utf-8")
     result = import_country(iso, folder, source=f"Harvard Dataverse doi:{doi} v{info['version']}",
                             version=info["version"], title=info["title"])
     result["downloaded_files"] = downloaded
@@ -209,8 +303,11 @@ def import_country(country: str, folder: Path, source: str | None = None,
         con.execute("BEGIN TRANSACTION")
         try:
             con.execute("DELETE FROM interventions WHERE country = ?", [iso])
-            con.execute(f"INSERT INTO interventions SELECT {_sql_str(iso)}, {cols}, {words} "
-                        f"FROM {read.format(path=_sql_str(str(inter)))}")
+            # row_n: DuckDB keeps the file order (preserve_insertion_order); checked below against an
+            # independent reading of the file, the way the explorer numbers it
+            con.execute(f"INSERT INTO interventions SELECT {_sql_str(iso)}, {cols}, {words}, "
+                        f"row_number() OVER () FROM {read.format(path=_sql_str(str(inter)))}")
+            check_row_numbers(con, iso, inter)
             con.execute("DELETE FROM deputies WHERE country = ?", [iso])
             con.execute(f"DROP TABLE IF EXISTS deputies_{iso.lower()}")
             if deps.exists():
@@ -234,6 +331,39 @@ def import_country(country: str, folder: Path, source: str | None = None,
             raise
     return {"country": iso, "rows": stats[0], "speech_rows": stats[1], "sessions": stats[2],
             "date_min": str(stats[3]), "date_max": str(stats[4]), "version": version}
+
+
+def csv_id_sequence_digest(path: Path) -> tuple[int, str]:
+    """(records, sha256 of the id_int column in file order), read with Python's csv module and
+    counted as the explorer counts them: the header and blank lines are not records."""
+    csv.field_size_limit(sys.maxsize)
+    h = hashlib.sha256()
+    n = 0
+    with open(path, newline="", encoding="utf-8-sig") as fh:
+        rows = csv.reader(fh)
+        header = next(rows)
+        k = header.index("id_int")
+        for row in rows:
+            if not row:
+                continue
+            n += 1
+            h.update(row[k].encode("utf-8") + b"\n")
+    return n, h.hexdigest()
+
+
+def check_row_numbers(con: duckdb.DuckDBPyConnection, iso: str, path: Path) -> None:
+    """row_n must be the record number of the published file: the explorer's speech_id."""
+    n, digest = csv_id_sequence_digest(path)
+    h = hashlib.sha256()
+    cur = con.execute("SELECT id_int FROM interventions WHERE country = ? ORDER BY row_n", [iso])
+    m = 0
+    while batch := cur.fetchmany(100_000):
+        for (i,) in batch:
+            h.update((i or "").encode("utf-8") + b"\n")
+        m += len(batch)
+    if (m, h.hexdigest()) != (n, digest):
+        raise RuntimeError(f"{iso}: the row numbers do not follow the file ({m:,} rows loaded, {n:,} records "
+                           f"in {path.name}). Nothing was imported.")
 
 
 def import_folder(folder: str) -> list[dict]:
@@ -294,6 +424,24 @@ def run_query(sql: str, params: list | None = None, max_rows: int = 200,
         finally:
             timer.cancel()
     return cols, rows[:max_rows], len(rows) > max_rows
+
+
+def source_record(iso: str, edition: str | None) -> dict:
+    """Bibliographic record of the loaded edition of a country (saved at download time; fetched
+    from Dataverse when missing and it describes the same edition)."""
+    f = country_dir(iso) / ".source.json"
+    if f.exists():
+        rec = json.loads(f.read_text(encoding="utf-8"))
+        if edition is None or rec.get("edition") == edition:
+            return rec
+    rec = dataverse.source_record(COUNTRIES[iso][2])
+    if edition is not None and rec.get("edition") != edition:
+        raise RuntimeError(f"{iso}: the loaded data are version {edition}, but Dataverse now publishes "
+                           f"{rec.get('edition')}. Download the country again before exporting for the explorer, "
+                           f"which loads the published version.")
+    country_dir(iso).mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
+    return rec
 
 
 def read_document(country: str, doc: str, language: str = "en") -> str:

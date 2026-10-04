@@ -42,6 +42,8 @@ class Filters:
     speech_only: bool = True
     exclude_chair: bool = False
     max_turn_words: int | None = None
+    library: int | None = None          # id of a library (library.resolve): only its interventions
+    library_name: str | None = None
 
     def __post_init__(self):
         if self.countries:
@@ -77,6 +79,8 @@ class Filters:
                   f"regexp_matches(coalesce({a}speaker_raw, ''), '{NOT_CHAIR_RX}'))")
         if self.max_turn_words:
             w += f" AND {a}n_words <= {int(self.max_turn_words)}"
+        if self.library is not None:
+            w += f" AND {a}id_int IN (SELECT id_int FROM lib.library_items WHERE library_id = {int(self.library)})"
         return w
 
     def year_bounds(self) -> tuple[int | None, int | None] | None:
@@ -95,7 +99,7 @@ class Filters:
 
     def unigram_ok(self) -> bool:
         return (self.speech_only and not self.party and not self.id_dep and not self.exclude_chair
-                and not self.max_turn_words and self.year_bounds() is not None)
+                and not self.max_turn_words and self.library is None and self.year_bounds() is not None)
 
     def unigram_where(self, params: list) -> str:
         w = ""
@@ -354,7 +358,11 @@ def _ngram_chart(result: dict, path: str, title: str | None, language: str, over
 
 
 def _filters_dict(f: Filters) -> dict:
-    return {k: v for k, v in f.__dict__.items() if v not in (None, [], False) or k == "speech_only"}
+    d = {k: v for k, v in f.__dict__.items() if v not in (None, [], False) or k == "speech_only"}
+    if "library" in d:                  # the name is what a reader understands, not the internal id
+        d["library"] = d.pop("library_name", d["library"])
+    d.pop("library_name", None)
+    return d
 
 
 # ── term counter ──────────────────────────────────────────────────────────────
@@ -511,10 +519,19 @@ def distinctive_words(f: Filters, field: str, a: str, b: str | None = None, top:
                       min_count: int = 20, alpha0: float = 1000.0) -> dict:
     """Weighted log-odds ratio with an informative Dirichlet prior (Monroe, Colaresi & Quinn 2008)."""
     field = field.lower()
-    if field not in ("sex", "party", "period", "country", "id_dep"):
-        raise ValueError("field must be sex, party, period, country or id_dep")
+    if field not in ("sex", "party", "period", "country", "id_dep", "library"):
+        raise ValueError("field must be sex, party, period, country, id_dep or library")
+    if field == "library":
+        from . import library as _lib     # late: library imports this module
+        lib_a, isos_a = _lib.resolve(a)
+        lib_b, isos_b = _lib.resolve(b) if b not in (None, "", "rest") else (None, [])
+        if not f.countries:               # 'rest' = the rest of the library's own chambers
+            f.countries = sorted(set(isos_a) | set(isos_b))
 
     def cond(value: str, params: list, alias="") -> str:
+        if field == "library":
+            lid = lib_a if value == a else lib_b
+            return f"{alias}id_int IN (SELECT id_int FROM lib.library_items WHERE library_id = {int(lid)})"
         col = f"{alias}{field}" if field != "period" else f"{alias}year"
         if field == "period":
             y0, _, y1 = str(value).partition("-")
@@ -700,7 +717,8 @@ def coverage(f: Filters, by: str = "year") -> dict:
     period = {"year": "year(date)", "legislature": "legislature"}[by]
     p: list = []
     f2 = Filters(f.countries, f.date_from, f.date_to, f.party, f.sex, f.id_dep, speech_only=False,
-                 exclude_chair=f.exclude_chair, max_turn_words=f.max_turn_words)
+                 exclude_chair=f.exclude_chair, max_turn_words=f.max_turn_words, library=f.library,
+                 library_name=f.library_name)
     rows = _q(f"""SELECT country, {period} AS period, min(date) AS d0, max(date) AS d1,
                   count(DISTINCT id_session) AS sessions, count(*) AS rows,
                   count(*) FILTER (WHERE dm_speech = 1) AS speech_rows,
@@ -826,6 +844,8 @@ GROUPS = {
     "sex": "coalesce(sex, '(unlinked)')",
     "speaker": "country || ' ' || coalesce(speaker_name, speaker_raw)",
     "session_type": "session_type",
+    # to find a country's event: the sessions where a term concentrates
+    "session": "country || ' ' || coalesce(CAST(date AS VARCHAR), '?') || ' ' || id_session",
 }
 
 
@@ -843,7 +863,8 @@ def term_frequency(pattern: str, f: Filters, by: str = "year", max_rows: int = 3
            f"SELECT grp AS {by}, sum(occ) AS occurrences, count(*) FILTER (WHERE occ > 0) AS "
            f"interventions_using, sum(n_words) AS total_words, "
            f"round(sum(occ) * 1e6 / nullif(sum(n_words), 0), 2) AS per_million_words "
-           f"FROM t GROUP BY grp ORDER BY " + ("occurrences DESC" if by in ("speaker", "party") else "grp"))
+           f"FROM t GROUP BY grp " + ("HAVING sum(occ) > 0 " if by == "session" else "") + "ORDER BY " +
+           ("occurrences DESC" if by in ("speaker", "party", "session") else "grp"))
     rows = _q(sql, pre + occ_params + p, max_rows=max_rows)
     return {"term": s["label"], "variants": s["variants"], "by": by, "filters": _filters_dict(f),
             "rows": [{k: store.jsonable(v) for k, v in r.items()} for r in rows],

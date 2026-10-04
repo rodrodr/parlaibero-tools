@@ -64,6 +64,21 @@ década?»*, *«compara el peso de las diputadas en el habla de España y Portug
 | `query_sql` · `export_result` | SQL de solo lectura (DuckDB) y exportación a CSV o Parquet |
 | `query_log` · `how_to_cite` | lo que se ha ejecutado, con las versiones de los datos (y una nota de métodos), y la cita de cada conjunto |
 
+**Bibliotecas: subconjuntos para un análisis enfocado y comparado.** `library_create` reúne las
+intervenciones de un tema, un periodo o un grupo **en uno o varios países**, con una definición por
+país (términos, filtros, ventana de tiempo) y la edición de los datos con que se hizo. Las fechas
+pueden alinearse con un acontecimiento distinto en cada país (`event_dates`). Desde ese momento,
+cualquier herramienta de análisis trabaja dentro de ella con `library=`. `library_describe` dice qué
+hay en cada parte antes de comparar: tamaño, fechas, oradores, peso de la presidencia y de los
+turnos largos, años demasiado escasos. `library_edit`, `library_combine` y `library_rebuild`
+(tras una edición nueva) la afinan.
+
+`library_export` la escribe para el [Diarios Explorer](https://rodrodr.github.io/parlaibero-explorer/)
+como **un archivo `.2replib` por país**, porque el explorador trabaja con un país a la vez, más un
+índice que permite a `library_import` reconstruir la biblioteca comparada. ⚠ Cada archivo se
+importa en el explorador **con el CSV de su país cargado**: el explorador no comprueba de qué país
+es el archivo.
+
 Dos filtros cambian los resultados, y las herramientas avisan cuando conviene usarlos:
 `max_turn_words` deja fuera los turnos muy largos. Casi siempre son documentos leídos en el acta,
 que el corpus conserva como habla cuando el acta no marca separación: son el 54 % de las palabras
@@ -71,7 +86,8 @@ de Argentina, el 26 % de Uruguay y el 25 % de México, frente a menos del 1 % en
 parte, `exclude_chair` deja fuera a la presidencia de la sesión, cuyo habla procedimental puede
 dominar una comparación entre grupos.
 
-Los datos se guardan en `~/.parlaibero` (o en `PARLAIBERO_HOME`). Los 16 países ocupan unos
+Los datos se guardan en `~/.parlaibero` (o en `PARLAIBERO_HOME`), y las bibliotecas aparte, en
+`~/.parlaibero/bibliotecas.duckdb`, para que volver a descargar o reindexar no las toque. Los 16 países ocupan unos
 12 GB de descarga y 15 GB de base de datos; El Salvador, el más pequeño, ocupa 99 MB. Los países
 grandes pueden descargarse desde la terminal, para no depender del tiempo de espera del cliente:
 

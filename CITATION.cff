@@ -14,7 +14,7 @@ authors:
   - family-names: Rodrigues-Silveira
     given-names: Rodrigo
     affiliation: "Instituto de Iberoamérica, Universidad de Salamanca"
-version: "0.2.1"
+version: "0.3.0"
 date-released: "2026-10-03"
 license: MIT
 repository-code: "https://github.com/rodrodr/parlaibero-tools"

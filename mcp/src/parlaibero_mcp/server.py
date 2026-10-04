@@ -18,7 +18,7 @@ except ImportError:  # mcp 1.x
     from mcp.server.fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
-from . import __version__, analysis, dataverse, store
+from . import __version__, analysis, dataverse, library as libmod, store
 from .textutil import search_regex
 from .catalog import COLLECTION_URL, COUNTRIES, DOCUMENTS, normalize_iso
 
@@ -38,6 +38,10 @@ How to work with it:
    `search_text`, `get_intervention`, `get_session`. Anything else: `query_sql` (read-only
    DuckDB, schema in `describe_data`); save results with `export_result`; `query_log` lists what
    was run, for the methods section.
+   Libraries (subsets): `library_create` gathers the interventions on a topic, period or group in
+   one or SEVERAL countries; every analysis tool then takes `library=` to work inside it.
+   `library_describe` says what is in it (size, spread, chair, long turns) before you compare;
+   `library_export` writes one file per country for the Diarios Explorer plus an index.
 3. Rows with `dm_speech = 0` are not speech (cover page, summaries, vote tallies, reproduced
    documents; `intervention_order = 0` is the session's Prolegomena). Filter `dm_speech = 1`
    to study what was said.
@@ -62,7 +66,8 @@ _server = _Server(name="parlaibero", instructions=INSTRUCTIONS)
 # Analysis tools are logged (for query_log) and need the v2 database (token-based n_words).
 LOGGED = {"query_sql", "search_text", "term_frequency", "ngram_viewer", "term_counter", "share_of_voice",
           "distinctive_words", "kwic", "collocations", "coverage", "export_result", "get_session",
-          "get_intervention"}
+          "get_intervention", "library_create", "library_edit", "library_combine", "library_describe",
+          "library_delete", "library_rebuild", "library_export", "library_import"}
 
 
 def _before(name: str, kwargs: dict) -> None:
@@ -70,7 +75,7 @@ def _before(name: str, kwargs: dict) -> None:
         if store.DB.exists() and store.schema_version() != store.SCHEMA_VERSION:
             raise ToolError("The local database was built by an older parlaibero-mcp. Run "
                             "`parlaibero-mcp reindex` in a terminal (about 2 minutes, no re-download) "
-                            "and try again.")
+                            "and try again (it reloads each country from the files already on disk).")
         analysis.log_call(name, {k: v for k, v in kwargs.items() if k != "ctx"})
 
 
@@ -119,9 +124,13 @@ Countries = Annotated[list[str] | None, Field(
 
 
 def _F(countries=None, date_from=None, date_to=None, party=None, sex=None, id_dep=None,
-       speech_only=True, exclude_chair=False, max_turn_words=None) -> analysis.Filters:
+       speech_only=True, exclude_chair=False, max_turn_words=None, library=None) -> analysis.Filters:
+    lib_id = None
+    if library:
+        lib_id, lib_countries = libmod.resolve(library)
+        countries = countries or lib_countries
     return analysis.Filters(countries, date_from, date_to, party, sex, id_dep, speech_only,
-                            exclude_chair, max_turn_words)
+                            exclude_chair, max_turn_words, lib_id, library if library else None)
 
 
 def _rows(cols: list[str], rows: list[tuple], max_cell: int | None = None) -> list[dict]:
@@ -163,6 +172,8 @@ MaxTurnWords = Annotated[int | None, Field(ge=100, description="Leave out turns 
                                                                "record; 10000 is a sensible check")]
 OutPath = Annotated[str | None, Field(description="File to write (absolute, or relative to the "
                                                   "client's working directory)")]
+Library = Annotated[str | None, Field(description="Name of a library (see library_describe): only its "
+                                                  "interventions; countries default to the library's")]
 
 
 # ── Catalogue and documentation ───────────────────────────────────────────────
@@ -230,7 +241,8 @@ def describe_data() -> dict:
                              "intervention_order (0 = Prolegomena), speaker_raw (as printed), "
                              "id_dep (deputy id, empty if not linked), speaker_name, sex (M|F), "
                              "party, district, dm_speech (1 = speech, 0 = not speech), text, "
-                             "n_words (tokens = runs of letters/digits, computed on import).",
+                             "n_words (tokens = runs of letters/digits, computed on import), row_n (record number in the "
+                             "published CSV; the Diarios Explorer's speech_id).",
             "deputies": "Deputy registers, core columns common to all countries: country, id_dep, "
                         "speaker_name, first_name, last_name, sex, sex_source, party, "
                         "parliamentary_group, district, legislature, start_date, end_date, notes. "
@@ -240,6 +252,10 @@ def describe_data() -> dict:
             "unigrams": "Word counts of speech rows: country, year, sex, fold (lower-case, accents "
                         "stripped), n. sum(n) equals sum(n_words) of the same speech rows.",
             "vocab": "Display form of each folded word per country: country, fold, word, n.",
+            "lib.libraries": "The user's libraries: id, name, description, color, created_at, updated_at.",
+            "lib.library_items": "Their interventions: library_id, country, id_int (join with interventions), "
+                                 "row_n, fingerprint, note, tags (JSON), origin, added_at.",
+            "lib.library_parts": "One row per library and country: edition of the data, doi, definitions (JSON).",
         },
         "loaded": store.loaded(),
         "examples": [
@@ -250,6 +266,8 @@ def describe_data() -> dict:
             "GROUP BY country, sex ORDER BY country, sex",
             "SELECT party, count(*) FROM interventions WHERE country = 'ES' AND dm_speech = 1 "
             "AND date BETWEEN '2020-01-01' AND '2020-12-31' GROUP BY 1 ORDER BY 2 DESC",
+            "SELECT i.country, i.party, count(*) FROM lib.library_items l JOIN lib.libraries b ON b.id = "
+            "l.library_id JOIN interventions i USING (id_int) WHERE b.name = 'my library' GROUP BY ALL ORDER BY 3 DESC",
         ],
         "tips": "Never SELECT text without LIMIT: the corpus holds millions of rows. Use "
                 "regexp_matches(text, '…', 'i') or contains(lower(text), '…') to filter on text. "
@@ -313,6 +331,7 @@ def query_sql(
 def search_text(
     pattern: Annotated[str, Field(description="Word or phrase (or RE2 regular expression if regex=true)")],
     countries: Countries = None,
+    library: Library = None,
     regex: bool = False,
     whole_word: Annotated[bool, Field(description="Plain searches: match whole words only")] = False,
     date_from: DateFrom = None,
@@ -330,7 +349,7 @@ def search_text(
     rx = search_regex(pattern, regex, whole_word)
     params: list = [rx]
     where = "regexp_matches(text, ?)" + _F(countries, date_from, date_to, party, sex, id_dep,
-                                           speech_only).where(params)
+                                           speech_only, library=library).where(params)
     _, total, _ = store.run_query(f"SELECT count(*) FROM interventions WHERE {where}", params)
     _, ids, _ = store.run_query(
         f"SELECT id_int FROM interventions WHERE {where} ORDER BY date DESC, id_int "
@@ -395,6 +414,7 @@ def term_frequency(
     pattern: Annotated[str, Field(description="Word or phrase; '+' sums variants, '*' ends a prefix")],
     by: Annotated[Literal[tuple(analysis.GROUPS)], Field(description="Grouping dimension")] = "year",  # type: ignore[valid-type]
     countries: Countries = None,
+    library: Library = None,
     date_from: DateFrom = None,
     date_to: DateTo = None,
     party: Party = None,
@@ -405,9 +425,10 @@ def term_frequency(
     max_rows: Annotated[int, Field(ge=1, le=2000)] = 300,
 ) -> dict:
     """How often a term is used, grouped by year, decade, country, legislature, party, sex,
-    speaker or session type: occurrences, interventions using it, total words and occurrences
-    per million words. Same counting as ngram_viewer."""
-    return analysis.term_frequency(pattern, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words),
+    speaker, session type or session: occurrences, interventions using it, total words and
+    occurrences per million words. Same counting as ngram_viewer. by='session' lists the sessions
+    where the term concentrates — a way to find the date of an event in each chamber."""
+    return analysis.term_frequency(pattern, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words, library),
                                    by, max_rows)
 
 
@@ -415,6 +436,7 @@ def term_frequency(
 def ngram_viewer(
     terms: Terms,
     countries: Countries = None,
+    library: Library = None,
     split_by_country: Annotated[bool, Field(description="One line per term × country instead of "
                                                         "pooling the countries")] = False,
     measure: Annotated[Literal["per_million", "count", "interventions_pct"], Field(
@@ -439,7 +461,7 @@ def ngram_viewer(
     """Google Books Ngram-style viewer: yearly frequency of one or more words or phrases, with
     the base behind every point (words, sessions) and low-base years flagged. Optionally writes
     the chart to an SVG or HTML file."""
-    return analysis.ngram_viewer(terms, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words),
+    return analysis.ngram_viewer(terms, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words, library),
                                  split_by_country, measure, smoothing, chart_path, title, language, overwrite)
 
 
@@ -447,6 +469,7 @@ def ngram_viewer(
 def term_counter(
     terms: Terms,
     countries: Countries = None,
+    library: Library = None,
     date_from: DateFrom = None,
     date_to: DateTo = None,
     party: Party = None,
@@ -458,12 +481,13 @@ def term_counter(
     """Counter for one or more terms: occurrences, interventions, sessions, speakers, breakdown by
     sex and party (with per-million rates), and the FIRST and LAST use in each country, with the
     intervention id — when a term entered each chamber's vocabulary."""
-    return analysis.term_counter(terms, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words))
+    return analysis.term_counter(terms, _F(countries, date_from, date_to, party, sex, None, speech_only, exclude_chair, max_turn_words, library))
 
 
 @mcp.tool(annotations=READ)
 def share_of_voice(
     countries: Countries = None,
+    library: Library = None,
     by: Annotated[Literal["sex", "party"], Field(description="Group to compare")] = "sex",
     per: Annotated[Literal["legislature", "year", "all"], Field(description="Period")] = "legislature",
     unit: Annotated[Literal["words", "turns"], Field(description="Measure of voice")] = "words",
@@ -475,17 +499,18 @@ def share_of_voice(
     """How much each group speaks compared with its weight in the chamber: share of words (or
     turns) and of speakers among linked deputies, against the group's share of members on the
     register in that period, and their ratio (>1 = speaks more than its weight)."""
-    return analysis.share_of_voice(_F(countries, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words), by, per, unit)
+    return analysis.share_of_voice(_F(countries, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words, library=library), by, per, unit)
 
 
 @mcp.tool(annotations=READ)
 def distinctive_words(
-    field: Annotated[Literal["sex", "party", "period", "country", "id_dep"], Field(
+    field: Annotated[Literal["sex", "party", "period", "country", "id_dep", "library"], Field(
         description="What separates the two groups")],
     a: Annotated[str, Field(description="Group A: 'F', a party label, a period '2000-2010', an ISO2 "
-                                        "code or an id_dep")],
+                                        "code, an id_dep or a library name")],
     b: Annotated[str | None, Field(description="Group B, same kind as A; omit for 'everyone else'")] = None,
     countries: Countries = None,
+    library: Library = None,
     date_from: DateFrom = None,
     date_to: DateTo = None,
     exclude_chair: ExcludeChair = False,
@@ -495,14 +520,15 @@ def distinctive_words(
 ) -> dict:
     """Words that most distinguish group A from group B (weighted log-odds with an informative
     Dirichlet prior, Monroe et al. 2008): e.g. women vs men deputies, one party vs another,
-    one period vs another. Compare within one language."""
-    return analysis.distinctive_words(_F(countries, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words), field, a, b, top, min_count)
+    one period vs another, a library vs the rest of its chambers. Compare within one language."""
+    return analysis.distinctive_words(_F(countries, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words, library=library), field, a, b, top, min_count)
 
 
 @mcp.tool(annotations=READ)
 def kwic(
     pattern: Annotated[str, Field(description="Word or phrase ('*' ends a prefix), or RE2 regex if regex=true")],
     countries: Countries = None,
+    library: Library = None,
     regex: bool = False,
     whole_word: bool = True,
     date_from: DateFrom = None,
@@ -517,7 +543,7 @@ def kwic(
 ) -> dict:
     """Keyword in context: concordance lines (left context · match · right context) from a
     sample of the interventions that use the term, for close reading."""
-    return analysis.kwic(pattern, _F(countries, date_from, date_to, party, sex), regex, whole_word,
+    return analysis.kwic(pattern, _F(countries, date_from, date_to, party, sex, library=library), regex, whole_word,
                          n, width, order, seed)
 
 
@@ -525,6 +551,7 @@ def kwic(
 def collocations(
     pattern: Annotated[str, Field(description="Word or phrase ('*' ends a prefix)")],
     countries: Countries = None,
+    library: Library = None,
     date_from: DateFrom = None,
     date_to: DateTo = None,
     party: Party = None,
@@ -539,13 +566,14 @@ def collocations(
 ) -> dict:
     """Words that keep company with a term: over-represented within ±window tokens of it
     (Dunning log-likelihood). Run with different dates to see how a term's associations shift."""
-    return analysis.collocations(pattern, _F(countries, date_from, date_to, party, sex, exclude_chair=exclude_chair, max_turn_words=max_turn_words), window, top,
+    return analysis.collocations(pattern, _F(countries, date_from, date_to, party, sex, exclude_chair=exclude_chair, max_turn_words=max_turn_words, library=library), window, top,
                                  min_count, sample, exclude_stopwords)
 
 
 @mcp.tool(annotations=REMOTE_READ)
 def coverage(
     countries: Countries = None,
+    library: Library = None,
     by: Annotated[Literal["year", "legislature"], Field(description="Period")] = "year",
     date_from: DateFrom = None,
     date_to: DateTo = None,
@@ -553,7 +581,7 @@ def coverage(
     """Data-quality check before interpreting a trend: sessions, rows, speech words, linked and
     sex-known shares per period, missing years and low-base periods, plus each corpus's
     linkage figures. Call it before comparing countries or reading peaks."""
-    return analysis.coverage(_F(countries, date_from, date_to), by)
+    return analysis.coverage(_F(countries, date_from, date_to, library=library), by)
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False))
@@ -579,6 +607,149 @@ def query_log(
     """The analyses run so far (tool, parameters, dataset versions), for reproducibility. Can
     write a methods appendix ready to adapt."""
     return analysis.query_log(last, methods_path, overwrite)
+
+
+# ── Libraries (subsets) ───────────────────────────────────────────────────────
+
+WRITE_LOCAL = ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False)
+LibName = Annotated[str, Field(description="Library name (case-insensitive)")]
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def library_create(
+    name: LibName,
+    countries: Annotated[list[str], Field(description="ISO2 codes of the chambers it takes (one or several)")],
+    terms: Annotated[str | None, Field(description="An intervention enters if it uses ANY of these: comma- or "
+                                                   "'+'-separated, '*' ends a prefix, whole words, case- and "
+                                                   "accent-insensitive. Give Spanish AND Portuguese forms when "
+                                                   "BR or PT are in ('corrupción+corrupção')")] = None,
+    regex: Annotated[bool, Field(description="terms is one RE2 regular expression")] = False,
+    min_occurrences: Annotated[int, Field(ge=1, le=100, description="Times the terms must appear in the "
+                                                                   "intervention: 2-3 keeps those that DISCUSS "
+                                                                   "the topic, not those that mention it")] = 1,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    party: Party = None,
+    sex: Sex = None,
+    id_dep: str | None = None,
+    speech_only: SpeechOnly = True,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+    event_dates: Annotated[dict[str, str] | None, Field(
+        description="Align on an event: {ISO2: 'YYYY-MM-DD'} per country; each country's window becomes "
+                    "event − days_before … event + days_after (stored as plain dates). To find the dates: "
+                    "term_counter (first use per chamber) or term_frequency(by='session')")] = None,
+    days_before: Annotated[int, Field(ge=0, le=36500)] = 0,
+    days_after: Annotated[int, Field(ge=0, le=36500)] = 0,
+    per_country: Annotated[dict[str, dict] | None, Field(
+        description="Per-country overrides of the settings above, e.g. {'BR': {'terms': 'aborto+interrupção "
+                    "da gravidez'}, 'ES': {'date_from': '2010'}}")] = None,
+    label: Annotated[str | None, Field(description="Common concept the parts share ('abortion'), recorded in "
+                                                   "every country's definition")] = None,
+    description: str = "",
+    color: Annotated[str, Field(description="Colour in the explorer")] = "indigo",
+    extend: Annotated[bool, Field(description="Add to an existing library of that name instead of failing")] = False,
+) -> dict:
+    """Create a library: a named, saved subset of interventions — on a topic, in a period, of a group —
+    from one or SEVERAL countries, for focused and comparative analysis. Each country gets its own
+    definition (terms, filters, time window), recorded with the edition of the data. Returns the
+    description of what was gathered (see library_describe). Then pass library=<name> to any analysis
+    tool. Equivalent terms across countries are the user's claim: say so when reporting."""
+    return libmod.create(name, countries, terms, regex, min_occurrences, date_from, date_to, party, sex, id_dep,
+                         speech_only, exclude_chair, max_turn_words, event_dates, days_before, days_after,
+                         per_country, label, description, color, extend)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=False))
+def library_edit(
+    name: LibName,
+    action: Annotated[Literal["add", "remove", "note"], Field(
+        description="add / remove interventions (by id_ints or by a query), or note one (note and/or tags)")],
+    id_ints: Annotated[list[str] | None, Field(description="Intervention ids")] = None,
+    sql: Annotated[str | None, Field(description="add/remove: a read-only SELECT returning a column id_int, "
+                                                 "e.g. after reading kwic or search_text results")] = None,
+    note: Annotated[str | None, Field(description="note: text attached to the intervention (id_ints[0])")] = None,
+    tags: Annotated[list[str] | None, Field(description="note: tags attached to the intervention")] = None,
+) -> dict:
+    """Refine a library by hand: add or remove interventions, or attach a note and tags to one.
+    Removed interventions stay excluded when the library is rebuilt from its definitions."""
+    if action == "add":
+        return libmod.add(name, id_ints, sql)
+    if action == "remove":
+        return libmod.remove(name, id_ints, sql)
+    if not id_ints or len(id_ints) != 1:
+        raise ValueError("note takes exactly one id in id_ints")
+    return libmod.note(name, id_ints[0], note, tags)
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def library_combine(
+    name: Annotated[str, Field(description="Name of the NEW library")],
+    a: LibName,
+    b: LibName,
+    op: Annotated[Literal["union", "intersection", "difference"], Field(
+        description="union (in either), intersection (in both), difference (in a, not in b)")],
+    description: str = "",
+) -> dict:
+    """A new library from two existing ones (notes and tags travel with the interventions)."""
+    return libmod.combine(name, a, b, op, description)
+
+
+@mcp.tool(annotations=READ)
+def library_describe(
+    name: Annotated[str | None, Field(description="Library name; omit to list every library")] = None,
+) -> dict:
+    """What is in a library, per country: interventions, sessions, dates, speakers, words, linkage,
+    share of the chair and of very long turns, years too thin to read as trends, the definitions
+    and the data edition — with warnings for comparing countries. Call it before analysing."""
+    return libmod.list_libraries() if not name else libmod.describe(name)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=False))
+def library_delete(
+    name: LibName,
+    confirm: Annotated[bool, Field(description="Must be true: deleting cannot be undone")] = False,
+) -> dict:
+    """Delete a library (only the library: the data are not touched). Without confirm=true it only
+    says what would be deleted."""
+    return libmod.delete(name, confirm)
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def library_rebuild(name: LibName) -> dict:
+    """After downloading a new edition of a country: rebuild the library on it. Definitions run
+    again; interventions added by hand, combined or imported, and their notes, are found again by
+    their text; exclusions are kept. Reports what came in and what was lost, per country."""
+    return libmod.rebuild(name)
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def library_export(
+    name: LibName,
+    folder: Annotated[str, Field(description="Destination folder (absolute, or relative to the client's "
+                                             "working directory)")],
+    table_format: Annotated[Literal["csv", "parquet"] | None, Field(
+        description="Also write every intervention of the library with its metadata, note and tags")] = None,
+    overwrite: bool = False,
+) -> dict:
+    """Export for the Diarios Explorer: one .2replib per country (the explorer holds one country at a
+    time) plus an index (.parlaibero-biblioteca.json) that library_import uses to rebuild the whole
+    comparative library. Each file must be imported in the explorer with ITS country's CSV loaded."""
+    return libmod.export(name, folder, table_format, overwrite)
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def library_import(
+    paths: Annotated[list[str], Field(description=".2replib files exported by the explorer (one per country), "
+                                                  "an index .parlaibero-biblioteca.json, or a folder")],
+    name: Annotated[str | None, Field(description="Name of the new library (default: the one in the files)")] = None,
+    force: Annotated[bool, Field(description="Import even when the files were written on another version of "
+                                             "the data (only items whose date and speaker still match)")] = False,
+) -> dict:
+    """Bring libraries made in the Diarios Explorer into the MCP — several countries' files become one
+    comparative library. Every item is checked against the loaded data (row → intervention, then
+    its date and speaker); whatever does not match is reported, not translated silently."""
+    return libmod.import_files(paths, name, force)
 
 
 @mcp.resource("parlaibero://about", mime_type="text/markdown")

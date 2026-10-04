@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0 · sin publicar
+
+Bibliotecas: subconjuntos con nombre, de uno o varios países (plan: `docs/PLAN_bibliotecas.md`).
+
+- `library_create`, `library_describe`, `library_edit` (añadir, quitar, anotar), `library_combine`,
+  `library_rebuild`, `library_delete`, `library_export` y `library_import`.
+- `library=` en todas las herramientas de análisis; `distinctive_words` compara una biblioteca con el
+  resto de sus cámaras (`field='library'`); `term_frequency(by='session')` ayuda a fechar un
+  acontecimiento en cada cámara (para `event_dates`).
+- Exportación para el Diarios Explorer: un `.2replib` por país y un índice
+  (`.parlaibero-biblioteca.json`). Comprobada contra el motor real del explorador con los CSV
+  publicados de El Salvador y España: importa todos los items, reconoce la fuente como suya y
+  devuelve los mismos `speech_id`, con notas y etiquetas.
+- Columna `row_n` (número de registro en el CSV publicado, el `speech_id` del explorador),
+  comprobada en cada importación contra una lectura independiente del archivo.
+- Las bibliotecas viven en su propio archivo (`bibliotecas.duckdb`), adjunto como `lib`.
+  **Las bases hechas con 0.2 deben ejecutar `parlaibero-mcp reindex` una vez**: recarga cada país
+  desde los CSV ya descargados (unos minutos, sin descargar nada).
+
 ## 0.2.1 · 2026-10-03
 
 - Todas las herramientas de análisis devuelven el DOI y la edición de los conjuntos que usaron
