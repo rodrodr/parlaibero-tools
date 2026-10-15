@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 · 2026-10-14
+## 0.5.0 · 2026-10-14 · publicada en PyPI
 
 Two network tools on a library (plan: `docs/PLAN_redes.md`; method: resource `parlaibero://methods/networks`).
 

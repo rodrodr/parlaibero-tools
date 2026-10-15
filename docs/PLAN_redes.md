@@ -1,8 +1,8 @@
 # Plan · Dos herramientas de red: `cooccurrence_network` y `mention_network` (motor 0.5.0)
 
-> **Estado: hecho (14-oct), sin publicar ni confirmar en git.** Fases A–E completas: motor 0.5.0 y luz-mcp 0.2.0
-> construidos y probados (57 pruebas del motor con las regresiones; 9 de luz; batería de 21 llamadas idéntica a la
-> 0.4.0; prueba de punta a punta por el protocolo MCP). Publicar en PyPI lo hace el investigador.
+> **Estado: TERMINADO (14-oct):** motor 0.5.0 y luz-mcp 0.2.0 publicados en PyPI por el investigador y comprobados
+> desde PyPI en un entorno limpio. 59 pruebas del motor con las regresiones; 9 de luz; batería de 21 llamadas
+> idéntica a la 0.4.0; prueba de punta a punta por el protocolo MCP.
 > Decisiones del investigador: 1) NPMI sin redondear; 2) `min_co` proporcional a N; 3) Leiden (portado del
 > explorador, paridad exacta); 4) por defecto solo `reference`; 5) el Anexo se queda en local.
 > Origen: especificación del investigador (14-oct) y prototipo construido ese día sobre la biblioteca
