@@ -18,7 +18,7 @@ except ImportError:  # mcp 1.x
     from mcp.server.fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
-from . import __version__, analysis, dataverse, library as libmod, store
+from . import __version__, analysis, dataverse, library as libmod, networks, store
 from .textutil import search_regex
 from .catalog import COLLECTION_URL, COUNTRIES, DOCUMENTS, normalize_iso
 
@@ -42,6 +42,10 @@ How to work with it:
    one or SEVERAL countries; every analysis tool then takes `library=` to work inside it.
    `library_describe` says what is in it (size, spread, chair, long turns) before you compare;
    `library_export` writes one file per country for the Diarios Explorer plus an index.
+   Networks on a library: `cooccurrence_network` (which entities are mentioned together, by whom;
+   without `entities` it first proposes candidates to confirm) and `mention_network` (who names whom
+   on the floor, deputies and external actors you declare). Both write files only to an ABSOLUTE
+   `output_dir` and are documented in the resource parlaibero://methods/networks.
 3. Rows with `dm_speech = 0` are not speech (cover page, summaries, vote tallies, reproduced
    documents; `intervention_order = 0` is the session's Prolegomena). Filter `dm_speech = 1`
    to study what was said.
@@ -67,14 +71,20 @@ _server = _Server(name="parlaibero", instructions=INSTRUCTIONS)
 LOGGED = {"query_sql", "search_text", "term_frequency", "ngram_viewer", "term_counter", "share_of_voice",
           "distinctive_words", "kwic", "collocations", "coverage", "export_result", "get_session",
           "get_intervention", "library_create", "library_edit", "library_combine", "library_describe",
-          "library_delete", "library_rebuild", "library_export", "library_import"}
+          "library_delete", "library_rebuild", "library_export", "library_import", "cooccurrence_network",
+          "mention_network"}
 
 
 def make_before(logged: set[str], command: str):
     """Before an analysis tool: refuse a database built by an older engine, and log the call."""
     def before(name: str, kwargs: dict) -> None:
         if name in logged:
-            if store.DB.exists() and store.schema_version() != store.SCHEMA_VERSION:
+            found = store.schema_version() if store.DB.exists() else None
+            if found is not None and found != store.SCHEMA_VERSION:
+                if found.isdigit() and int(found) > int(store.SCHEMA_VERSION):
+                    raise ToolError(f"The local database was built by a NEWER version of {command} than this server "
+                                    f"(database format {found}, server {store.SCHEMA_VERSION}). Update the server: "
+                                    f"restart the client, or run `uvx --refresh {command} --version` once.")
                 raise ToolError(f"The local database was built by an older version. Run `{command} reindex` in a "
                                 f"terminal and try again (it reloads each dataset from the files already on disk, "
                                 f"no download).")
@@ -736,6 +746,100 @@ def library_import(
     return libmod.import_files(paths, name, force)
 
 
+# ── Networks ──────────────────────────────────────────────────────────────────
+
+EntitySpec = Annotated[list[dict] | None, Field(
+    description="Entities [{name, type: persona|institucion|concepto, pattern, exclude?}]. pattern and exclude are "
+                "regular expressions (RE2: no look-arounds) over lower-case, accent-free text, e.g. "
+                "'\\bsupremo tribunal|\\bstf\\b'. A match inside `exclude`, or inside a LONGER match of another "
+                "entity, does not count ('maria pereira' is not 'pereira'). Omit to get candidates first.")]
+Groups = Annotated[dict[str, list[str]] | None, Field(
+    description="Up to two contrast groups of labels of `group_by`, e.g. {'left': ['PT', 'PSOL'], 'right': ['PL']}; "
+                "every other label is 'rest'. Case-insensitive. No default: the classification is yours")]
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def cooccurrence_network(
+    library: Annotated[str, Field(description="Library name (the network is built on its interventions)")],
+    entities: EntitySpec = None,
+    groups: Groups = None,
+    group_by: Annotated[str, Field(description="Column the group labels refer to (party, sex…)")] = "party",
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+    min_co: Annotated[int | None, Field(ge=1, description="Minimum interventions together; default "
+                                                         "max(5, N/120), reported")] = None,
+    min_npmi: Annotated[float, Field(ge=-1, le=1, description="Minimum NPMI (unrounded)")] = 0.10,
+    max_nodes: Annotated[int, Field(ge=2, le=400)] = 60,
+    max_entities: Annotated[int, Field(ge=2, le=400)] = 150,
+    kwic_per_entity: Annotated[int, Field(ge=0, le=20)] = 5,
+    seed: int = 1,
+    pooled: Annotated[bool, Field(description="One network for all the library's countries instead of one "
+                                              "per country")] = False,
+    output_dir: Annotated[str | None, Field(description="ABSOLUTE folder for the files")] = None,
+    formats: Annotated[list[Literal["html", "csv", "json", "md"]] | None, Field(
+        description="Files to write in output_dir (default all four)")] = None,
+    overwrite: bool = False,
+) -> dict:
+    """Network of entities (people, institutions, concepts) mentioned in the same intervention of a
+    library: co (volume), NPMI (affinity), Jaccard, counts by group and each entity's bias between two
+    groups, Leiden communities, centralities, examples (KWIC) and ambiguity warnings. Writes an
+    interactive HTML (light/dark, accessible, with tables), CSV, JSON and a summary. One network per
+    country. Without `entities` it proposes candidates and builds nothing until you confirm them."""
+    f = _F(None, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words, library=library)
+    return networks.cooccurrence_network(f, entities, groups, group_by, min_co, min_npmi, max_nodes, max_entities,
+                                         kwic_per_entity, seed, output_dir, formats, overwrite, pooled)
+
+
+ExternalActors = Annotated[list[dict] | None, Field(
+    description="People or bodies outside the chamber to count as targets: [{name, aliases: [...], role}]. "
+                "They are matched first, by any alias, so declaring a homonym of a deputy (a minister, a "
+                "former adviser) also keeps it from being taken for the deputy")]
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def mention_network(
+    library: Annotated[str, Field(description="Library name (the network is built on its interventions)")],
+    target_scope: Annotated[Literal["speakers", "external", "both"], Field(
+        description="Who can be mentioned: deputies of the chamber, the external actors given, or both")] = "both",
+    external_actors: ExternalActors = None,
+    mention_kinds: Annotated[list[Literal["reference", "address"]] | None, Field(
+        description="'reference' = talking ABOUT someone (default); 'address' = speaking TO them")] = None,
+    groups: Groups = None,
+    group_by: Annotated[str, Field(description="Column the group labels refer to (party, sex…)")] = "party",
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+    min_mentions: Annotated[int, Field(ge=1, description="Minimum interventions per directed edge")] = 2,
+    min_speakers: Annotated[int, Field(ge=1, description="Minimum distinct speakers mentioning a target")] = 1,
+    top_n: Annotated[int, Field(ge=2, le=400, description="People kept, by total strength")] = 60,
+    honorifics: Annotated[bool | None, Field(
+        description="Whether 'señor/senhor X' alone counts as naming the deputy X. Default by language, as "
+                    "measured: yes in Spanish, no in Portuguese (in Brazil it names ministers, judges and "
+                    "former presidents as often as members)")] = None,
+    seed: int = 1,
+    validation_sample: Annotated[int, Field(ge=0, le=1000, description="Write a random sample of N resolved "
+                                                                        "mentions to check by hand")] = 0,
+    output_dir: Annotated[str | None, Field(description="ABSOLUTE folder for the files")] = None,
+    formats: Annotated[list[Literal["html", "csv", "json", "md"]] | None, Field(
+        description="Files to write in output_dir (default all four)")] = None,
+    overwrite: bool = False,
+) -> dict:
+    """Directed network of who mentions whom in a library: an arrow speaker → deputy (or external actor)
+    counts the speaker's interventions that name them. Names come from the deputies register (in office on
+    the day), by full name anywhere or by surname after a title; homonyms are resolved by the title's
+    gender and the party written next to the name, otherwise listed apart (never guessed). The record's
+    notes in brackets are not counted. Gives in/out strength, PageRank, reciprocity, Leiden communities,
+    a group → group matrix, E-I and asymmetric pairs, and writes an interactive HTML (network and heat map,
+    with tables), CSV, JSON and a summary. One network per country."""
+    f = _F(None, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words, library=library)
+    return networks.mention_network(f, target_scope, external_actors, mention_kinds, groups, group_by,
+                                    min_mentions, min_speakers, top_n, seed, validation_sample, output_dir,
+                                    formats, overwrite, honorifics)
+
+
 @mcp.resource("parlaibero://about", mime_type="text/markdown")
 def about() -> str:
     """What ParlaIbero is and how this server works."""
@@ -744,6 +848,13 @@ def about() -> str:
         lines.append(f"- {iso} · {en} · https://doi.org/{doi}")
     lines += ["", f"Local data: `{store.HOME}`", f"Collection: {COLLECTION_URL}"]
     return "\n".join(lines)
+
+
+@mcp.resource("parlaibero://methods/networks", mime_type="text/markdown")
+def methods_networks() -> str:
+    """How cooccurrence_network and mention_network are built: definitions, rules, limits and validation."""
+    from importlib.resources import files
+    return files("parlaibero_mcp").joinpath("methods_networks.md").read_text(encoding="utf-8")
 
 
 def main() -> None:

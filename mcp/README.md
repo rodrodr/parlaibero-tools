@@ -132,6 +132,20 @@ country's CSV loaded**. The country is in the file name, the library name and it
 compatibility of the files is tested against the explorer's real engine, not a copy of it
 (`diaries_explorer/explorer_src/test/ida_y_vuelta_mcp.mjs`).
 
+**Networks on a library**
+
+| tool | what it does |
+|---|---|
+| `cooccurrence_network` | which entities (people, institutions, concepts, given as regular expressions) are mentioned **in the same intervention**: co-occurrence (volume), NPMI (affinity beyond chance), Jaccard, Leiden communities, centralities, examples, and each entity's **bias** between two groups you define. It warns about ambiguous patterns. Without `entities` it first proposes candidates and builds nothing |
+| `mention_network` | **who names whom** on the floor: speaker → deputy in office that day (from the register) or → an external actor you declare. Separates talking *about* someone from speaking *to* them, leaves out the record's notes in brackets, and lists ambiguous names apart instead of guessing. In/out strength, PageRank, reciprocity, communities, a group → group matrix, E-I, asymmetric pairs, and a sample to check by hand |
+
+Both write an interactive HTML page (light and dark, keyboard, a table for every figure), CSV, JSON and a
+summary, **only** to the absolute `output_dir` you give, with the citation of each dataset. A library with
+several countries gives one network per country. Example, in words: *«build the co-occurrence network of
+the Supreme Court, the Government, the Armed Forces and «golpe» in my library, comparing the left and
+right blocs»*. Definitions, rules, limits and the measured precision of `mention_network` are in the
+resource `parlaibero://methods/networks`.
+
 The resource `parlaibero://about` summarises the collection.
 
 ### Two filters that change results

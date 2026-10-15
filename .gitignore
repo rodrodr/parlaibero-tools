@@ -10,3 +10,8 @@ build/
 *.part
 *.duckdb
 *.duckdb.wal
+
+# local regression data (names of politicians: kept out of the public repository)
+docs/anexo_golpe_8jan.tsv
+docs/anexo_golpe_8jan_externos.tsv
+docs/ejemplos_golpe_8jan/

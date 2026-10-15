@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.5.0 · 2026-10-14
+
+Two network tools on a library (plan: `docs/PLAN_redes.md`; method: resource `parlaibero://methods/networks`).
+
+- `cooccurrence_network`: entities mentioned in the same intervention, with co-occurrence, NPMI (thresholds on
+  the unrounded value), Jaccard, bias between two groups, Leiden communities, betweenness and strength,
+  examples, and ambiguity alerts derived from rules. `min_co` scales with the library (`max(5, N/120)`).
+  Without `entities` it proposes candidates and builds nothing.
+- `mention_network`: a directed network of who names whom: deputies in office on the day, from the register,
+  plus the external actors you declare. It separates `reference` from `address`, counts the record's notes in
+  brackets apart, and resolves homonyms by the title's gender, a given name or a party, otherwise listing them
+  apart. It reports in/out strength, PageRank, reciprocity, a group → group matrix, E-I, asymmetric pairs and an
+  optional validation sample. Precision was measured by independent review in four rounds; it is in the method
+  resource.
+- Leiden communities ported from the Diarios Explorer (`leiden.py`), with identical results for the same seed.
+- Interactive HTML pages: light and dark, keyboard, a table twin for every figure, palettes checked with the
+  validator, and a self-check of the embedded data after writing.
+- **No earlier result changes.** The 21-call battery gives the same output as 0.4.0.
+
 ## 0.4.0 · 2026-10-04
 
 El motor sirve también otras colecciones: perfiles de colección (`profile.py`).
