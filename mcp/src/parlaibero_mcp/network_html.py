@@ -79,6 +79,7 @@ button[aria-pressed="true"]{background:var(--grid)}
 @media (min-width:900px){.layout{grid-template-columns:minmax(0,1fr) 320px}}
 .layout.nopanel{grid-template-columns:minmax(0,1fr)}
 .layout.nopanel #panel{display:none}
+.layout.nopanel #chart{height:max(min(72vh,680px),min(calc(100vh - 150px),1100px))}   /* without the panel the chart grows in height too */
 #chart{width:100%;height:min(72vh,680px);display:block;touch-action:pan-y;background:var(--surface);border-radius:8px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--ink2);margin-top:8px}
 .legend .sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:4px;vertical-align:-2px;
@@ -307,18 +308,25 @@ function graphView(o){
       d.fx = T.invertX(ev.x); d.fy = T.invertY(ev.y); })
     .on('end', (ev, d) => { if (ctl.layout !== 'force') return; if (!ev.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
   function fit(animate){ const shown = o.nodes.filter((d) => live.has(d.id)); if (!shown.length) return;
-    let [x0, x1] = d3.extent(shown, (d) => d.x), [y0, y1] = d3.extent(shown, (d) => d.y);
-    if (guide && guide.rOut){ const r = guide.rOut + 40; x0 = Math.min(x0, -r); x1 = Math.max(x1, r); y0 = Math.min(y0, -r - 20); y1 = Math.max(y1, r); }
-    for (const c of (guide && guide.discs) || []){ x0 = Math.min(x0, c.x - c.r); x1 = Math.max(x1, c.x + c.r); y0 = Math.min(y0, c.y - c.r - 16); y1 = Math.max(y1, c.y + c.r); }
-    const pad = ctl.maxR + 28;
-    const k = Math.max(0.05, Math.min(4, (width() - 2 * pad) / Math.max(1, x1 - x0), (height() - 2 * pad) / Math.max(1, y1 - y0)));
+    const pad = ctl.maxR + 28, textW = (t) => t.length * 6.6 + 8;      // px of a group name (12 px semibold)
+    // two passes: the names keep their size on screen, so how much layout space they need depends on the scale
+    let k = 1, x0, x1, y0, y1;
+    for (let pass = 0; pass < 2; pass++){
+      [x0, x1] = d3.extent(shown, (d) => d.x); [y0, y1] = d3.extent(shown, (d) => d.y);
+      if (guide && guide.rOut){ const name = d3.max(guide.sectors || [], (sc) => textW(sc.name)) || 0, r = guide.rOut + (18 + name) / k;
+        x0 = Math.min(x0, -r); x1 = Math.max(x1, r); y0 = Math.min(y0, -guide.rOut - 44 / k); y1 = Math.max(y1, guide.rOut + 24 / k); }
+      for (const c of (guide && guide.discs) || []){ const half = Math.max(c.r, textW(c.name) / 2 / k);
+        x0 = Math.min(x0, c.x - half); x1 = Math.max(x1, c.x + half); y0 = Math.min(y0, c.y - c.r - 20 / k); y1 = Math.max(y1, c.y + c.r); }
+      k = Math.max(0.05, Math.min(4, (width() - 2 * pad) / Math.max(1, x1 - x0), (height() - 2 * pad) / Math.max(1, y1 - y0))); }
     const t = d3.zoomIdentity.translate(width() / 2, height() / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
     (animate && !REDUCED ? svg.transition().duration(300) : svg).call(zoom.transform, t); }
-  // the chart refits when its width changes: window resized, side panel hidden or shown
-  const onResize = () => { svg.attr('viewBox', [0, 0, width(), height()]); fit(false); };
+  // the chart refits when its size changes: window resized, side panel hidden or shown
+  const onResize = () => { svg.attr('viewBox', [0, 0, width(), height()]);
+    if (ctl.layout === 'clusters') setLayout('clusters', false); else fit(false); };   // the discs follow the new shape
   window.addEventListener('resize', onResize);
-  if (window.ResizeObserver) { let w0 = width();
-    new ResizeObserver(() => { const w = width(); if (w && Math.abs(w - w0) > 1) { w0 = w; onResize(); } }).observe(svg.node()); }
+  if (window.ResizeObserver) { let w0 = width(), h0 = height();
+    new ResizeObserver(() => { const w = width(), h = height();
+      if (w && h && (Math.abs(w - w0) > 1 || Math.abs(h - h0) > 1)) { w0 = w; h0 = h; onResize(); } }).observe(svg.node()); }
 
   // ── layouts ──
   const shownLinks = () => o.links.filter((l) => lastOk(l));
@@ -368,9 +376,20 @@ function graphView(o){
     const meta = d3.forceSimulation(discs).randomSource(seed())
       .force('link', d3.forceLink([...between.values()]).id((d) => d.id).distance((e) => e.source.r + e.target.r + CLUSTER_GAP)
         .strength((e) => 0.03 + 0.2 * e.w / maxB))
-      .force('charge', d3.forceManyBody().strength(-60)).force('x', d3.forceX(0).strength(0.03)).force('y', d3.forceY(0).strength(0.03))
+      .force('charge', d3.forceManyBody().strength(-60))
+      .force('x', d3.forceX(0).strength(0.03)).force('y', d3.forceY(0).strength(0.03))
       .force('collide', d3.forceCollide().radius((d) => d.r + CLUSTER_GAP / 2).strength(1).iterations(4)).stop();
     for (let i = 0; i < 500; i++) meta.tick();
+    // then the centres are spread along the longer side of the chart until the whole has its shape (a wide chart when
+    // the side panel is hidden): the discs stay round and the gaps can only grow
+    const span = (k, f) => { const m = d3.mean(discs, (c) => c[k]);
+      return d3.max(discs, (c) => m + (c[k] - m) * f + c.r) - d3.min(discs, (c) => m + (c[k] - m) * f - c.r); };
+    const want = width() / height(), ratio = span('x', 1) / span('y', 1);
+    if (discs.length > 1 && Math.abs(Math.log(ratio / want)) > 0.05){
+      const [k, other, goal] = ratio < want ? ['x', 'y', want] : ['y', 'x', 1 / want];
+      let lo = 1, hi = 3;
+      for (let i = 0; i < 30; i++){ const f = (lo + hi) / 2; if (span(k, f) / span(other, 1) < goal) lo = f; else hi = f; }
+      const m = d3.mean(discs, (c) => c[k]); discs.forEach((c) => { c[k] = m + (c[k] - m) * lo; }); }
     const at = new Map(discs.map((c) => [c.id, c])), pos = new Map();
     for (const d of vis){ const c = at.get(raw(d)), p = local.get(d.id); pos.set(d.id, {x: c.x + p.x, y: c.y + p.y}); }
     return {pos, guide: {discs: discs.map((c) => ({x: c.x, y: c.y, r: c.r, name: c.name}))}}; }

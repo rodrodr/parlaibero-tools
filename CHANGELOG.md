@@ -24,7 +24,9 @@ Three network tools that are never mixed, and pages whose ink follows the data.
 - **Thirty colours** for themes, communities and parties (it was 8 and gray), validated in both themes; names on
   discs, sectors and legends carry identity too.
 - The side panel of every network page can be hidden («hide panel») to give the network the whole width; the page
-  remembers the choice in the browser and opens the panel again when a click asks for details.
+  remembers the choice in the browser and opens the panel again when a click asks for details. Without the panel
+  the chart also grows in height, the «separated groups» discs spread to the chart's shape, and the view fit
+  leaves room for the group names.
 - A test parses every inline script of the three pages with Node.
 - The server's instructions and `parlaibero://methods/networks` describe the three networks apart.
 - Results of `comention_network` (old `cooccurrence_network` with actors) and `mention_network` do not change.
