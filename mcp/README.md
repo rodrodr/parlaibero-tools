@@ -7,7 +7,12 @@ linked to their deputies, deposited in [Harvard Dataverse](https://dataverse.har
 
 The server downloads each country's dataset once (MD5-verified, straight from Dataverse), loads it
 into a local [DuckDB](https://duckdb.org) database and exposes tools to search, count and read it.
-Nothing is sent anywhere except plain GET requests to Dataverse.
+Nothing is sent anywhere: the only requests are plain GETs to Dataverse and, for the word network, to the
+Diarios Explorer's site for its expression tables.
+
+**New here?** The [tutorial](https://github.com/rodrodr/parlaibero-tools/blob/main/docs/tutorial/TUTORIAL.en.md)
+walks through the tools with real questions and what they return
+([en español](https://github.com/rodrodr/parlaibero-tools/blob/main/docs/tutorial/TUTORIAL.md)).
 
 ## Install
 

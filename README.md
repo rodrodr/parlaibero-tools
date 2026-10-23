@@ -49,6 +49,9 @@ Después basta con pedirlo en lenguaje natural: *«descarga El Salvador y dime q
 de seguridad desde 2019»*, *«¿cuánto se menciona la corrupción en el Congreso peruano por
 década?»*, *«compara el peso de las diputadas en el habla de España y Portugal»*.
 
+**¿Por dónde empezar?** El [tutorial](docs/tutorial/TUTORIAL.md) recorre las herramientas con preguntas reales y
+lo que devuelven, de la descarga a las redes y la nota de métodos (también [en inglés](docs/tutorial/TUTORIAL.en.md)).
+
 | herramienta | qué hace |
 |---|---|
 | `list_countries` · `download_country` | los 16 conjuntos, qué hay descargado, y la descarga de Dataverse con verificación MD5 |
@@ -155,7 +158,8 @@ This repository provides:
   (Claude Code, Claude Desktop, Cursor, Codex, Gemini CLI…) search, count and read them. Install it
   in Claude Code with
   `claude mcp add parlaibero -s user -- uvx parlaibero-mcp`.
-  See [`mcp/README.md`](mcp/README.md) for other clients.
+  See [`mcp/README.md`](mcp/README.md) for other clients, and the [tutorial](docs/tutorial/TUTORIAL.en.md)
+  for a walk through the tools with real questions and results.
 - **[`skills/`](skills/), the 21 `diaries-*` Claude Code skills** and their Python code: the
   pipeline that turned session diaries (PDF/HTML) into the corpus, from OCR to the canonical
   16-column matrix. Install them with `bash install_skills.sh`. The skills are written in Spanish
