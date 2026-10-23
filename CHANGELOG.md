@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0 · 2026-10-23 · sin publicar
+## 0.6.0 · 2026-10-23 · publicada en PyPI
 
 Three network tools that are never mixed, and pages whose ink follows the data.
 
