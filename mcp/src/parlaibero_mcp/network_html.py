@@ -77,6 +77,8 @@ button[aria-pressed="true"]{background:var(--grid)}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 @media (min-width:900px){.layout{grid-template-columns:minmax(0,1fr) 320px}}
+.layout.nopanel{grid-template-columns:minmax(0,1fr)}
+.layout.nopanel #panel{display:none}
 #chart{width:100%;height:min(72vh,680px);display:block;touch-action:pan-y;background:var(--surface);border-radius:8px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--ink2);margin-top:8px}
 .legend .sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:4px;vertical-align:-2px;
@@ -312,7 +314,11 @@ function graphView(o){
     const k = Math.max(0.05, Math.min(4, (width() - 2 * pad) / Math.max(1, x1 - x0), (height() - 2 * pad) / Math.max(1, y1 - y0)));
     const t = d3.zoomIdentity.translate(width() / 2, height() / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
     (animate && !REDUCED ? svg.transition().duration(300) : svg).call(zoom.transform, t); }
-  window.addEventListener('resize', () => { svg.attr('viewBox', [0, 0, width(), height()]); fit(false); });
+  // the chart refits when its width changes: window resized, side panel hidden or shown
+  const onResize = () => { svg.attr('viewBox', [0, 0, width(), height()]); fit(false); };
+  window.addEventListener('resize', onResize);
+  if (window.ResizeObserver) { let w0 = width();
+    new ResizeObserver(() => { const w = width(); if (w && Math.abs(w - w0) > 1) { w0 = w; onResize(); } }).observe(svg.node()); }
 
   // ── layouts ──
   const shownLinks = () => o.links.filter((l) => lastOk(l));
@@ -413,10 +419,25 @@ function graphView(o){
   window.addEventListener('themechange', draw);
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
   draw();
-  if (o.onLayout) o.onLayout(ctl.layout);
+  if (o.onLayout) queueMicrotask(() => o.onLayout(ctl.layout));   // after the page has its handle on the view
   return {node, link, hit, label, sim, fit, draw, filter, R, setSize(f){ size = f; draw(); },
           layout: () => ctl.layout, relayout(){ if (ctl.layout !== 'force') setLayout(ctl.layout, true); }};
 }
+// The side panel can be hidden to give the network the whole width (remembered in this browser); a click that asks
+// for details opens it again.
+function panelControl(){
+  const lay = document.querySelector('.layout'), b = document.getElementById('panelbtn');
+  if (!lay || !b) return () => {};
+  const set = (hidden, keep = true) => { lay.classList.toggle('nopanel', hidden); b.textContent = hidden ? 'show panel' : 'hide panel';
+    b.setAttribute('aria-expanded', String(!hidden));
+    if (keep) try { localStorage.setItem('parlaibero-network-panel', hidden ? 'hidden' : 'shown'); } catch (e) { /* storage off */ } };
+  let saved = null;
+  try { saved = localStorage.getItem('parlaibero-network-panel'); } catch (e) { /* storage off */ }
+  set(saved === 'hidden', false);
+  b.addEventListener('click', () => set(!lay.classList.contains('nopanel')));
+  return () => { if (lay.classList.contains('nopanel')) set(false); };
+}
+const openPanel = panelControl();
 function themeButton(){
   const b = document.getElementById('theme'); if (!b) return;
   b.addEventListener('click', () => { const r = document.documentElement;
@@ -497,12 +518,12 @@ hit.on('mouseenter', (ev, l) => showTip(ev, [[`${l.source.id} – ${l.target.id}
     [l.npmi.toFixed(3), 'NPMI'], ...(HAS_BIAS ? G.contrast.map((g) => [fmt(l['co_' + g] || 0), 'by ' + g]) : [])]))
   .on('mouseleave', hideTip).on('click', (ev, l) => showEdge(l));
 const panel = document.getElementById('panel');
-function showNode(d){ panel.replaceChildren(el('h2', {}, d.name),
+function showNode(d){ openPanel(); panel.replaceChildren(el('h2', {}, d.name),
     el('p', {class:'kv'}, nodeRows(d).slice(1).map(([v, l]) => `${v} ${l}`).join(' · ')));
   for (const k of (DATA.kwic[d.name] || [])) { const box = el('div', {class:'ex'});
     box.append(el('div', {class:'meta'}, [k.date, k.speaker, k.party].filter(Boolean).join(' · ') + ' · ' + k.id_int), kwicLine(k)); panel.append(box); }
   const al = (DATA.alerts || {})[d.name]; if (al) al.forEach((a) => panel.append(el('p', {class:'warn'}, '⚠ ' + a))); }
-function showEdge(l){ panel.replaceChildren(el('h2', {}, `${l.source.id} – ${l.target.id}`),
+function showEdge(l){ openPanel(); panel.replaceChildren(el('h2', {}, `${l.source.id} – ${l.target.id}`),
     el('p', {class:'kv'}, `${fmt(l.co)} interventions together · NPMI ${l.npmi.toFixed(3)} · Jaccard ${l.jaccard.toFixed(3)}`));
   for (const x of (l.examples || [])) { const box = el('div', {class:'ex'});
     box.append(el('div', {class:'meta'}, [x.date, x.speaker, x.party].filter(Boolean).join(' · ') + ' · ' + x.id_int));
@@ -562,6 +583,7 @@ def comention_page(res: dict) -> str:
    <button id="labels" aria-pressed="false">all labels</button>
    <button id="split" aria-pressed="false">separate by group</button>
    <button id="reset">reset view</button>
+   <button id="panelbtn" aria-controls="panel" aria-expanded="true">hide panel</button>
    <button id="theme" aria-label="switch light or dark theme">theme</button>
   </div>
   <svg id="chart" role="img" aria-label="Network of entities mentioned together; the same data are in the tables below"></svg>
@@ -672,7 +694,7 @@ function readingList(rows){ const box = el('div');
     d.append(el('div', {class: 'meta'}, [m.date, m.speaker, m.party, m.id_int].filter(Boolean).join(' · ') + ` · score ${x.score}`),
       el('div', {}, x.terms.map((t) => t.tf > 1 ? `${t.display} ×${t.tf}` : t.display).join(', '))); box.append(d); });
   return box; }
-function openTheme(k){ const t = themes[k]; showTheme(k);
+function openTheme(k){ const t = themes[k]; showTheme(k); openPanel();
   const big = new Set(DATA.parties.top.filter((x) => x.words >= 0.01 * DATA.parties.words_total).map((x) => x.party));
   const rates = t.parties.top.filter((x) => big.has(x.party) && x.per_1000 !== null).sort((a, b) => b.per_1000 - a.per_1000);
   const mx = d3.max(rates, (x) => x.per_1000) || 1;
@@ -688,7 +710,7 @@ function openTheme(k){ const t = themes[k]; showTheme(k);
       '(parties with at least 1 % of the words).'), bars,
     el('h2', {}, 'Read first'), el('p', {class: 'hint'}, 'The interventions that concentrate the theme\'s vocabulary (BM25).'),
     readingList(t.reading.slice(0, 10))); }
-function showNode(d){ const ns = links.filter((l) => l.source.id === d.id || l.target.id === d.id)
+function showNode(d){ openPanel(); const ns = links.filter((l) => l.source.id === d.id || l.target.id === d.id)
     .map((l) => [l.source.id === d.id ? l.target : l.source, l]).sort((a, b) => b[1].weight - a[1].weight);
   const ul = el('ul'); ns.slice(0, 15).forEach(([x, l]) => ul.append(el('li', {}, `${x.display} — ${l.weight.toFixed(2)} (${fmt(l.co)} together)`)));
   panel.replaceChildren(back(), el('h2', {}, d.display), el('p', {class: 'kv'}, nodeRows(d).slice(1).map(([v, l]) => `${v} ${l}`).join(' · ')),
@@ -784,11 +806,11 @@ hit.on('mouseenter', (ev, l) => showTip(ev, [[`${l.source.name} → ${l.target.n
 const panel = document.getElementById('panel');
 function list(title, items){ if (!items.length) return document.createTextNode(''); const box = el('div', {class:'ex'}); box.append(el('div', {class:'meta'}, title));
   const ul = el('ul'); items.slice(0, 8).forEach(([n, v]) => ul.append(el('li', {}, `${n} — ${fmt(v)}`))); box.append(ul); return box; }
-function showNode(d){ const inn = links.filter((l) => l.target.id === d.id).map((l) => [l.source.name, l.interventions]).sort((a, b) => b[1] - a[1]);
+function showNode(d){ openPanel(); const inn = links.filter((l) => l.target.id === d.id).map((l) => [l.source.name, l.interventions]).sort((a, b) => b[1] - a[1]);
   const out = links.filter((l) => l.source.id === d.id).map((l) => [l.target.name, l.interventions]).sort((a, b) => b[1] - a[1]);
   panel.replaceChildren(el('h2', {}, d.name), el('p', {class:'kv'}, rows(d).slice(1).map(([v, l]) => `${v} ${l}`).join(' · ')),
     list('Mentioned most by', inn), list('Mentions most', out)); }
-function showEdge(l){ panel.replaceChildren(el('h2', {}, `${l.source.name} → ${l.target.name}`),
+function showEdge(l){ openPanel(); panel.replaceChildren(el('h2', {}, `${l.source.name} → ${l.target.name}`),
     el('p', {class:'kv'}, `${fmt(l.interventions)} interventions · ${fmt(l.mentions)} mentions · ${fmt(l.sessions)} sessions`));
   (l.examples || []).forEach((x) => { const box = el('div', {class:'ex'}); box.append(el('div', {class:'meta'}, x.id_int), kwicLine(x)); panel.append(box); }); }
 
@@ -868,6 +890,7 @@ def mention_page(res: dict) -> str:
     <label>node size <input type="range" id="maxr" aria-label="largest node radius"><output id="maxrOut"></output></label>
     <label>edge width <input type="range" id="maxw" aria-label="widest line"><output id="maxwOut"></output></label>
     <button id="labels" aria-pressed="false">all labels</button><button id="reset">reset view</button>
+    <button id="panelbtn" aria-controls="panel" aria-expanded="true">hide panel</button>
    </div>
    <svg id="chart" role="img" aria-label="Directed network of who mentions whom; the same data are in the tables below"></svg>
    <div class="legend" id="legend"></div>
@@ -929,6 +952,7 @@ def words_page(res: dict) -> str:
    <label>edge width <input type="range" id="maxw" aria-label="widest line"><output id="maxwOut"></output></label>
    <button id="labels" aria-pressed="false">all labels</button>
    <button id="reset">reset view</button>
+   <button id="panelbtn" aria-controls="panel" aria-expanded="true">hide panel</button>
    <button id="theme" aria-label="switch light or dark theme">theme</button>
   </div>
   <svg id="chart" role="img" aria-label="Network of the library's characteristic words, coloured by theme; the same data are in the tables below"></svg>
