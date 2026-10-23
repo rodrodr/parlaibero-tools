@@ -1,27 +1,85 @@
 # Network tools: method
 
-Two tools build networks on a **library** (`library_create`), for any topic and any of the 16 countries.
-Both write their files only to an **absolute** `output_dir`, are deterministic for a given `seed`, are
-recorded in `query_log`, and cite each dataset by DOI and version in every output.
+Three tools build networks on a **library** (`library_create`), for any topic and any of the 16 countries. They
+answer different questions and are **never mixed in one network**:
 
-- `cooccurrence_network`: which entities (people, institutions, concepts) are mentioned **in the same
-  intervention**, and by whom.
-- `mention_network`: who **names whom** on the floor, as a directed network of speakers and the deputies
-  (or external actors) they talk about.
+| tool | nodes | an edge means | question |
+|---|---|---|---|
+| `cooccurrence_network` | **words** and multi-word expressions, found in the library itself | they occur in the same intervention more than chance | what is talked about: themes |
+| `comention_network` | **actors** you list: people and institutions | both are mentioned in the same intervention | which actors are discussed together, and by whom |
+| `mention_network` | **people**: speakers, deputies, external actors you declare | A names B on the floor (directed) | who talks about whom |
 
-A library with several countries gives **one network per country**. A speaker can only name, on the floor,
-the members of their own chamber, and the vocabulary of each chamber is its own. `pooled=True` merges the
-countries in `cooccurrence_network` when that is what you want.
+A word or a concept is never an actor: `comention_network` refuses `concepto` and points to
+`cooccurrence_network`, and `cooccurrence_network` takes no entities.
+
+All three write their files only to an **absolute** `output_dir`, are deterministic for a given `seed`, are
+recorded in `query_log`, and cite each dataset by DOI and version in every output. A library with several
+countries gives **one network per country**: a speaker can only name the members of their own chamber, and the
+vocabulary of each chamber is its own. `pooled=True` merges the countries in `comention_network` when that is what
+you want.
 
 ---
 
-## 1. `cooccurrence_network`
+## 1. `cooccurrence_network`: words and themes
+
+The method of the Diarios Explorer (`engine/coocurrencia.js`), **ported line by line** (`cooccurrence.py`) and
+tested against the explorer's own code, which the test suite runs in Node: tokens, stretches, the segmentation of
+speech, expressions, the lexicon and the whole network (nodes, edges, themes, parties and reading lists) are
+identical on a test corpus, and the MCP tool gives the explorer's network on a store built from that corpus.
+
+### Vocabulary
+
+- **Lexicon.** Every term of the library is compared with the rest of the country's corpus (corpus − library):
+  signed G² of Dunning on the full 2×2 table, |G²| ≥ 10.83 (p < 0.001), frequency ≥ 5, the 2,000 most over-used.
+  Tokens: lower case, runs of letters and digits, accents folded (`Previdência` = `previdencia`).
+- **Expressions.** The corpus's multi-word expressions (`reforma da previdência`, `teto de gastos`), detected once
+  over the whole country by the explorer, are counted and measured like words, and joined into one token in the
+  text, so each is one node. Their tables are downloaded once from the explorer's site and used only if they were
+  built from the loaded dataset (DOI, version, file size, SHA-256); otherwise the network is built without them
+  and the output says why. `expressions=false` leaves them out.
+- **Nodes:** the first `vocabulary` (250) terms of the lexicon, without numbers (digits or numerals written out)
+  and without the **Snowball** stopwords of the language (Portuguese for Brazil and Portugal, Spanish otherwise;
+  `estado`, `estados` are kept), BSD-3-Clause, recorded in every output. `exclude` drops terms after reading the
+  themes.
+
+### Text and unit
+
+- **Speech only** (`speech_only`, default): stage directions in brackets and upper-case lines (vote lists,
+  headers) are left out, as in the explorer's fast segmentation. Rows marked `dm_speech = 0` are not in the text.
+- **Unit:** the intervention (default) or consecutive fragments of `fragment` tokens (20) within it.
+
+### Edges and themes
+
+- **Association:** signed G² on the 2×2 table of units; kept if positive and G² ≥ 10.83 **and** among the
+  `neighbours` (10) highest-G² edges of either term.
+- **Weight:** association strength, observed / expected (van Eck and Waltman 2009, as VOSviewer). The G² decides
+  which edges exist; the strength, how much they weigh.
+- **Themes:** Leiden communities (resolution `resolution`, seed `seed`) of three terms or more; smaller ones are
+  listed as loose terms. Themes are ordered by the mean G² of their terms in the lexicon: how characteristic of
+  the library they are.
+- **Per theme:** its terms by internal strength; the interventions that use any of them; the words of the
+  interventions it dominates (the theme with the largest share of its own vocabulary present); the theme's words
+  said by each party, and that party's words in the library, so a **rate per 1,000 words** compares parties of
+  different size; a **reading list**: BM25 (k1 = 1.2, b = 0.75) with ln(1 + G²) as the term weight.
+
+### Differences from the explorer
+
+- Reference counts come from every row of the country in the MCP's database (the explorer reads its FTS5 index
+  of the same rows; the two tokenizers differ by about one token in a million).
+- Speech only uses the fast segmentation for any library; the explorer applies its full parser of the record
+  below 25 million characters.
+- Displayed forms are the country's most frequent written form of each word.
+
+---
+
+## 2. `comention_network`: actors mentioned together
 
 ### Unit and counts
 
 - **Unit:** the intervention. **N** = interventions of the library after the filters (`date_from`,
   `date_to`, `exclude_chair`, `max_turn_words`).
-- **Entities:** `[{name, type, pattern, exclude}]`. `type` is `persona`, `institucion` or `concepto`.
+- **Actors:** `[{name, type, pattern, exclude}]`. `type` is `persona` or `institucion`; anything else is
+  refused (words and concepts are the nodes of `cooccurrence_network`).
   `pattern` is a regular expression matched on the text in lower case without accents, so `nacion`
   matches «Nación». It must also be valid in RE2, the engine that pre-filters the rows: no look-behind,
   no back-references. `exclude` removes the matches that also match it.
@@ -54,21 +112,20 @@ Thresholds are applied to the **unrounded** NPMI.
 
 ### Without `entities`
 
-The tool proposes candidates and builds nothing: proper names, acronyms and the library's distinctive
-words. Confirm or edit them and call it again.
+The tool proposes candidates and builds nothing: proper names and acronyms of a sample. Confirm or edit them
+and call it again.
 
 ### Ambiguity alerts
 
 The tool warns, by rule rather than by list, about:
 - **short patterns** (under 5 characters), unless at least 80 % of their matches are in capitals (acronyms);
 - **people or institutions** written mostly in lower case (a common word);
-- **concepts** among the chamber's 5,000 commonest words;
 - **surnames** shared by two or more deputies in office;
 - **entities in more than 80 % of the library**: they are its subject, not a node.
 
 ---
 
-## 2. `mention_network`
+## 3. `mention_network`: who names whom
 
 ### What counts as a mention
 
@@ -188,19 +245,50 @@ two empty columns to label.
 
 ---
 
-## 3. Outputs
+## 4. Drawing
+
+The pages draw every network the same way, so that the ink says what the data say:
+
+- **Zoom moves the points, not the marks.** Nodes, lines, labels and arrowheads keep their size on screen at any
+  zoom; zooming in separates the nodes instead of inflating them.
+- **Node size:** √ of the size measure, between 2.5 px and the **«node size»** control (12 px of radius by default;
+  `max_node_size` sets it, 4–40).
+- **Lines are thin.** Width: √ of the weight between 0.4 px and the **«edge width»** control (1.5 px by default;
+  `max_edge_width`, 0.5–6); the weight is read in the tooltip and the tables, and opacity carries a second measure
+  (NPMI or G²). A wide invisible band keeps thin lines easy to point at.
+- **Arrowheads have a fixed size** (6 px), whatever the width of their line, and their tip touches the edge of the
+  target node.
+- **Three layouts**, chosen with `layout` and switchable in the page:
+  - `force` (default): force-directed, computed before drawing with a fixed seed.
+  - `clusters`: each group (theme, community or party) is laid out on its own with its internal edges, then the
+    groups are placed as named discs kept apart by a fixed gap, those with more edges between them a little closer;
+    the edges between groups recede. Themes read as separate islands.
+  - `rings`: the Diarios Explorer's centrifugal layout. Rings by the number of distinct connections among the edges
+    shown (the 3 % most connected in the core, then the next 7 %, 15 %, 30 % and the rest; ties are never split),
+    sectors by group, clockwise from 12 by weight, each ordered from the most to the least connected; edges curve
+    towards the centre. Rings and sectors are recomputed when the thresholds change. The rings grow with √ of the
+    nodes beyond 60, so a large network keeps its spacing.
+- **Up to 30 colours.** Each theme, community or party has its own colour up to 30 (a 31st and beyond are gray). The
+  first 8 are the reference palette; the other 22 were chosen to be as far apart as possible within the lightness
+  band and the chroma floor, each with its dark-theme step, and ordered so that neighbours in the order are told
+  apart in both themes, also under colour-blindness (`validate_palette.js`: adjacent CVD ΔE ≥ 8.4, normal vision
+  ≥ 18.7). Thirty hues cannot all be told apart pairwise, so names on the discs, sectors and legend, the theme
+  selector and the tables carry identity too.
+
+## 5. Outputs
 
 | file | content |
 |---|---|
 | `*.html` | Interactive page: the network, controls and examples on click, light and dark themes, and keyboard use. Every figure is also in a table. The data are embedded, and the page is checked against them after it is written; a mismatch deletes the file and raises an error. |
 | `*_nodes.csv`, `*_edges.csv` | the network, with every measure |
+| `*_themes.csv` | `cooccurrence_network` only: each theme with its terms |
 | `*_block_matrix.csv`, `*_ambiguas.csv`, `*_validation_sample.csv` | `mention_network` only |
 | `*.json` | everything above, with the parameters and checksums |
 | `*_summary.md` | a short summary with the citation |
 
 The pages load d3 7.8.5 from cdnjs. Nothing else leaves your machine.
 
-## 4. Cite
+## 6. Cite
 
 Each output lists the dataset of every country used, with its DOI and version (see `how_to_cite`).
 Name the tool and the engine version, which is printed in every output.

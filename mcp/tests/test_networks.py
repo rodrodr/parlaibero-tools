@@ -57,7 +57,7 @@ def home(tmp_path, monkeypatch):
 ENTS = [
     {"name": "Corte", "type": "institucion", "pattern": r"corte suprema"},
     {"name": "Gobierno", "type": "institucion", "pattern": r"\bgobierno\b"},
-    {"name": "presupuesto", "type": "concepto", "pattern": r"\bpresupuesto"},
+    {"name": "Hacienda", "type": "institucion", "pattern": r"\bpresupuesto"},
     {"name": "Pérez", "type": "persona", "pattern": r"\bperez\b"},
     {"name": "Eduardo Pérez", "type": "persona", "pattern": r"eduardo perez"},
 ]
@@ -69,8 +69,8 @@ def F(**kw):
 
 
 def net(home, **kw):
-    r = networks.cooccurrence_network(F(countries=kw.pop("countries", None)), kw.pop("entities", ENTS),
-                                      min_co=kw.pop("min_co", 1), min_npmi=kw.pop("min_npmi", -1), formats=[], **kw)
+    r = networks.comention_network(F(countries=kw.pop("countries", None)), kw.pop("entities", ENTS),
+                                   min_co=kw.pop("min_co", 1), min_npmi=kw.pop("min_npmi", -1), formats=[], **kw)
     return r
 
 
@@ -117,28 +117,29 @@ def test_groups_and_bias(home):
 
 
 def test_auto_mode_builds_nothing(home, tmp_path):
-    r = networks.cooccurrence_network(F(), None, output_dir=str(tmp_path / "out"))
+    r = networks.comention_network(F(), None, output_dir=str(tmp_path / "out"))
     assert r["mode"] == "auto" and r["candidates"]
     assert not (tmp_path / "out").exists()
 
 
 def test_auto_candidates_skip_forms_of_address_and_notes(home):
-    names = {c["name"] for c in networks.cooccurrence_network(F(), None)["candidates"] if "name" in c}
+    names = {c["name"] for c in networks.comention_network(F(), None)["candidates"] if "name" in c}
     assert "Corte Suprema" in names
     assert not any(n.lower().startswith(("el ", "la ", "de ")) for n in names)
 
 
 def test_invalid_pattern_and_relative_dir(home):
     with pytest.raises(ValueError, match="RE2"):
-        net(home, entities=[{"name": "x", "pattern": r"(?<=a)b"}, {"name": "y", "pattern": "c"}])
+        net(home, entities=[{"name": "x", "type": "persona", "pattern": r"(?<=a)b"},
+                            {"name": "y", "type": "persona", "pattern": "c"}])
     with pytest.raises(ValueError, match="absolute"):
-        networks.cooccurrence_network(F(), ENTS, min_co=1, output_dir="relative/dir")
+        networks.comention_network(F(), ENTS, min_co=1, output_dir="relative/dir")
 
 
 def test_html_escapes_and_self_check(home, tmp_path):
-    ents = ENTS + [{"name": "script", "type": "concepto", "pattern": r"sin mas"}]
-    r = networks.cooccurrence_network(F(countries=["SV"]), ents, min_co=1, min_npmi=-1,
-                                      output_dir=str(tmp_path / "o"), kwic_per_entity=5)
+    ents = ENTS + [{"name": "script", "type": "persona", "pattern": r"sin mas"}]
+    r = networks.comention_network(F(countries=["SV"]), ents, min_co=1, min_npmi=-1,
+                                   output_dir=str(tmp_path / "o"), kwic_per_entity=5)
     page = Path([f for f in r["files"] if f.endswith(".html")][0]).read_text(encoding="utf-8")
     assert "</script><b>" not in page                                # the speech's </script> cannot close the tag
     data = json.loads(page.split('type="application/json">')[1].split("</script>")[0])
@@ -150,6 +151,31 @@ def test_html_escapes_and_self_check(home, tmp_path):
     with pytest.raises(RuntimeError, match="Self-check"):
         networks._self_check(bad, res)
     assert not bad.exists()
+
+
+def test_actors_only_words_go_to_the_word_network(home):
+    for t in ("concepto", "concept", "word", None):
+        with pytest.raises(ValueError, match="cooccurrence_network|persona or institucion"):
+            net(home, entities=[{"name": "presupuesto", "type": t, "pattern": r"\bpresupuesto"}])
+    with pytest.raises(ValueError, match="comention_network"):
+        networks.cooccurrence_network(F(), entities=ENTS)
+    assert all(c.get("source") != "distinctive word of the library"
+               for c in networks.comention_network(F(), None)["candidates"])
+
+
+def test_view_controls_are_recorded_and_checked(home, tmp_path, scripts_parse):
+    r = networks.comention_network(F(countries=["SV"]), ENTS, min_co=1, min_npmi=-1, formats=["json", "html"],
+                                   output_dir=str(tmp_path / "v"), max_node_size=20, max_edge_width=2, layout="clusters")
+    html = [f for f in r["files"] if f.endswith(".html")][0]
+    page = Path(html).read_text(encoding="utf-8")
+    assert '"view":{"max_node_size":20,"max_edge_width":2,"layout":"clusters"}' in page
+    assert 'id="maxr"' in page and 'id="maxw"' in page and 'id="layout"' in page and 'id="colour"' in page
+    assert page.count("--c30:") == 3                                   # 30 colours, light and both dark scopes
+    scripts_parse(html)
+    with pytest.raises(ValueError, match="max_node_size"):
+        networks.comention_network(F(), ENTS, max_node_size=100)
+    with pytest.raises(ValueError, match="layout"):
+        networks.comention_network(F(), ENTS, layout="spiral")
 
 
 def test_leiden_is_deterministic():
@@ -199,7 +225,7 @@ def test_regression_golpe_8jan():
             for r in csv.DictReader(open(ANNEX, encoding="utf-8"), delimiter="\t")]
     lid, _ = library.resolve("golpe_8jan")
     f = analysis.Filters(None, "2023-01-08", None, exclude_chair=True, library=lid, library_name="golpe_8jan")
-    s = networks.cooccurrence_network(f, ents, {"izq": ["PT", "PSOL", "PCdoB", "PV", "REDE", "PSB", "PDT"],
+    s = networks.comention_network(f, ents, {"izq": ["PT", "PSOL", "PCdoB", "PV", "REDE", "PSB", "PDT"],
                                                 "pl": ["PL", "NOVO"]}, formats=[])["networks"]["BR"]
     assert (s["N"], s["edges"], s["parameters"]["min_co"]) == (2949, 181, 25)
     assert s["checksums"]["sum_co"] == 18986 and s["checksums"]["sum_co_izq"] == 12054

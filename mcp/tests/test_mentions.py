@@ -124,9 +124,9 @@ def test_honorifics_license_by_language_default(home):
     assert on_forced is True and ("D4", "D3") in e_forced
 
 
-def test_network_counts_and_files(home, tmp_path):
+def test_network_counts_and_files(home, tmp_path, scripts_parse):
     r = networks.mention_network(F(), "both", [{"name": "Tibério", "aliases": ["presidente Tibério"], "role": "President"}],
-                                 min_mentions=1, output_dir=str(tmp_path / "out"), validation_sample=10)
+                                 min_mentions=1, output_dir=str(tmp_path / "out"), validation_sample=10, layout="rings")
     s = r["networks"]["BR"]
     found_n = s["counts"]["mentions_found"]
     assert found_n["self"] == 1 and found_n["editorial"] == 1 and found_n["address"] == 1
@@ -136,7 +136,9 @@ def test_network_counts_and_files(home, tmp_path):
     assert edges[("D2", "D4")] == 1 and edges[("D1", "D2")] == 1 and edges[("D1", "ext:Tibério")] == 1
     assert ("D1", "D4") not in edges                                     # the vocative is not counted
     html = Path([f for f in r["files"] if f.endswith(".html")][0]).read_text(encoding="utf-8")
-    assert '<script id="network-data" type="application/json">' in html
+    assert '<script id="network-data" type="application/json">' in html and '"layout":"rings"' in html
+    assert 'id="layout"' in html and 'id="groupby"' in html
+    scripts_parse([f for f in r["files"] if f.endswith(".html")][0])
     assert any(f.endswith("_validation_sample.csv") for f in r["files"])
     with pytest.raises(ValueError, match="absolute"):
         networks.mention_network(F(), output_dir="relative")

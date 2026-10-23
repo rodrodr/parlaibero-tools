@@ -136,14 +136,19 @@ compatibility of the files is tested against the explorer's real engine, not a c
 
 | tool | what it does |
 |---|---|
-| `cooccurrence_network` | which entities (people, institutions, concepts, given as regular expressions) are mentioned **in the same intervention**: co-occurrence (volume), NPMI (affinity beyond chance), Jaccard, Leiden communities, centralities, examples, and each entity's **bias** between two groups you define. It warns about ambiguous patterns. Without `entities` it first proposes candidates and builds nothing |
+| `cooccurrence_network` | **words**: the library's characteristic words and multi-word expressions (its lexicon against the rest of the country's corpus) joined when they occur in the same intervention more than chance, clustered into **themes**. Per theme: its terms, coverage, each party's rate per 1,000 words and the interventions to read first. The Diarios Explorer's method, ported and tested against its code |
+| `comention_network` | **actors**: the people and institutions you list (as regular expressions) that are mentioned **in the same intervention**: co-occurrence (volume), NPMI (affinity beyond chance), Jaccard, Leiden communities, centralities, examples, and each actor's **bias** between two groups you define. It warns about ambiguous patterns. Without `entities` it first proposes candidates and builds nothing. Words and concepts are refused: they belong to `cooccurrence_network` |
 | `mention_network` | **who names whom** on the floor: speaker → deputy in office that day (from the register) or → an external actor you declare. Separates talking *about* someone from speaking *to* them, leaves out the record's notes in brackets, and lists ambiguous names apart instead of guessing. In/out strength, PageRank, reciprocity, communities, a group → group matrix, E-I, asymmetric pairs, and a sample to check by hand |
 
-Both write an interactive HTML page (light and dark, keyboard, a table for every figure), CSV, JSON and a
-summary, **only** to the absolute `output_dir` you give, with the citation of each dataset. A library with
-several countries gives one network per country. Example, in words: *«build the co-occurrence network of
-the Supreme Court, the Government, the Armed Forces and «golpe» in my library, comparing the left and
-right blocs»*. Definitions, rules, limits and the measured precision of `mention_network` are in the
+The three are never mixed in one network. Each writes an interactive HTML page (light and dark, keyboard, a table
+for every figure), CSV, JSON and a summary, **only** to the absolute `output_dir` you give, with the citation of
+each dataset. In the pages, zooming moves the points, not the marks: nodes, thin lines and fixed-size arrowheads
+keep their size on screen, and two controls (`max_node_size`, `max_edge_width`) cap them. Three layouts
+(`layout`): force-directed, separated groups (each theme or community as its own disc) and the explorer's rings,
+with up to 30 colours for groups. A library with several
+countries gives one network per country. Examples, in words: *«the themes of my library on the pension reform»*;
+*«which of the Supreme Court, the Government and the Armed Forces are mentioned together in my library, comparing
+the left and right blocs»*. Definitions, rules, limits and the measured precision of `mention_network` are in the
 resource `parlaibero://methods/networks`.
 
 The resource `parlaibero://about` summarises the collection.

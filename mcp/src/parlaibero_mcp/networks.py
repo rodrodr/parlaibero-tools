@@ -1,8 +1,12 @@
-"""Network tools on a library: co-mentions of entities (cooccurrence_network) and who mentions whom
-(mention_network). General by construction: any library, any topic, any of the collection's
-countries; nothing about one country or one debate is written here.
+"""Network tools on a library, three kinds that are never mixed:
+  - cooccurrence_network: WORDS that occur in the same intervention (or fragment), clustered into themes; the
+    engine is cooccurrence.py, a port of the Diarios Explorer's;
+  - comention_network: ACTORS (people and institutions) mentioned in the same intervention, by whom;
+  - mention_network: who names whom on the floor (directed, between people).
+General by construction: any library, any topic, any of the collection's countries; nothing about one country or
+one debate is written here.
 
-Definitions are fixed and recorded with every result (plan: docs/PLAN_redes.md):
+Definitions of the actor networks, fixed and recorded with every result (plan: docs/PLAN_redes.md):
   - the unit is the intervention; N = interventions of the library after the filters;
   - patterns are regular expressions over lower-case, accent-free text;
   - NPMI = ln(p(ab) / (p(a) p(b))) / −ln p(ab), and 1 when co = N; thresholds compare UNROUNDED values;
@@ -23,11 +27,16 @@ from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 
-from . import __version__, analysis, leiden, profile, store
+from . import __version__, analysis, cooccurrence as co, leiden, profile, store
 from .catalog import COUNTRIES
 
+# Actors only: a word or an idea is a node of cooccurrence_network, never an entity here.
 ENTITY_TYPES = {"persona": "persona", "person": "persona", "institucion": "institucion", "institución": "institucion",
-                "institution": "institucion", "concepto": "concepto", "concept": "concepto"}
+                "institution": "institucion"}
+NOT_ACTORS = {"concepto", "concept", "tema", "topic", "palabra", "word", "idea", "termo", "término", "termino"}
+WORDS_NOT_HERE = ("comention_network takes actors only (people and institutions). Words, ideas and concepts are the "
+                  "nodes of cooccurrence_network, which finds them from the library's own vocabulary and clusters "
+                  "them into themes; do not mix the two in one network.")
 MAX_ENTITIES_HARD = 400
 MAX_ROWS = 200_000
 TIME_BUDGET_S = 900
@@ -139,9 +148,12 @@ def _validate_entities(entities: list[dict]) -> list[dict]:
         if name in seen:
             raise ValueError(f"two entities are called {name!r}")
         seen.add(name)
-        etype = ENTITY_TYPES.get(str(e.get("type") or "concepto").lower())
+        raw_type = str(e.get("type") or "").strip().lower()
+        if raw_type in NOT_ACTORS:
+            raise ValueError(f"{name}: type {raw_type!r}. {WORDS_NOT_HERE}")
+        etype = ENTITY_TYPES.get(raw_type)
         if etype is None:
-            raise ValueError(f"{name}: type must be persona, institucion or concepto")
+            raise ValueError(f"{name}: type must be persona or institucion")
         pat = str(e.get("pattern") or "").strip()
         if not pat:
             raise ValueError(f"{name}: empty pattern")
@@ -304,10 +316,7 @@ def _alerts(ents: list[dict], iso: str, date_min, date_max, raw: dict[str, str],
       - short pattern (< 5 characters) or an acronym;
       - persons and institutions: the word is mostly written in LOWER case in this library, i.e. it is
         also an ordinary word ('supremo', 'lira');
-      - concepts: a single word among the 5,000 most frequent of the chamber (likely to have other senses);
       - a surname shared by several deputies in office in the library's period."""
-    common = {r[0] for r in store.run_query("SELECT fold FROM vocab WHERE country = ? ORDER BY n DESC LIMIT 5000",
-                                            [iso], max_rows=5000)[1]}
     surnames = Counter()
     try:
         rows = store.run_query("""SELECT DISTINCT id_dep, coalesce(last_name, speaker_name) FROM deputies
@@ -342,11 +351,9 @@ def _alerts(ents: list[dict], iso: str, date_min, date_max, raw: dict[str, str],
             total = low + cap + allcaps
             if len(lit.replace(" ", "")) < 5 and not (total >= 10 and allcaps / total >= 0.8):
                 warn.append(f"short pattern '{lit}': check the examples")
-            if single and e["type"] != "concepto" and total >= 10 and low / total > 0.5:
+            if single and total >= 10 and low / total > 0.5:
                 warn.append(f"'{lit}' is written in lower case {round(100 * low / total)}% of the time here: "
                             f"it is also an ordinary word")
-            if single and e["type"] == "concepto" and lit in common:
-                warn.append(f"'{lit}' is among the 5,000 most frequent words of this chamber: it may have other senses")
             if single and surnames.get(lit, 0) >= 2:
                 warn.append(f"'{lit}' is the surname of {surnames[lit]} deputies in office in the period")
         if warn:
@@ -380,16 +387,32 @@ def _raw_texts(ids: list[str]) -> dict[str, str]:
     return out
 
 
-# ── cooccurrence_network ──────────────────────────────────────────────────────
+# ── comention_network: actors mentioned together ──────────────────────────────
 
-def cooccurrence_network(f: analysis.Filters, entities: list[dict] | None = None, groups: dict | None = None,
-                         group_by: str = "party", min_co: int | None = None, min_npmi: float = 0.10,
-                         max_nodes: int = 60, max_entities: int = 150, kwic_per_entity: int = 5, seed: int = 1,
-                         output_dir: str | None = None, formats: list[str] | None = None, overwrite: bool = False,
-                         pooled: bool = False, max_candidates: int = 60) -> dict:
-    """Co-mention network of entities in a library (see the module docstring for the definitions)."""
+LAYOUTS = ("force", "clusters", "rings")
+
+
+def _view(max_node_size: float, max_edge_width: float, layout: str = "force") -> dict:
+    """Defaults of the page's «layout», «node size» and «edge width» controls (px on screen, at any zoom)."""
+    if layout not in LAYOUTS:
+        raise ValueError(f"layout must be one of {', '.join(LAYOUTS)}")
+    if not 4 <= max_node_size <= 40:
+        raise ValueError("max_node_size must be between 4 and 40 (px of radius)")
+    if not 0.5 <= max_edge_width <= 6:
+        raise ValueError("max_edge_width must be between 0.5 and 6 (px)")
+    return {"max_node_size": max_node_size, "max_edge_width": max_edge_width, "layout": layout}
+
+
+def comention_network(f: analysis.Filters, entities: list[dict] | None = None, groups: dict | None = None,
+                      group_by: str = "party", min_co: int | None = None, min_npmi: float = 0.10,
+                      max_nodes: int = 60, max_entities: int = 150, kwic_per_entity: int = 5, seed: int = 1,
+                      output_dir: str | None = None, formats: list[str] | None = None, overwrite: bool = False,
+                      pooled: bool = False, max_candidates: int = 60, max_node_size: float = 12,
+                      max_edge_width: float = 1.5, layout: str = "force") -> dict:
+    """Co-mention network of actors in a library (see the module docstring for the definitions)."""
     if f.library is None:
-        raise ValueError("cooccurrence_network needs a library (library=…)")
+        raise ValueError("comention_network needs a library (library=…)")
+    view = _view(max_node_size, max_edge_width, layout)
     if not entities:
         return candidates(f, max_candidates, seed)
     if len(entities) > max_entities:
@@ -410,13 +433,14 @@ def cooccurrence_network(f: analysis.Filters, entities: list[dict] | None = None
     for iso, part in sorted(by_country.items()):
         results[iso] = _one_network(iso, part, ents, gnames, gmap, group_by, min_co, min_npmi, max_nodes,
                                     kwic_per_entity, seed, f)
+        results[iso]["parameters"]["view"] = view
     files = []
     if out_dir:
         from . import network_html
-        base = store_slug(f.library_name or "library") + "_cooccurrence"
+        base = store_slug(f.library_name or "library") + "_comention"
         for iso, res in results.items():
             stem = base + ("" if len(results) == 1 else f"_{iso}")
-            files += _write_outputs(out_dir, stem, res, formats, overwrite, network_html.cooccurrence_page)
+            files += _write_outputs(out_dir, stem, res, formats, overwrite, network_html.comention_page)
     summary = {iso: _summary(res) for iso, res in results.items()}
     notes = []
     if len(results) > 1:
@@ -671,7 +695,7 @@ def _self_check(path: Path, res: dict) -> None:
 
 def _markdown(res: dict) -> str:
     s = _summary(res)
-    L = [f"# Co-mention network · {res['country']}", "",
+    L = [f"# Co-mention network of actors · {res['country']}", "",
          f"- Interventions (N): {res['N']:,}", f"- Nodes: {s['nodes']} · edges: {s['edges']} · density: {s['density']}",
          f"- Thresholds: co ≥ {s['parameters']['min_co']}"
          + (" (automatic: max(5, N/120))" if s['parameters']['min_co_auto'] else "")
@@ -707,8 +731,8 @@ _ACR = re.compile(r"(?<![\w])([A-Z][A-Z0-9]{1,6})(?![\w])")
 
 
 def candidates(f: analysis.Filters, max_candidates: int = 60, seed: int = 1, sample: int = 4000) -> dict:
-    """Mode auto: propose entities (proper names, acronyms, distinctive words), with their n and examples.
-    Nothing is built until the user confirms a list."""
+    """Mode auto: propose actors (proper names and acronyms), with their share of a sample. Nothing is built until
+    the user confirms a list. Words are not proposed: they are the nodes of cooccurrence_network."""
     params: list = []
     where = f.where(params, alias="i")
     cols, rows, _ = store.run_query(f"SELECT i.country, i.id_int, i.text FROM interventions i WHERE true{where} "
@@ -764,14 +788,6 @@ def candidates(f: analysis.Filters, max_candidates: int = 60, seed: int = 1, sam
         if v >= max(3, S // 400) and low_doc.get(fold(a), 0) < 0.3 * v:
             out.append({"name": a, "type": "institucion", "pattern": r"\b" + re.escape(fold(a)) + r"\b",
                         "share_of_sample": round(v / S, 4), "source": "acronym"})
-    try:
-        dw = analysis.distinctive_words(analysis.Filters(f.countries, f.date_from, f.date_to, exclude_chair=True),
-                                        "library", f.library_name, top=25, min_count=10)
-        for w in dw["distinctive_of_a"]:
-            out.append({"name": w["word"], "type": "concepto", "pattern": r"\b" + re.escape(fold(w["word"])) + r"\b",
-                        "z": w["z"], "source": "distinctive word of the library"})
-    except Exception as e:  # a library spanning a whole chamber has no "rest"
-        out.append({"note": f"distinctive words not available: {e}"})
     seen, uniq = set(), []
     for c in out:
         key = c.get("pattern")
@@ -782,9 +798,10 @@ def candidates(f: analysis.Filters, max_candidates: int = 60, seed: int = 1, sam
     return {"mode": "auto", "library": f.library_name, "sampled_interventions": S, "languages": sorted(langs),
             "candidates": uniq[: max_candidates + 30],
             "next": "Nothing has been built. Review the candidates (merge variants, fix types, add `exclude` where "
-                    "a longer name contains a shorter one), then call cooccurrence_network again with "
-                    "entities=[{name, type, pattern, exclude?}]. Patterns are regular expressions over lower-case, "
-                    "accent-free text (RE2 syntax: no look-arounds)."}
+                    "a longer name contains a shorter one, drop what is not a person or an institution), then call "
+                    "comention_network again with entities=[{name, type: persona|institucion, pattern, exclude?}]. "
+                    "Patterns are regular expressions over lower-case, accent-free text (RE2 syntax: no "
+                    "look-arounds). For the words and themes of the library use cooccurrence_network."}
 
 
 # ── mention_network ───────────────────────────────────────────────────────────
@@ -1122,11 +1139,13 @@ def mention_network(f: analysis.Filters, target_scope: str = "both", external_ac
                     mention_kinds: list[str] | None = None, groups: dict | None = None, group_by: str = "party",
                     min_mentions: int = 2, min_speakers: int = 1, top_n: int = 60, seed: int = 1,
                     validation_sample: int = 0, output_dir: str | None = None, formats: list[str] | None = None,
-                    overwrite: bool = False, honorifics: bool | None = None) -> dict:
+                    overwrite: bool = False, honorifics: bool | None = None, max_node_size: float = 12,
+                    max_edge_width: float = 1.5, layout: str = "force") -> dict:
     """Directed network of who (speaker) mentions whom (another deputy of the chamber, or an external
     actor given by the user), one per country. Definitions in the module docstring and the plan."""
     if f.library is None:
         raise ValueError("mention_network needs a library (library=…)")
+    view = _view(max_node_size, max_edge_width, layout)
     if target_scope not in ("speakers", "external", "both"):
         raise ValueError("target_scope must be speakers, external or both")
     kinds = set(mention_kinds or ["reference"])
@@ -1166,6 +1185,7 @@ def mention_network(f: analysis.Filters, target_scope: str = "both", external_ac
     for iso, part in sorted(by_country.items()):
         results[iso] = _one_mention_network(iso, part, exts, target_scope, kinds, gnames, gmap, group_by, honorifics,
                                             min_mentions, min_speakers, top_n, seed, validation_sample, f)
+        results[iso]["parameters"]["view"] = view
     files = []
     if out_dir:
         from . import network_html
@@ -1445,3 +1465,293 @@ def _write_mention_outputs(out_dir: Path, stem: str, res: dict, formats, overwri
             path.unlink(missing_ok=True)
             raise RuntimeError(f"Self-check failed: HTML {got} vs computed {res['checksums']}; file not kept.")
     return files
+
+
+# ── cooccurrence_network: words and themes ────────────────────────────────────
+
+# The multi-word expressions of each corpus are detected once, over the whole country, by the Diarios Explorer
+# (tools/expresiones_precalculadas.py) and published next to its page; they are valid for one dataset version.
+EXPRESSIONS_URL = "https://rodrodr.github.io/parlaibero-explorer/expresiones/"
+EXPRESSIONS_VERSION = 2               # VERSION of the explorer's engine/expresiones.js that cooccurrence.py ports
+_EXPRESSIONS: dict[str, tuple] = {}
+DEVIATIONS = [
+    "Reference counts come from every row of the country in the MCP's database (the explorer reads its FTS5 index of "
+    "the same rows; the two tokenizers differ by about one token in a million).",
+    "Speech only uses the explorer's fast segmentation (parenthetical stage directions and upper-case lines out) for "
+    "any library; the explorer applies its full parser of the record below 25 million characters.",
+    "Rows the corpus marks as not speech (dm_speech = 0) are not in the library's text.",
+    "Displayed forms are the country's most frequent written form of each word.",
+]
+
+
+def cooccurrence_network(f: analysis.Filters, vocabulary: int = 250, unit: str = "intervention", fragment: int = 20,
+                         neighbours: int = 10, resolution: float = 1.0, seed: int = 1, g2_min: float = 10.83,
+                         exclude: list[str] | None = None, expressions: bool = True, speech_only: bool = True,
+                         output_dir: str | None = None, formats: list[str] | None = None, overwrite: bool = False,
+                         max_node_size: float = 12, max_edge_width: float = 1.5, layout: str = "force",
+                         entities=None) -> dict:
+    """Word co-occurrence network and themes of a library, one per country (cooccurrence.py: the Diarios
+    Explorer's method)."""
+    if entities:
+        raise ValueError("cooccurrence_network is the network of WORDS: it finds them in the library's vocabulary "
+                         "and clusters them into themes, and takes no entities. For people and institutions mentioned "
+                         "in the same intervention use comention_network; for who names whom, mention_network.")
+    if f.library is None:
+        raise ValueError("cooccurrence_network needs a library (library=…)")
+    if unit not in ("intervention", "fragment"):
+        raise ValueError("unit must be 'intervention' or 'fragment'")
+    if not 3 <= int(vocabulary) <= 500:
+        raise ValueError("vocabulary must be between 3 and 500 terms")
+    view = _view(max_node_size, max_edge_width, layout)
+    t0 = time.time()
+    opts = {"vocabulary": int(vocabulary), "unit": unit, "fragment": int(fragment), "neighbours": int(neighbours),
+            "resolution": float(resolution), "seed": int(seed), "g2_min": float(g2_min), "exclude": list(exclude or [])}
+    params: list = []
+    where = f.where(params, alias="i")
+    cols, rows, truncated = store.run_query(
+        f"SELECT i.country, i.row_n, i.id_int, i.date, i.speaker_name, i.party, i.text FROM interventions i "
+        f"WHERE true{where} ORDER BY i.country, i.row_n", params, max_rows=MAX_ROWS, timeout_s=TIME_BUDGET_S)
+    if truncated:
+        raise ValueError(f"The library has more than {MAX_ROWS:,} interventions after the filters: narrow it down.")
+    if not rows:
+        raise store.NoData("The library has no interventions under these filters.")
+    by_country = defaultdict(list)
+    for r in rows:
+        by_country[r[0]].append(dict(zip(cols, r)))
+    formats = [x.lower() for x in (formats or ["html", "csv", "json", "md"])]
+    out_dir = _out_dir(output_dir)
+    results = {iso: _word_network(iso, part, opts, expressions, speech_only, f, view)
+               for iso, part in sorted(by_country.items())}
+    files = []
+    if out_dir:
+        from . import network_html
+        base = store_slug(f.library_name or "library") + "_words"
+        for iso, res in results.items():
+            stem = base + ("" if len(results) == 1 else f"_{iso}")
+            files += _write_word_outputs(out_dir, stem, res, formats, overwrite, network_html.words_page)
+    notes = []
+    if len(results) > 1:
+        notes.append("One network per country: the vocabulary is each chamber's lexicon against its own corpus.")
+    notes += analysis._long_turn_notes(f)
+    return {"library": f.library_name, "networks": {iso: _word_summary(r) for iso, r in results.items()},
+            "files": files, "notes": notes, "seconds": round(time.time() - t0, 1),
+            "datasets": analysis._versions(results)}
+
+
+def _reference_counts(iso: str, terms: list[str]) -> tuple[dict[str, int], int]:
+    """Occurrences in every row of the country of the given folded terms, and the country's total of tokens."""
+    if not terms:
+        return {}, 0
+    tok = r"regexp_extract_all(lower(coalesce(text, '')), '[\pL\pN\pM]+')"
+    _, rows, _ = store.run_query(
+        f"SELECT f, count(*) FROM (SELECT strip_accents(x) AS f FROM (SELECT unnest({tok}) AS x FROM interventions "
+        f"WHERE country = ?)) WHERE f IN (SELECT unnest(?::VARCHAR[])) GROUP BY f", [iso, terms],
+        max_rows=len(terms) + 10, timeout_s=TIME_BUDGET_S)
+    _, tot, _ = store.run_query(f"SELECT sum(len({tok})) FROM interventions WHERE country = ?", [iso],
+                                timeout_s=TIME_BUDGET_S)
+    return {f: int(n) for f, n in rows}, int(tot[0][0] or 0)
+
+
+def _display_forms(iso: str, terms: list[str]) -> dict[str, str]:
+    if not terms:
+        return {}
+    _, rows, _ = store.run_query("SELECT fold, word FROM vocab WHERE country = ? AND fold IN (SELECT unnest(?::VARCHAR[]))",
+                                 [iso, terms], max_rows=len(terms) + 10)
+    return {f: w for f, w in rows}
+
+
+def _expression_index(iso: str) -> tuple:
+    """The explorer's precomputed expressions for the loaded dataset of a country: (index or None, record). Cached
+    under the MCP's home; checked against the dataset's DOI, version and file size and the package's SHA-256."""
+    if iso in _EXPRESSIONS:
+        return _EXPRESSIONS[iso]
+    import gzip
+    import hashlib
+    from . import dataverse
+    info = {"source": EXPRESSIONS_URL, "used": False}
+    cache = store.HOME / "cache" / "expresiones"
+    try:
+        cache.mkdir(parents=True, exist_ok=True)
+        with dataverse._client(timeout=60) as cl:
+            r = cl.get(EXPRESSIONS_URL + "indice.json")
+            r.raise_for_status()
+            index = r.json()
+            if index.get("version_expresiones") != EXPRESSIONS_VERSION:
+                raise ValueError(f"the published tables are of version {index.get('version_expresiones')}, this "
+                                 f"engine reads version {EXPRESSIONS_VERSION}")
+            e = (index.get("paises") or {}).get(iso)
+            if not e:
+                raise ValueError(f"no table for {iso}")
+            loaded = store.loaded().get(iso) or {}
+            built, have = e.get("dataverse") or {}, {"doi": COUNTRIES[iso][2], "version": loaded.get("version")}
+            if built.get("doi") != have["doi"] or str(built.get("version")) != str(have["version"]):
+                raise ValueError(f"the table was built for {built.get('doi')} v{built.get('version')}; the loaded "
+                                 f"dataset is {have['doi']} v{have['version']}")
+            csv_file = store.DATA / iso / e["csv"]["nombre"]
+            if csv_file.exists() and csv_file.stat().st_size != e["csv"]["bytes"]:
+                raise ValueError(f"{csv_file.name} has {csv_file.stat().st_size:,} bytes; the table was built from "
+                                 f"one of {e['csv']['bytes']:,}")
+            path = cache / e["archivo"]
+            if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest() != e["sha256"]:
+                r = cl.get(EXPRESSIONS_URL + e["archivo"])
+                r.raise_for_status()
+                if hashlib.sha256(r.content).hexdigest() != e["sha256"]:
+                    raise ValueError("the downloaded table does not match the SHA-256 of the index")
+                path.write_bytes(r.content)
+        pq = json.loads(gzip.decompress(path.read_bytes()))
+        if pq.get("version") != EXPRESSIONS_VERSION or pq.get("columnas", [])[:5] != ["forma", "mostrar", "n_tokens",
+                                                                                     "n_palabras", "frecuencia"]:
+            raise ValueError("the table does not have the expected version or columns")
+        ix = co.ExpressionIndex(pq["filas"], iso, pq.get("meta"))
+        info.update(used=True, expressions=ix.n, file=e["archivo"], sha256=e["sha256"], built_for=e["dataverse"],
+                    generated=index.get("generado"), detection=pq.get("meta"))
+        _EXPRESSIONS[iso] = (ix, info)
+    except Exception as err:      # offline, another version of the data…: the network is built without expressions
+        info["reason"] = f"expressions not used: {err}"
+        _EXPRESSIONS[iso] = (None, info)
+    return _EXPRESSIONS[iso]
+
+
+def _word_network(iso, rows, opts, use_expressions, speech_only, f, view) -> dict:
+    texts, excluded = [], Counter()
+    for r in rows:
+        if speech_only:
+            t, ex = co.speech_text(r["text"] or "")
+            excluded.update(ex)
+        else:
+            t = r["text"] or ""
+        texts.append(t)
+    counts, c = co.count_terms(texts)
+    reference, corpus_tokens = _reference_counts(iso, sorted(t for t, k in counts.items()
+                                                             if k >= co.LEXICON["min_freq"]))
+    lex = co.keyness(counts, c, corpus_tokens, reference, co.LEXICON["min_freq"], co.THRESHOLD,
+                     co.LEXICON["limit"], co.LEXICON["limit_negative"])
+    ix, expr_info = _expression_index(iso) if use_expressions else (None, {"used": False, "reason": "expressions=false"})
+    if ix:
+        co.add_expressions(lex, ix, texts, co.LEXICON["min_freq"], co.LEXICON["limit"], co.LEXICON["limit_negative"])
+    shown = _display_forms(iso, [t["term"] for t in lex["terms"][:600] if not t.get("expression")])
+    terms = [{"term": t["term"], "display": t.get("display") or shown.get(t["term"]) or t["term"], "freq": t["freq"],
+              "g2": t["g2"], "expression": bool(t.get("expression"))} for t in lex["terms"]]
+    docs = [{"id": r["row_n"], "text": t, "party": r["party"]} for r, t in zip(rows, texts)]
+    net = co.network(docs, terms, iso, opts, ix)
+    for e in net["edges"]:
+        e["source"], e["target"] = net["nodes"][e["a"]]["term"], net["nodes"][e["b"]]["term"]
+    party_words = {x["party"]: x["words"] for x in (net.get("parties") or {}).get("top", [])}
+    for t in net["themes"]:
+        for x in t["parties"]["top"]:
+            pw = party_words.get(x["party"])
+            x["party_words"] = pw
+            x["per_1000"] = round(1000 * x["words"] / pw, 3) if pw else None
+    meta = {r["row_n"]: r for r in rows}
+    read = {x["id"] for x in net.get("reading", {}).get("global", [])} | {
+        x["id"] for t in net["themes"] for x in t["reading"]}
+    lang = co.language_of(iso)
+    return {
+        "country": iso, "N": len(rows), **net,
+        "metadata": {str(i): {"id_int": meta[i]["id_int"], "date": str(meta[i]["date"]) if meta[i]["date"] else None,
+                              "speaker": meta[i]["speaker_name"], "party": meta[i]["party"]} for i in sorted(read)},
+        "lexicon": {"tokens": c, "corpus_tokens": corpus_tokens, "reference_tokens": lex["reference_tokens"],
+                    "candidates": lex["candidates"], "over_used": lex.get("n_positive", 0),
+                    "with_expressions": lex.get("expressions"), "incoherent_terms": len(lex["incoherent"]),
+                    "text_tokens_left_out": dict(excluded)},
+        "parameters": {**opts, "speech_only": speech_only, "text": "speech only (fast segmentation)" if speech_only
+                       else "full text", "lexicon": dict(co.LEXICON, threshold=co.THRESHOLD),
+                       "stopwords": co.stopwords_source(lang), "expressions": expr_info, "filters": analysis._filters_dict(f),
+                       "method": "port of the Diarios Explorer's engine/coocurrencia.js (parlaibero-explorer)",
+                       "deviations": DEVIATIONS, "engine": f"parlaibero-mcp {__version__}", "generated": _now(),
+                       "view": view},
+        "checksums": {"sum_co": sum(e["co"] for e in net["edges"]), "sum_weight": round(sum(e["weight"] for e in net["edges"]), 4),
+                      "nodes": len(net["nodes"]), "themes": len(net["themes"])},
+        "citation": _citation_lines([iso]),
+    }
+
+
+def _word_summary(res: dict) -> dict:
+    """What the agent reads: the themes with their terms, coverage and parties, and how the network was made."""
+    if not res["themes"]:
+        return {"N": res["N"], "warning": res.get("warning") or "No themes.", "vocabulary": res["vocabulary"],
+                "parameters": res["parameters"]}
+    big = {x["party"] for x in res["parties"]["top"] if x["words"] >= 0.01 * max(1, res["parties"]["words_total"])}
+    themes = []
+    for t in res["themes"]:
+        rates = sorted((x for x in t["parties"]["top"] if x["party"] in big and x["per_1000"] is not None),
+                       key=lambda x: -x["per_1000"])
+        themes.append({"theme": t["id"] + 1, "label": t["label"], "n_terms": t["n_terms"],
+                       "terms": [x["display"] for x in t["terms"][:15]], "pct_interventions": t["pct_interventions"],
+                       "pct_words_dominated": t["weight_pct"], "g2_mean": t["g2_mean"],
+                       "parties_most": [(x["party"], x["per_1000"]) for x in rates[:4]],
+                       "parties_least": [(x["party"], x["per_1000"]) for x in rates[-3:]],
+                       "read_first": [res["metadata"][str(x["id"])]["id_int"] for x in t["reading"][:3]]})
+    s = res["stats"]
+    return {"N": res["N"], "vocabulary": res["vocabulary"], "nodes": len([n for n in res["nodes"] if n["degree"]]),
+            "edges": s["kept_edges"], "themes": themes, "loose_terms": [x["display"] for x in res["loose_terms"]],
+            "stats": s, "lexicon": res["lexicon"], "expressions": res["parameters"]["expressions"],
+            "checksums": res["checksums"],
+            "reading": ("Themes are communities of words that occur together in the same intervention more than chance "
+                        "(signed G² ≥ 10.83, each term's strongest neighbours). Themes are ordered by how characteristic "
+                        "their terms are of the library (mean G² in the lexicon). A party's rate is the theme's words per "
+                        "1,000 words that party says in the library (parties with at least 1 % of the words). "
+                        "read_first: the interventions that concentrate the theme's vocabulary (BM25)."),
+            "notes": res["parameters"]["deviations"]}
+
+
+def _write_word_outputs(out_dir: Path, stem: str, res: dict, formats: list[str], overwrite: bool, page) -> list[str]:
+    files = []
+    if "csv" in formats:
+        nkeys = ["term", "display", "expression", "theme", "freq", "g2_lexicon", "df_unit", "df_intervention",
+                 "strength", "degree"]
+        files.append(_write_csv(out_dir / f"{stem}_nodes.csv", nkeys, [{**n, "theme": n["theme"] + 1 if n["theme"] >= 0
+                                                                         else None} for n in res["nodes"]], overwrite))
+        files.append(_write_csv(out_dir / f"{stem}_edges.csv", ["source", "target", "co", "expected", "g2", "weight"],
+                                res["edges"], overwrite))
+        files.append(_write_csv(out_dir / f"{stem}_themes.csv",
+                                ["theme", "label", "n_terms", "g2_mean", "interventions", "pct_interventions",
+                                 "weight_pct", "terms"],
+                                [{**t, "theme": t["id"] + 1, "terms": ", ".join(x["display"] for x in t["terms"])}
+                                 for t in res["themes"]], overwrite))
+    if "json" in formats:
+        files.append(_write(out_dir / f"{stem}.json", json.dumps(res, ensure_ascii=False, indent=1, default=str),
+                            overwrite))
+    if "md" in formats:
+        files.append(_write(out_dir / f"{stem}_summary.md", _word_markdown(res), overwrite))
+    if "html" in formats:
+        path = out_dir / f"{stem}.html"
+        files.append(_write(path, page(res), overwrite))
+        text = path.read_text(encoding="utf-8")
+        m = re.search(r'<script id="network-data" type="application/json">(.*?)</script>', text, re.S)
+        data = json.loads(m.group(1)) if m else {"edges": []}
+        got = {"sum_co": sum(e["co"] for e in data["edges"]), "sum_weight": round(sum(e["weight"] for e in data["edges"]), 4),
+               "nodes": len(data.get("nodes", [])), "themes": len(data.get("themes", []))}
+        if got != res["checksums"]:
+            path.unlink(missing_ok=True)
+            raise RuntimeError(f"Self-check failed: the HTML data {got} differ from the computed {res['checksums']}. "
+                               f"The file was not kept.")
+    return files
+
+
+def _word_markdown(res: dict) -> str:
+    s = _word_summary(res)
+    p = res["parameters"]
+    L = [f"# Word co-occurrence network and themes · {res['country']}", "",
+         f"- Interventions: {res['N']:,} · vocabulary: {res['vocabulary']['used']} terms · edges: {res['stats']['kept_edges']}"
+         f" · themes: {res['stats']['themes']} · modularity {res['stats']['modularity']}",
+         f"- Unit: {p['unit']}{' of ' + str(p['fragment']) + ' tokens' if p['unit'] == 'fragment' else ''} · neighbours "
+         f"k = {p['neighbours']} · G² ≥ {p['g2_min']} · Leiden γ = {p['resolution']}, seed {p['seed']}",
+         f"- Text: {p['text']} · stopwords: {p['stopwords']['source']} ({p['stopwords']['language']}, "
+         f"{p['stopwords']['license']}) · expressions: "
+         + (f"{p['expressions']['expressions']:,} of the corpus" if p["expressions"].get("used")
+            else p["expressions"].get("reason", "no")), "", "## Themes", ""]
+    for t in s.get("themes", []):
+        L += [f"### {t['theme']}. {t['label']}", "",
+              f"{t['n_terms']} terms · {t['pct_interventions']} % of the interventions · {t['pct_words_dominated']} % of "
+              f"the words in interventions it dominates · mean G² {t['g2_mean']}", "",
+              "Terms: " + ", ".join(t["terms"]), "",
+              "Parties that say it most (per 1,000 of their words): " + ", ".join(f"{a} {b}" for a, b in t["parties_most"]),
+              "", "Read first: " + ", ".join(t["read_first"]), ""]
+    if s.get("loose_terms"):
+        L += ["## Loose terms", "", ", ".join(s["loose_terms"]), ""]
+    L += ["## Reading", "", s.get("reading", ""), "", "## Method", "", p["method"] + ".", ""]
+    L += [f"- {d}" for d in p["deviations"]]
+    L += ["", "## Data", ""] + [f"- {c}" for c in res["citation"]]
+    L += ["", f"Generated with {p['engine']} on {p['generated']}."]
+    return "\n".join(L) + "\n"

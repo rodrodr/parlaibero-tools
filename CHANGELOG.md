@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.6.0 · 2026-10-23 · sin publicar
+
+Three network tools that are never mixed, and pages whose ink follows the data.
+
+- **`cooccurrence_network` is now the network of WORDS** and their themes: the Diarios Explorer's method
+  (`engine/coocurrencia.js`), ported line by line in `cooccurrence.py`: the library's lexicon against the rest of
+  the country's corpus (signed G²), the corpus's multi-word expressions as one node (the explorer's precomputed
+  tables, checked against the loaded dataset), Snowball stopwords, signed G² ≥ 10.83 with each term's k strongest
+  neighbours, association strength as the weight, Leiden themes, party rates per 1,000 words and BM25 reading
+  lists. `tests/test_cooccurrence.py` runs the explorer's own code in Node and compares tokens, segmentation,
+  expressions, lexicon and the whole network; the tool gives the explorer's network on the same corpus.
+- **The actor network is now `comention_network`** (it was `cooccurrence_network`): people and institutions only.
+  `type: concepto` is refused with a pointer to `cooccurrence_network`, and the candidates no longer include the
+  library's distinctive words. Calling `cooccurrence_network` with `entities` raises an error that points here.
+- **Drawing** (all three pages): the zoom moves the points, not the marks, so nodes, labels, lines and arrowheads
+  keep their size on screen; node radius is capped by a «node size» control (12 px by default, `max_node_size`);
+  lines are thin, capped by an «edge width» control (1.5 px, `max_edge_width`), with the weight in the tooltip and
+  opacity; arrowheads have a fixed size whatever the line's width; thin lines keep a wide invisible band to point at.
+- **Three layouts** in every network page, switchable there and chosen with `layout`: `force`; `clusters`, each
+  group as a named disc kept apart from the others; `rings`, the Diarios Explorer's centrifugal layout (rings by
+  number of connections, sectors by theme, community or party), ported from `page/23_menciones_red.js`.
+- **Thirty colours** for themes, communities and parties (it was 8 and gray), validated in both themes; names on
+  discs, sectors and legends carry identity too.
+- A test parses every inline script of the three pages with Node.
+- The server's instructions and `parlaibero://methods/networks` describe the three networks apart.
+- Results of `comention_network` (old `cooccurrence_network` with actors) and `mention_network` do not change.
+
 ## 0.5.0 · 2026-10-14 · publicada en PyPI
 
 Two network tools on a library (plan: `docs/PLAN_redes.md`; method: resource `parlaibero://methods/networks`).

@@ -42,9 +42,13 @@ How to work with it:
    one or SEVERAL countries; every analysis tool then takes `library=` to work inside it.
    `library_describe` says what is in it (size, spread, chair, long turns) before you compare;
    `library_export` writes one file per country for the Diarios Explorer plus an index.
-   Networks on a library: `cooccurrence_network` (which entities are mentioned together, by whom;
-   without `entities` it first proposes candidates to confirm) and `mention_network` (who names whom
-   on the floor, deputies and external actors you declare). Both write files only to an ABSOLUTE
+   Networks on a library, three kinds that answer different questions and are never mixed:
+   `cooccurrence_network` = WORDS: the library's characteristic words and expressions that occur
+   together, clustered into themes (what is talked about; it finds the words itself);
+   `comention_network` = ACTORS: people and institutions you list that are mentioned in the same
+   intervention, by whom (without `entities` it proposes candidates to confirm);
+   `mention_network` = who names whom on the floor (deputies and external actors you declare).
+   Never pass words or concepts as entities. All three write files only to an ABSOLUTE
    `output_dir` and are documented in the resource parlaibero://methods/networks.
 3. Rows with `dm_speech = 0` are not speech (cover page, summaries, vote tallies, reproduced
    documents; `intervention_order = 0` is the session's Prolegomena). Filter `dm_speech = 1`
@@ -72,7 +76,7 @@ LOGGED = {"query_sql", "search_text", "term_frequency", "ngram_viewer", "term_co
           "distinctive_words", "kwic", "collocations", "coverage", "export_result", "get_session",
           "get_intervention", "library_create", "library_edit", "library_combine", "library_describe",
           "library_delete", "library_rebuild", "library_export", "library_import", "cooccurrence_network",
-          "mention_network"}
+          "comention_network", "mention_network"}
 
 
 def make_before(logged: set[str], command: str):
@@ -749,17 +753,72 @@ def library_import(
 # ── Networks ──────────────────────────────────────────────────────────────────
 
 EntitySpec = Annotated[list[dict] | None, Field(
-    description="Entities [{name, type: persona|institucion|concepto, pattern, exclude?}]. pattern and exclude are "
-                "regular expressions (RE2: no look-arounds) over lower-case, accent-free text, e.g. "
-                "'\\bsupremo tribunal|\\bstf\\b'. A match inside `exclude`, or inside a LONGER match of another "
-                "entity, does not count ('maria pereira' is not 'pereira'). Omit to get candidates first.")]
+    description="Actors [{name, type: persona|institucion, pattern, exclude?}]: people and institutions only (words "
+                "and ideas are cooccurrence_network's nodes). pattern and exclude are regular expressions (RE2: no "
+                "look-arounds) over lower-case, accent-free text, e.g. '\\bsupremo tribunal|\\bstf\\b'. A match inside "
+                "`exclude`, or inside a LONGER match of another actor, does not count ('maria pereira' is not "
+                "'pereira'). Omit to get candidates first.")]
 Groups = Annotated[dict[str, list[str]] | None, Field(
     description="Up to two contrast groups of labels of `group_by`, e.g. {'left': ['PT', 'PSOL'], 'right': ['PL']}; "
                 "every other label is 'rest'. Case-insensitive. No default: the classification is yours")]
+NodeSize = Annotated[float, Field(ge=4, le=40, description="Largest node radius in the page, in px on screen (nodes "
+                                                            "keep their size when zooming); the page has a control")]
+EdgeWidth = Annotated[float, Field(ge=0.5, le=6, description="Widest line in the page, in px (lines stay thin: "
+                                                              "weights are read in the tooltips and tables)")]
+Layout = Annotated[Literal["force", "clusters", "rings"], Field(
+    description="Layout the page opens with (it can be switched there): 'force'; 'clusters', each group (theme, "
+                "community, party) as a separate disc, kept apart; 'rings', the Diarios Explorer's centrifugal "
+                "layout: rings by number of connections (the most connected in the centre), sectors by group")]
 
 
 @mcp.tool(annotations=WRITE_LOCAL)
 def cooccurrence_network(
+    library: Annotated[str, Field(description="Library name (the network is built on its interventions)")],
+    vocabulary: Annotated[int, Field(ge=3, le=500, description="Terms of the library's lexicon used as nodes "
+                                                               "(the most over-used against the rest of the corpus)")] = 250,
+    unit: Annotated[Literal["intervention", "fragment"], Field(
+        description="Unit of context: the whole intervention, or consecutive fragments of `fragment` tokens")] = "intervention",
+    fragment: Annotated[int, Field(ge=5, le=200)] = 20,
+    neighbours: Annotated[int, Field(ge=1, le=50, description="Each term keeps its k strongest edges (by G²)")] = 10,
+    resolution: Annotated[float, Field(gt=0, le=5, description="Leiden resolution γ: higher, more and smaller "
+                                                                "themes (0.6 / 1 / 1.6 in the explorer)")] = 1.0,
+    seed: int = 1,
+    exclude: Annotated[list[str] | None, Field(description="Terms to leave out after reading the themes (any "
+                                                           "case or accents)")] = None,
+    expressions: Annotated[bool, Field(description="Join the corpus's multi-word expressions ('reforma da "
+                                                   "previdência') into one node (tables of the Diarios Explorer, "
+                                                   "downloaded once and checked against the loaded dataset)")] = True,
+    speech_only: Annotated[bool, Field(description="Leave out stage directions in brackets and upper-case lines "
+                                                   "(vote lists, headers)")] = True,
+    date_from: DateFrom = None,
+    date_to: DateTo = None,
+    exclude_chair: ExcludeChair = False,
+    max_turn_words: MaxTurnWords = None,
+    output_dir: Annotated[str | None, Field(description="ABSOLUTE folder for the files")] = None,
+    formats: Annotated[list[Literal["html", "csv", "json", "md"]] | None, Field(
+        description="Files to write in output_dir (default all four)")] = None,
+    overwrite: bool = False,
+    max_node_size: NodeSize = 12,
+    max_edge_width: EdgeWidth = 1.5,
+    layout: Layout = "force",
+    entities: Annotated[list[dict] | None, Field(description="Not accepted: this network finds its words itself. "
+                                                             "Actors go to comention_network")] = None,
+) -> dict:
+    """Network of WORDS of a library and its themes: the library's characteristic words and expressions (its
+    lexicon against the rest of the country's corpus), joined when they occur in the same intervention (or
+    fragment) more than chance (signed G², each term's k strongest neighbours, weight = observed/expected),
+    clustered by Leiden into themes. Per theme: terms, coverage, words of the parties (per 1,000 of their
+    words) and the interventions to read first. The Diarios Explorer's method, ported and tested against its
+    code. Writes an interactive HTML, CSV, JSON and a summary. One network per country. Not for people or
+    institutions (comention_network) nor for who names whom (mention_network)."""
+    f = _F(None, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words, library=library)
+    return networks.cooccurrence_network(f, vocabulary, unit, fragment, neighbours, resolution, seed, 10.83, exclude,
+                                         expressions, speech_only, output_dir, formats, overwrite, max_node_size,
+                                         max_edge_width, layout, entities)
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def comention_network(
     library: Annotated[str, Field(description="Library name (the network is built on its interventions)")],
     entities: EntitySpec = None,
     groups: Groups = None,
@@ -781,15 +840,20 @@ def cooccurrence_network(
     formats: Annotated[list[Literal["html", "csv", "json", "md"]] | None, Field(
         description="Files to write in output_dir (default all four)")] = None,
     overwrite: bool = False,
+    max_node_size: NodeSize = 12,
+    max_edge_width: EdgeWidth = 1.5,
+    layout: Layout = "force",
 ) -> dict:
-    """Network of entities (people, institutions, concepts) mentioned in the same intervention of a
-    library: co (volume), NPMI (affinity), Jaccard, counts by group and each entity's bias between two
-    groups, Leiden communities, centralities, examples (KWIC) and ambiguity warnings. Writes an
-    interactive HTML (light/dark, accessible, with tables), CSV, JSON and a summary. One network per
-    country. Without `entities` it proposes candidates and builds nothing until you confirm them."""
+    """Network of ACTORS (people and institutions) mentioned in the same intervention of a library: co
+    (volume), NPMI (affinity), Jaccard, counts by group and each actor's bias between two groups, Leiden
+    communities, centralities, examples (KWIC) and ambiguity warnings. Writes an interactive HTML (light/
+    dark, accessible, with tables), CSV, JSON and a summary. One network per country. Without `entities`
+    it proposes candidates (proper names, acronyms) and builds nothing until you confirm them. Words and
+    ideas are not actors: their network is cooccurrence_network."""
     f = _F(None, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words, library=library)
-    return networks.cooccurrence_network(f, entities, groups, group_by, min_co, min_npmi, max_nodes, max_entities,
-                                         kwic_per_entity, seed, output_dir, formats, overwrite, pooled)
+    return networks.comention_network(f, entities, groups, group_by, min_co, min_npmi, max_nodes, max_entities,
+                                      kwic_per_entity, seed, output_dir, formats, overwrite, pooled, 60, max_node_size,
+                                      max_edge_width, layout)
 
 
 ExternalActors = Annotated[list[dict] | None, Field(
@@ -826,6 +890,9 @@ def mention_network(
     formats: Annotated[list[Literal["html", "csv", "json", "md"]] | None, Field(
         description="Files to write in output_dir (default all four)")] = None,
     overwrite: bool = False,
+    max_node_size: NodeSize = 12,
+    max_edge_width: EdgeWidth = 1.5,
+    layout: Layout = "force",
 ) -> dict:
     """Directed network of who mentions whom in a library: an arrow speaker → deputy (or external actor)
     counts the speaker's interventions that name them. Names come from the deputies register (in office on
@@ -837,7 +904,7 @@ def mention_network(
     f = _F(None, date_from, date_to, exclude_chair=exclude_chair, max_turn_words=max_turn_words, library=library)
     return networks.mention_network(f, target_scope, external_actors, mention_kinds, groups, group_by,
                                     min_mentions, min_speakers, top_n, seed, validation_sample, output_dir,
-                                    formats, overwrite, honorifics)
+                                    formats, overwrite, honorifics, max_node_size, max_edge_width, layout)
 
 
 @mcp.resource("parlaibero://about", mime_type="text/markdown")
@@ -852,7 +919,8 @@ def about() -> str:
 
 @mcp.resource("parlaibero://methods/networks", mime_type="text/markdown")
 def methods_networks() -> str:
-    """How cooccurrence_network and mention_network are built: definitions, rules, limits and validation."""
+    """How cooccurrence_network (words), comention_network (actors) and mention_network (who names whom) are
+    built: definitions, rules, limits and validation."""
     from importlib.resources import files
     return files("parlaibero_mcp").joinpath("methods_networks.md").read_text(encoding="utf-8")
 
