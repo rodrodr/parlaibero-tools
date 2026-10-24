@@ -10,9 +10,9 @@ into a local [DuckDB](https://duckdb.org) database and exposes tools to search, 
 Nothing is sent anywhere: the only requests are plain GETs to Dataverse and, for the word network, to the
 Diarios Explorer's site for its expression tables.
 
-**New here?** The [tutorial](https://github.com/rodrodr/parlaibero-tools/blob/main/docs/tutorial/TUTORIAL.en.md)
-walks through the tools with real questions and what they return
-([en español](https://github.com/rodrodr/parlaibero-tools/blob/main/docs/tutorial/TUTORIAL.md)).
+**New here?** The [tutorial](https://rodrodr.github.io/parlaibero-tools/#en) follows four complete studies, from the
+first request to the checks that change the conclusion, with real results, and has a card for each of the 31 tools
+([en español](https://rodrodr.github.io/parlaibero-tools/#es)).
 
 ## Install
 

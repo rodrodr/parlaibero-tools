@@ -1,0 +1,232 @@
+{
+ "es": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Palabras más propias de España y de las otras 12 cámaras de habla hispana en los debates de la pandemia",
+  "sub": "Log-odds ponderado (z) en la biblioteca, sin turnos de más de 10.000 palabras y sin nombres de persona.",
+  "aria": "distinctive words",
+  "left": {
+   "title": "España",
+   "color": "c1",
+   "items": [
+    [
+     "usted",
+     46.6
+    ],
+    [
+     "españa",
+     36.2
+    ],
+    [
+     "ustedes",
+     35.4
+    ],
+    [
+     "gobierno",
+     33.3
+    ],
+    [
+     "señora",
+     30.7
+    ],
+    [
+     "real",
+     29.2
+    ],
+    [
+     "comunidades",
+     27.1
+    ],
+    [
+     "aplausos",
+     26.8
+    ],
+    [
+     "autónomos",
+     26.0
+    ],
+    [
+     "autónomas",
+     24.5
+    ],
+    [
+     "ha",
+     23.8
+    ],
+    [
+     "medidas",
+     23.6
+    ]
+   ]
+  },
+  "right": {
+   "title": "las otras 12 cámaras de habla hispana",
+   "color": "c0",
+   "items": [
+    [
+     "presidente",
+     30.6
+    ],
+    [
+     "salud",
+     25.2
+    ],
+    [
+     "proyecto",
+     23.9
+    ],
+    [
+     "ley",
+     23.8
+    ],
+    [
+     "nacional",
+     23.2
+    ],
+    [
+     "artículo",
+     22.3
+    ],
+    [
+     "mil",
+     18.2
+    ],
+    [
+     "del",
+     16.8
+    ],
+    [
+     "diputados",
+     16.8
+    ],
+    [
+     "emergencia",
+     15.7
+    ],
+    [
+     "comisión",
+     15.7
+    ],
+    [
+     "covid",
+     15.5
+    ]
+   ]
+  }
+ },
+ "en": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Words most typical of Spain and of the other 12 Spanish-speaking chambers in the pandemic debates",
+  "sub": "Weighted log-odds (z) in the library, without turns over 10,000 words and without personal names.",
+  "aria": "distinctive words",
+  "left": {
+   "title": "Spain",
+   "color": "c1",
+   "items": [
+    [
+     "usted",
+     46.6
+    ],
+    [
+     "españa",
+     36.2
+    ],
+    [
+     "ustedes",
+     35.4
+    ],
+    [
+     "gobierno",
+     33.3
+    ],
+    [
+     "señora",
+     30.7
+    ],
+    [
+     "real",
+     29.2
+    ],
+    [
+     "comunidades",
+     27.1
+    ],
+    [
+     "aplausos",
+     26.8
+    ],
+    [
+     "autónomos",
+     26.0
+    ],
+    [
+     "autónomas",
+     24.5
+    ],
+    [
+     "ha",
+     23.8
+    ],
+    [
+     "medidas",
+     23.6
+    ]
+   ]
+  },
+  "right": {
+   "title": "the other 12 Spanish-speaking chambers",
+   "color": "c0",
+   "items": [
+    [
+     "presidente",
+     30.6
+    ],
+    [
+     "salud",
+     25.2
+    ],
+    [
+     "proyecto",
+     23.9
+    ],
+    [
+     "ley",
+     23.8
+    ],
+    [
+     "nacional",
+     23.2
+    ],
+    [
+     "artículo",
+     22.3
+    ],
+    [
+     "mil",
+     18.2
+    ],
+    [
+     "del",
+     16.8
+    ],
+    [
+     "diputados",
+     16.8
+    ],
+    [
+     "emergencia",
+     15.7
+    ],
+    [
+     "comisión",
+     15.7
+    ],
+    [
+     "covid",
+     15.5
+    ]
+   ]
+  }
+ }
+}

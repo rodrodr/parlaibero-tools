@@ -1,0 +1,284 @@
+{
+ "es": {
+  "type": "timeline",
+  "title": "Primer uso de «feminicidio», «femicidio» o «feminicídio» en cada corpus",
+  "sub": "El tamaño del punto es el total de usos. Gris: el corpus empieza después de 2015, así que el primer uso del corpus no es el del país.",
+  "x_domain": [
+   "2000-01-01",
+   "2026-01-01"
+  ],
+  "size": 5737,
+  "aria": "Fecha del primer uso por país",
+  "rows": [
+   {
+    "label": "Costa Rica",
+    "date": "2001-07-24",
+    "value": 502,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Costa Rica · 2001-07-24</b><br>FUERZA DEMOCRÁTICA<br>502 usos en total"
+   },
+   {
+    "label": "Rep. Dominicana",
+    "date": "2002-11-21",
+    "value": 240,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Rep. Dominicana · 2002-11-21</b><br>PLD<br>240 usos en total"
+   },
+   {
+    "label": "Panamá",
+    "date": "2002-12-10",
+    "value": 435,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Panamá · 2002-12-10</b><br>ARN<br>435 usos en total"
+   },
+   {
+    "label": "México",
+    "date": "2003-09-01",
+    "value": 5737,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>México · 2003-09-01</b><br>PRD<br>5.737 usos en total"
+   },
+   {
+    "label": "Guatemala",
+    "date": "2004-07-07",
+    "value": 306,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Guatemala · 2004-07-07</b><br>URNG MAIZ<br>306 usos en total"
+   },
+   {
+    "label": "Chile",
+    "date": "2005-01-06",
+    "value": 1189,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Chile · 2005-01-06</b><br>PPD<br>1.189 usos en total"
+   },
+   {
+    "label": "España",
+    "date": "2005-03-17",
+    "value": 23,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>España · 2005-03-17</b><br>PSOE<br>23 usos en total"
+   },
+   {
+    "label": "Perú",
+    "date": "2007-09-06",
+    "value": 1499,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Perú · 2007-09-06</b><br>AP<br>1.499 usos en total"
+   },
+   {
+    "label": "Uruguay",
+    "date": "2008-03-05",
+    "value": 290,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Uruguay · 2008-03-05</b><br>Partido Nacional<br>290 usos en total"
+   },
+   {
+    "label": "Portugal",
+    "date": "2008-10-01",
+    "value": 24,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Portugal · 2008-10-01</b><br>BE<br>24 usos en total"
+   },
+   {
+    "label": "Colombia",
+    "date": "2008-11-25",
+    "value": 806,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Colombia · 2008-11-25</b><br>MIRA<br>806 usos en total"
+   },
+   {
+    "label": "Argentina",
+    "date": "2010-05-04",
+    "value": 262,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Argentina · 2010-05-04</b><br>orador no vinculado<br>262 usos en total"
+   },
+   {
+    "label": "Brasil",
+    "date": "2011-04-28",
+    "value": 4056,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Brasil · 2011-04-28</b><br>PPS<br>4.056 usos en total"
+   },
+   {
+    "label": "Ecuador",
+    "date": "2011-11-16",
+    "value": 999,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Ecuador · 2011-11-16</b><br>MPAIS<br>999 usos en total"
+   },
+   {
+    "label": "Paraguay",
+    "date": "2016-05-25",
+    "value": 164,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Paraguay · 2016-05-25</b><br>Avanza País<br>164 usos en total"
+   },
+   {
+    "label": "El Salvador",
+    "date": "2018-06-21",
+    "value": 264,
+    "color": "c0",
+    "note": "corpus desde 2018",
+    "tip": "<b>El Salvador · 2018-06-21</b><br>orador no vinculado<br>264 usos en total"
+   }
+  ]
+ },
+ "en": {
+  "type": "timeline",
+  "title": "First use of «feminicidio», «femicidio» or «feminicídio» in each corpus",
+  "sub": "Dot size is the total number of uses. Grey: the corpus starts after 2015, so the corpus's first use is not the country's.",
+  "x_domain": [
+   "2000-01-01",
+   "2026-01-01"
+  ],
+  "size": 5737,
+  "aria": "Date of first use by country",
+  "rows": [
+   {
+    "label": "Costa Rica",
+    "date": "2001-07-24",
+    "value": 502,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Costa Rica · 2001-07-24</b><br>FUERZA DEMOCRÁTICA<br>502 uses in all"
+   },
+   {
+    "label": "Dominican Rep.",
+    "date": "2002-11-21",
+    "value": 240,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Dominican Rep. · 2002-11-21</b><br>PLD<br>240 uses in all"
+   },
+   {
+    "label": "Panama",
+    "date": "2002-12-10",
+    "value": 435,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Panama · 2002-12-10</b><br>ARN<br>435 uses in all"
+   },
+   {
+    "label": "Mexico",
+    "date": "2003-09-01",
+    "value": 5737,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Mexico · 2003-09-01</b><br>PRD<br>5,737 uses in all"
+   },
+   {
+    "label": "Guatemala",
+    "date": "2004-07-07",
+    "value": 306,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Guatemala · 2004-07-07</b><br>URNG MAIZ<br>306 uses in all"
+   },
+   {
+    "label": "Chile",
+    "date": "2005-01-06",
+    "value": 1189,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Chile · 2005-01-06</b><br>PPD<br>1,189 uses in all"
+   },
+   {
+    "label": "Spain",
+    "date": "2005-03-17",
+    "value": 23,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Spain · 2005-03-17</b><br>PSOE<br>23 uses in all"
+   },
+   {
+    "label": "Peru",
+    "date": "2007-09-06",
+    "value": 1499,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Peru · 2007-09-06</b><br>AP<br>1,499 uses in all"
+   },
+   {
+    "label": "Uruguay",
+    "date": "2008-03-05",
+    "value": 290,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Uruguay · 2008-03-05</b><br>Partido Nacional<br>290 uses in all"
+   },
+   {
+    "label": "Portugal",
+    "date": "2008-10-01",
+    "value": 24,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Portugal · 2008-10-01</b><br>BE<br>24 uses in all"
+   },
+   {
+    "label": "Colombia",
+    "date": "2008-11-25",
+    "value": 806,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Colombia · 2008-11-25</b><br>MIRA<br>806 uses in all"
+   },
+   {
+    "label": "Argentina",
+    "date": "2010-05-04",
+    "value": 262,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Argentina · 2010-05-04</b><br>speaker not linked<br>262 uses in all"
+   },
+   {
+    "label": "Brazil",
+    "date": "2011-04-28",
+    "value": 4056,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Brazil · 2011-04-28</b><br>PPS<br>4,056 uses in all"
+   },
+   {
+    "label": "Ecuador",
+    "date": "2011-11-16",
+    "value": 999,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Ecuador · 2011-11-16</b><br>MPAIS<br>999 uses in all"
+   },
+   {
+    "label": "Paraguay",
+    "date": "2016-05-25",
+    "value": 164,
+    "color": "c1",
+    "note": null,
+    "tip": "<b>Paraguay · 2016-05-25</b><br>Avanza País<br>164 uses in all"
+   },
+   {
+    "label": "El Salvador",
+    "date": "2018-06-21",
+    "value": 264,
+    "color": "c0",
+    "note": "corpus from 2018",
+    "tip": "<b>El Salvador · 2018-06-21</b><br>speaker not linked<br>264 uses in all"
+   }
+  ]
+ }
+}

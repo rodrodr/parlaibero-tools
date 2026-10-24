@@ -1,0 +1,342 @@
+{
+ "es": {
+  "type": "diverging",
+  "independent": true,
+  "value_label": "G²",
+  "title": "Palabras que acompañan a «feminicidio» en México (ventana de cinco palabras a cada lado)",
+  "sub": "Longitud: log-verosimilitud (G²), escalada dentro de cada periodo.",
+  "aria": "Colocaciones por periodo",
+  "left": {
+   "title": "hasta 2011 · 390 intervenciones",
+   "color": "c7",
+   "items": [
+    [
+     "relacionadas",
+     595.7,
+     "76 cerca"
+    ],
+    [
+     "mexicana",
+     500.8,
+     "89 cerca"
+    ],
+    [
+     "investigaciones",
+     479.8,
+     "80 cerca"
+    ],
+    [
+     "delito",
+     355.9,
+     "65 cerca"
+    ],
+    [
+     "república",
+     344.0,
+     "90 cerca"
+    ],
+    [
+     "vinculada",
+     298.8,
+     "45 cerca"
+    ],
+    [
+     "juárez",
+     278.4,
+     "72 cerca"
+    ],
+    [
+     "registrados",
+     251.9,
+     "29 cerca"
+    ],
+    [
+     "tipificar",
+     247.1,
+     "30 cerca"
+    ],
+    [
+     "ciudad",
+     231.5,
+     "65 cerca"
+    ],
+    [
+     "país",
+     222.4,
+     "73 cerca"
+    ],
+    [
+     "competentes",
+     158.5,
+     "28 cerca"
+    ],
+    [
+     "justicia",
+     152.4,
+     "58 cerca"
+    ],
+    [
+     "relación",
+     144.8,
+     "42 cerca"
+    ],
+    [
+     "ocurridos",
+     143.3,
+     "22 cerca"
+    ]
+   ]
+  },
+  "right": {
+   "title": "desde 2016 · 1.571 intervenciones",
+   "color": "c3",
+   "items": [
+    [
+     "delito",
+     2189.9,
+     "466 cerca"
+    ],
+    [
+     "tentativa",
+     839.1,
+     "126 cerca"
+    ],
+    [
+     "homicidio",
+     781.3,
+     "149 cerca"
+    ],
+    [
+     "víctimas",
+     505.5,
+     "220 cerca"
+    ],
+    [
+     "país",
+     413.4,
+     "224 cerca"
+    ],
+    [
+     "doloso",
+     385.7,
+     "68 cerca"
+    ],
+    [
+     "casos",
+     350.8,
+     "141 cerca"
+    ],
+    [
+     "aumento",
+     347.7,
+     "85 cerca"
+    ],
+    [
+     "grado",
+     321.3,
+     "64 cerca"
+    ],
+    [
+     "homicidios",
+     288.8,
+     "74 cerca"
+    ],
+    [
+     "enérgicamente",
+     277.4,
+     "42 cerca"
+    ],
+    [
+     "violación",
+     245.6,
+     "75 cerca"
+    ],
+    [
+     "tipificación",
+     231.2,
+     "41 cerca"
+    ],
+    [
+     "condena",
+     221.5,
+     "47 cerca"
+    ],
+    [
+     "trata",
+     203.3,
+     "74 cerca"
+    ]
+   ]
+  }
+ },
+ "en": {
+  "type": "diverging",
+  "independent": true,
+  "value_label": "G²",
+  "title": "Words around «feminicidio» in Mexico (a window of five words on each side)",
+  "sub": "Length: log-likelihood (G²), scaled within each period.",
+  "aria": "Collocations by period",
+  "left": {
+   "title": "to 2011 · 390 interventions",
+   "color": "c7",
+   "items": [
+    [
+     "relacionadas",
+     595.7,
+     "76 near"
+    ],
+    [
+     "mexicana",
+     500.8,
+     "89 near"
+    ],
+    [
+     "investigaciones",
+     479.8,
+     "80 near"
+    ],
+    [
+     "delito",
+     355.9,
+     "65 near"
+    ],
+    [
+     "república",
+     344.0,
+     "90 near"
+    ],
+    [
+     "vinculada",
+     298.8,
+     "45 near"
+    ],
+    [
+     "juárez",
+     278.4,
+     "72 near"
+    ],
+    [
+     "registrados",
+     251.9,
+     "29 near"
+    ],
+    [
+     "tipificar",
+     247.1,
+     "30 near"
+    ],
+    [
+     "ciudad",
+     231.5,
+     "65 near"
+    ],
+    [
+     "país",
+     222.4,
+     "73 near"
+    ],
+    [
+     "competentes",
+     158.5,
+     "28 near"
+    ],
+    [
+     "justicia",
+     152.4,
+     "58 near"
+    ],
+    [
+     "relación",
+     144.8,
+     "42 near"
+    ],
+    [
+     "ocurridos",
+     143.3,
+     "22 near"
+    ]
+   ]
+  },
+  "right": {
+   "title": "from 2016 · 1,571 interventions",
+   "color": "c3",
+   "items": [
+    [
+     "delito",
+     2189.9,
+     "466 near"
+    ],
+    [
+     "tentativa",
+     839.1,
+     "126 near"
+    ],
+    [
+     "homicidio",
+     781.3,
+     "149 near"
+    ],
+    [
+     "víctimas",
+     505.5,
+     "220 near"
+    ],
+    [
+     "país",
+     413.4,
+     "224 near"
+    ],
+    [
+     "doloso",
+     385.7,
+     "68 near"
+    ],
+    [
+     "casos",
+     350.8,
+     "141 near"
+    ],
+    [
+     "aumento",
+     347.7,
+     "85 near"
+    ],
+    [
+     "grado",
+     321.3,
+     "64 near"
+    ],
+    [
+     "homicidios",
+     288.8,
+     "74 near"
+    ],
+    [
+     "enérgicamente",
+     277.4,
+     "42 near"
+    ],
+    [
+     "violación",
+     245.6,
+     "75 near"
+    ],
+    [
+     "tipificación",
+     231.2,
+     "41 near"
+    ],
+    [
+     "condena",
+     221.5,
+     "47 near"
+    ],
+    [
+     "trata",
+     203.3,
+     "74 near"
+    ]
+   ]
+  }
+ }
+}

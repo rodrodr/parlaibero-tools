@@ -1,0 +1,312 @@
+{
+ "list_countries": {
+  "summary": {
+   "es": "Los 16 conjuntos: DOI, versión, tamaño y si ya están descargados.",
+   "en": "The 16 datasets: DOI, version, size and whether they are downloaded."
+  },
+  "example": {
+   "es": "¿Qué parlamentos hay y cuáles tengo ya descargados?",
+   "en": "Which parliaments are there, and which have I downloaded?"
+  }
+ },
+ "download_country": {
+  "summary": {
+   "es": "Descarga un país de Dataverse (con MD5) y lo carga en la base local.",
+   "en": "Downloads a country from Dataverse (MD5-checked) and loads it into the local database."
+  },
+  "example": {
+   "es": "Descarga Uruguay y Paraguay.",
+   "en": "Download Uruguay and Paraguay."
+  }
+ },
+ "import_from_folder": {
+  "summary": {
+   "es": "Carga los CSV de ParlaIbero que bajaste a mano.",
+   "en": "Loads ParlaIbero CSV files you downloaded by hand."
+  },
+  "example": {
+   "es": "Importa los CSV de Chile que tengo en ~/Descargas/chile.",
+   "en": "Import the Chile CSV files I have in ~/Downloads/chile."
+  }
+ },
+ "coverage": {
+  "summary": {
+   "es": "La base de cada periodo: sesiones, palabras, vinculación, años que faltan o son finos.",
+   "en": "The base behind each period: sittings, words, linkage, missing or thin years."
+  },
+  "example": {
+   "es": "Antes de comparar Argentina, España, México y Uruguay en 2022 y 2023, dime qué base tiene cada año.",
+   "en": "Before comparing Argentina, Spain, Mexico and Uruguay in 2022 and 2023, tell me what base each year has."
+  }
+ },
+ "describe_data": {
+  "summary": {
+   "es": "El esquema de las tablas locales y consultas de ejemplo, para escribir SQL.",
+   "en": "The schema of the local tables and example queries, for writing SQL."
+  },
+  "example": {
+   "es": "¿Qué columnas tiene la tabla de intervenciones y qué otras tablas hay?",
+   "en": "What columns does the interventions table have, and which other tables are there?"
+  }
+ },
+ "get_documentation": {
+  "summary": {
+   "es": "La documentación depositada con cada país: limitaciones, información del corpus, libro de códigos.",
+   "en": "The documentation deposited with each country: limitations, corpus information, codebook."
+  },
+  "example": {
+   "es": "¿Qué limitaciones conocidas tiene el corpus de Paraguay?",
+   "en": "What known limitations does the Paraguay corpus have?"
+  }
+ },
+ "how_to_cite": {
+  "summary": {
+   "es": "La cita y el DOI de la última versión de un país.",
+   "en": "The citation and DOI of a country's latest version."
+  },
+  "example": {
+   "es": "Dame la cita del conjunto de Brasil para la bibliografía.",
+   "en": "Give me the citation of the Brazil dataset for the references."
+  }
+ },
+ "ngram_viewer": {
+  "summary": {
+   "es": "Frecuencia anual de palabras o frases, con la base de cada punto; dibuja SVG o HTML.",
+   "en": "Yearly frequency of words or phrases, with the base of every point; draws SVG or HTML."
+  },
+  "example": {
+   "es": "Dibuja «inflación» por millón de palabras en Argentina y Uruguay desde 1990.",
+   "en": "Chart 'inflación' per million words in Argentina and Uruguay since 1990."
+  }
+ },
+ "term_counter": {
+  "summary": {
+   "es": "Totales de un término, por sexo y partido, y su primer y último uso en cada país.",
+   "en": "A term's totals, by sex and party, and its first and last use in each country."
+  },
+  "example": {
+   "es": "¿Cuándo se dijo por primera vez «inteligencia artificial» en cada parlamento?",
+   "en": "When was 'inteligencia artificial' first said in each parliament?"
+  }
+ },
+ "term_frequency": {
+  "summary": {
+   "es": "Frecuencia agrupada por año, país, legislatura, partido, sexo, orador o sesión.",
+   "en": "Frequency grouped by year, country, legislature, party, sex, speaker or sitting."
+  },
+  "example": {
+   "es": "¿En qué sesiones de Chile se usa más «pensiones»?",
+   "en": "In which Chilean sittings is 'pensiones' used most?"
+  }
+ },
+ "share_of_voice": {
+  "summary": {
+   "es": "Cuánto habla cada grupo frente a su peso en el registro de diputados.",
+   "en": "How much each group speaks compared with its weight on the register of deputies."
+  },
+  "example": {
+   "es": "Por legislatura, ¿hablan las diputadas de Costa Rica en proporción a su peso?",
+   "en": "By legislature, do women deputies in Costa Rica speak in proportion to their weight?"
+  }
+ },
+ "distinctive_words": {
+  "summary": {
+   "es": "Las palabras que más separan dos grupos (log-odds ponderado).",
+   "en": "The words that most separate two groups (weighted log-odds)."
+  },
+  "example": {
+   "es": "¿Qué palabras distinguen al Frente Amplio del Partido Nacional en Uruguay desde 2020?",
+   "en": "Which words set Frente Amplio apart from Partido Nacional in Uruguay since 2020?"
+  }
+ },
+ "kwic": {
+  "summary": {
+   "es": "Concordancias: el término con su contexto, para leer.",
+   "en": "Concordance lines: the term in its context, for reading."
+  },
+  "example": {
+   "es": "Enséñame diez usos de «seguridad ciudadana» en Ecuador, al azar.",
+   "en": "Show me ten random uses of 'seguridad ciudadana' in Ecuador."
+  }
+ },
+ "collocations": {
+  "summary": {
+   "es": "Las palabras que rodean a un término más de lo esperado (log-verosimilitud).",
+   "en": "The words around a term more often than expected (log-likelihood)."
+  },
+  "example": {
+   "es": "¿Qué palabras acompañan a «migrantes» en Panamá antes y después de 2018?",
+   "en": "Which words go with 'migrantes' in Panama before and after 2018?"
+  }
+ },
+ "search_text": {
+  "summary": {
+   "es": "Busca intervenciones con una palabra, frase o expresión regular, con un fragmento.",
+   "en": "Finds interventions with a word, phrase or regex, with a snippet."
+  },
+  "example": {
+   "es": "Busca las intervenciones de Guatemala que mencionan «Ley de Competencia».",
+   "en": "Find the Guatemalan interventions that mention 'Ley de Competencia'."
+  }
+ },
+ "get_intervention": {
+  "summary": {
+   "es": "El texto completo de una intervención y, si quieres, los turnos de alrededor.",
+   "en": "The full text of one intervention and, if you want, the turns around it."
+  },
+  "example": {
+   "es": "Léeme entera la intervención de Perú que más veces dice «feminicidio», con los dos turnos anteriores.",
+   "en": "Read me in full the Peruvian intervention that says 'feminicidio' most often, with the two turns before it."
+  }
+ },
+ "get_session": {
+  "summary": {
+   "es": "Los turnos de una sesión, en orden: quién habla, cuánto y cómo empieza.",
+   "en": "The turns of a sitting, in order: who speaks, how much and how they begin."
+  },
+  "example": {
+   "es": "¿Qué se debatió en la sesión UY0070168?",
+   "en": "What was debated in sitting UY0070168?"
+  }
+ },
+ "library_create": {
+  "summary": {
+   "es": "Guarda un subconjunto (un tema, un periodo, un grupo) de uno o varios países.",
+   "en": "Saves a subset (a topic, a period, a group) from one or several countries."
+  },
+  "example": {
+   "es": "Crea una biblioteca con las intervenciones sobre agua de Chile, Perú y México desde 2015.",
+   "en": "Create a library with the interventions about water in Chile, Peru and Mexico since 2015."
+  }
+ },
+ "library_describe": {
+  "summary": {
+   "es": "Qué hay en una biblioteca, país por país, con avisos para comparar.",
+   "en": "What is in a library, country by country, with warnings for comparing."
+  },
+  "example": {
+   "es": "Antes de comparar, descríbeme la biblioteca «agua».",
+   "en": "Before comparing, describe the library 'agua' for me."
+  }
+ },
+ "library_edit": {
+  "summary": {
+   "es": "Añade o quita intervenciones a mano, o les pone notas y etiquetas.",
+   "en": "Adds or removes interventions by hand, or attaches notes and tags."
+  },
+  "example": {
+   "es": "Quita de «agua» las intervenciones que solo leen el orden del día.",
+   "en": "Remove from 'agua' the interventions that only read the agenda."
+  }
+ },
+ "library_combine": {
+  "summary": {
+   "es": "Une, cruza o resta dos bibliotecas.",
+   "en": "Joins, intersects or subtracts two libraries."
+  },
+  "example": {
+   "es": "Haz una biblioteca con lo que está en «agua» y también en «minería».",
+   "en": "Make a library with what is in both 'agua' and 'minería'."
+  }
+ },
+ "library_export": {
+  "summary": {
+   "es": "Exporta una biblioteca al Diarios Explorer: un archivo por país y un índice.",
+   "en": "Exports a library to the Diarios Explorer: one file per country and an index."
+  },
+  "example": {
+   "es": "Exporta «pandemia» para abrirla en el Diarios Explorer.",
+   "en": "Export 'pandemia' to open it in the Diarios Explorer."
+  }
+ },
+ "library_import": {
+  "summary": {
+   "es": "Trae al MCP las bibliotecas hechas en el Diarios Explorer.",
+   "en": "Brings libraries made in the Diarios Explorer into the MCP."
+  },
+  "example": {
+   "es": "Importa las bibliotecas que guardé en ~/explorer como una sola, «educación».",
+   "en": "Import the libraries I saved in ~/explorer as one, 'educación'."
+  }
+ },
+ "library_rebuild": {
+  "summary": {
+   "es": "Rehace una biblioteca sobre una edición nueva de los datos.",
+   "en": "Rebuilds a library on a new edition of the data."
+  },
+  "example": {
+   "es": "He descargado la nueva versión de Perú: reconstruye «pandemia».",
+   "en": "I downloaded the new Peru version: rebuild 'pandemia'."
+  }
+ },
+ "library_delete": {
+  "summary": {
+   "es": "Borra una biblioteca (los datos no se tocan); sin confirmar, solo avisa.",
+   "en": "Deletes a library (the data are untouched); without confirming, it only warns."
+  },
+  "example": {
+   "es": "Borra la biblioteca «pruebas».",
+   "en": "Delete the library 'pruebas'."
+  }
+ },
+ "cooccurrence_network": {
+  "summary": {
+   "es": "Red de palabras de una biblioteca y sus temas; o, con entidades, quién se nombra junto a quién.",
+   "en": "A word network of a library and its themes; or, with entities, who is named together with whom."
+  },
+  "example": {
+   "es": "¿De qué temas se habló en la biblioteca «agua» de Chile y qué partidos los usan más?",
+   "en": "Which themes run through the Chilean 'agua' library, and which parties use them most?"
+  }
+ },
+ "comention_network": {
+  "summary": {
+   "es": "Red de actores mencionados en la misma intervención, con el sesgo de cada uno entre dos grupos.",
+   "en": "A network of actors mentioned in the same intervention, with each one's bias between two groups."
+  },
+  "example": {
+   "es": "¿Qué instituciones se mencionan juntas en «agua» y cuáles nombra más la oposición?",
+   "en": "Which institutions are mentioned together in 'agua', and which does the opposition name more?"
+  }
+ },
+ "mention_network": {
+  "summary": {
+   "es": "Quién nombra a quién en el pleno: diputados y actores externos que declares.",
+   "en": "Who names whom on the floor: deputies and the external actors you declare."
+  },
+  "example": {
+   "es": "En «agua», ¿a quién nombran el oficialismo y la oposición? Declara a la ministra del ramo como actor externo.",
+   "en": "In 'agua', whom do government and opposition name? Declare the minister in charge as an external actor."
+  }
+ },
+ "query_sql": {
+  "summary": {
+   "es": "SQL de solo lectura (DuckDB) para todo lo que no hace otra herramienta.",
+   "en": "Read-only SQL (DuckDB) for anything no other tool does."
+  },
+  "example": {
+   "es": "¿Cuántas sesiones celebró cada parlamento cada año desde 2015?",
+   "en": "How many sittings did each parliament hold each year since 2015?"
+  }
+ },
+ "export_result": {
+  "summary": {
+   "es": "Guarda el resultado de una consulta en CSV o Parquet para R, Python o Stata.",
+   "en": "Saves a query result to CSV or Parquet for R, Python or Stata."
+  },
+  "example": {
+   "es": "Guarda esa tabla en Parquet en ~/proyecto/datos.",
+   "en": "Save that table as Parquet in ~/project/data."
+  }
+ },
+ "query_log": {
+  "summary": {
+   "es": "Lo que se ha ejecutado, con parámetros y versiones; escribe un apéndice de métodos.",
+   "en": "What has been run, with parameters and versions; writes a methods appendix."
+  },
+  "example": {
+   "es": "Escribe el apéndice de métodos de lo que hemos hecho hoy.",
+   "en": "Write the methods appendix for what we did today."
+  }
+ }
+}

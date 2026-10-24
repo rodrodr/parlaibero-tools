@@ -1,0 +1,232 @@
+{
+ "es": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Palabras más propias de diputadas y de diputados · México, LXIV legislatura (2018–2021)",
+  "sub": "Log-odds ponderado (z), sin la presidencia.",
+  "aria": "distinctive words by sex",
+  "left": {
+   "title": "diputadas",
+   "color": "c2",
+   "items": [
+    [
+     "diputada",
+     77.4
+    ],
+    [
+     "del",
+     75.6
+    ],
+    [
+     "votación",
+     66.1
+    ],
+    [
+     "grupo",
+     62.9
+    ],
+    [
+     "parlamentario",
+     62.1
+    ],
+    [
+     "diputado",
+     60.0
+    ],
+    [
+     "de",
+     56.2
+    ],
+    [
+     "partido",
+     53.9
+    ],
+    [
+     "diputados",
+     53.9
+    ],
+    [
+     "mujeres",
+     52.1
+    ],
+    [
+     "general",
+     48.9
+    ],
+    [
+     "manifestarlo",
+     44.9
+    ]
+   ]
+  },
+  "right": {
+   "title": "diputados",
+   "color": "c0",
+   "items": [
+    [
+     "que",
+     73.6
+    ],
+    [
+     "no",
+     72.5
+    ],
+    [
+     "es",
+     70.4
+    ],
+    [
+     "un",
+     49.2
+    ],
+    [
+     "pero",
+     46.7
+    ],
+    [
+     "una",
+     46.0
+    ],
+    [
+     "porque",
+     44.1
+    ],
+    [
+     "esta",
+     43.7
+    ],
+    [
+     "yo",
+     43.2
+    ],
+    [
+     "más",
+     41.3
+    ],
+    [
+     "eso",
+     41.2
+    ],
+    [
+     "país",
+     40.8
+    ]
+   ]
+  }
+ },
+ "en": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Words most typical of women and of men deputies · Mexico, 64th legislature (2018–2021)",
+  "sub": "Weighted log-odds (z), without the chair.",
+  "aria": "distinctive words by sex",
+  "left": {
+   "title": "women",
+   "color": "c2",
+   "items": [
+    [
+     "diputada",
+     77.4
+    ],
+    [
+     "del",
+     75.6
+    ],
+    [
+     "votación",
+     66.1
+    ],
+    [
+     "grupo",
+     62.9
+    ],
+    [
+     "parlamentario",
+     62.1
+    ],
+    [
+     "diputado",
+     60.0
+    ],
+    [
+     "de",
+     56.2
+    ],
+    [
+     "partido",
+     53.9
+    ],
+    [
+     "diputados",
+     53.9
+    ],
+    [
+     "mujeres",
+     52.1
+    ],
+    [
+     "general",
+     48.9
+    ],
+    [
+     "manifestarlo",
+     44.9
+    ]
+   ]
+  },
+  "right": {
+   "title": "men",
+   "color": "c0",
+   "items": [
+    [
+     "que",
+     73.6
+    ],
+    [
+     "no",
+     72.5
+    ],
+    [
+     "es",
+     70.4
+    ],
+    [
+     "un",
+     49.2
+    ],
+    [
+     "pero",
+     46.7
+    ],
+    [
+     "una",
+     46.0
+    ],
+    [
+     "porque",
+     44.1
+    ],
+    [
+     "esta",
+     43.7
+    ],
+    [
+     "yo",
+     43.2
+    ],
+    [
+     "más",
+     41.3
+    ],
+    [
+     "eso",
+     41.2
+    ],
+    [
+     "país",
+     40.8
+    ]
+   ]
+  }
+ }
+}

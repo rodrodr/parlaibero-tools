@@ -1,0 +1,264 @@
+{
+ "es": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Palabras más propias del PT y del PSL en el debate de 2019",
+  "sub": "Log-odds ponderado (z) en la biblioteca, 2019, sin la presidencia; sin nombres de persona.",
+  "aria": "distinctive words",
+  "left": {
+   "title": "PT",
+   "color": "c7",
+   "items": [
+    [
+     "trabalhadores",
+     9.2
+    ],
+    [
+     "proposta",
+     8.2
+    ],
+    [
+     "se",
+     7.0
+    ],
+    [
+     "trabalhador",
+     7.0
+    ],
+    [
+     "salário",
+     6.8
+    ],
+    [
+     "dos",
+     6.5
+    ],
+    [
+     "povo",
+     6.2
+    ],
+    [
+     "direitos",
+     6.1
+    ],
+    [
+     "mínimo",
+     6.0
+    ],
+    [
+     "mulheres",
+     6.0
+    ],
+    [
+     "aposentar",
+     5.9
+    ],
+    [
+     "direito",
+     5.8
+    ],
+    [
+     "pobres",
+     5.6
+    ],
+    [
+     "portanto",
+     5.5
+    ]
+   ]
+  },
+  "right": {
+   "title": "PSL",
+   "color": "c4",
+   "items": [
+    [
+     "eu",
+     13.0
+    ],
+    [
+     "todos",
+     10.1
+    ],
+    [
+     "nova",
+     9.3
+    ],
+    [
+     "esquerda",
+     9.1
+    ],
+    [
+     "muito",
+     8.8
+    ],
+    [
+     "tenho",
+     8.3
+    ],
+    [
+     "psl",
+     8.3
+    ],
+    [
+     "nosso",
+     7.8
+    ],
+    [
+     "meu",
+     7.6
+    ],
+    [
+     "segurança",
+     7.4
+    ],
+    [
+     "me",
+     7.2
+    ],
+    [
+     "bem",
+     7.2
+    ],
+    [
+     "meus",
+     7.2
+    ],
+    [
+     "corrupção",
+     6.5
+    ]
+   ]
+  }
+ },
+ "en": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Words most typical of PT and PSL in the 2019 debate",
+  "sub": "Weighted log-odds (z) in the library, 2019, without the chair; personal names left out.",
+  "aria": "distinctive words",
+  "left": {
+   "title": "PT",
+   "color": "c7",
+   "items": [
+    [
+     "trabalhadores",
+     9.2
+    ],
+    [
+     "proposta",
+     8.2
+    ],
+    [
+     "se",
+     7.0
+    ],
+    [
+     "trabalhador",
+     7.0
+    ],
+    [
+     "salário",
+     6.8
+    ],
+    [
+     "dos",
+     6.5
+    ],
+    [
+     "povo",
+     6.2
+    ],
+    [
+     "direitos",
+     6.1
+    ],
+    [
+     "mínimo",
+     6.0
+    ],
+    [
+     "mulheres",
+     6.0
+    ],
+    [
+     "aposentar",
+     5.9
+    ],
+    [
+     "direito",
+     5.8
+    ],
+    [
+     "pobres",
+     5.6
+    ],
+    [
+     "portanto",
+     5.5
+    ]
+   ]
+  },
+  "right": {
+   "title": "PSL",
+   "color": "c4",
+   "items": [
+    [
+     "eu",
+     13.0
+    ],
+    [
+     "todos",
+     10.1
+    ],
+    [
+     "nova",
+     9.3
+    ],
+    [
+     "esquerda",
+     9.1
+    ],
+    [
+     "muito",
+     8.8
+    ],
+    [
+     "tenho",
+     8.3
+    ],
+    [
+     "psl",
+     8.3
+    ],
+    [
+     "nosso",
+     7.8
+    ],
+    [
+     "meu",
+     7.6
+    ],
+    [
+     "segurança",
+     7.4
+    ],
+    [
+     "me",
+     7.2
+    ],
+    [
+     "bem",
+     7.2
+    ],
+    [
+     "meus",
+     7.2
+    ],
+    [
+     "corrupção",
+     6.5
+    ]
+   ]
+  }
+ }
+}

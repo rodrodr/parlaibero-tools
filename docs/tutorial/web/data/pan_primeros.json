@@ -1,0 +1,436 @@
+{
+ "es": {
+  "type": "timeline",
+  "x_domain": [
+   "2019-06-01",
+   "2020-10-01"
+  ],
+  "months": [
+   "ene",
+   "feb",
+   "mar",
+   "abr",
+   "may",
+   "jun",
+   "jul",
+   "ago",
+   "sep",
+   "oct",
+   "nov",
+   "dic"
+  ],
+  "ref_date": "2020-03-11",
+  "ref_label": "11-mar: la OMS declara la pandemia",
+  "size": 10337,
+  "title": "Primer uso de «coronavirus» o «covid» en cada pleno",
+  "sub": "Círculo hueco: el primer uso que da term_counter y que la lectura desmiente. Banda gris: semanas sin sesiones alrededor de la declaración. El tamaño del punto es el total de usos hasta 2025.",
+  "aria": "Fecha del primer uso por país",
+  "rows": [
+   {
+    "label": "México",
+    "date": "2020-01-28",
+    "value": 5414,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>México · 2020-01-28</b><br>MORENA<br>5.414 usos hasta 2025"
+   },
+   {
+    "label": "Chile",
+    "date": "2020-01-29",
+    "value": 3660,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Chile · 2020-01-29</b><br>IND<br>3.660 usos hasta 2025"
+   },
+   {
+    "label": "Guatemala",
+    "date": "2020-01-30",
+    "value": 2276,
+    "color": "c1",
+    "wrong": "2020-01-21",
+    "wrong_tip": "<b>Guatemala · 2020-01-21</b><br>una sesión fechada el 21 de enero de 2020 que habla de «COVID-19» en pasado: la fecha está mal",
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Guatemala · 2020-01-30</b><br>orador no vinculado<br>2.276 usos hasta 2025"
+   },
+   {
+    "label": "Panamá",
+    "date": "2020-01-30",
+    "value": 2215,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Panamá · 2020-01-30</b><br>CD<br>2.215 usos hasta 2025"
+   },
+   {
+    "label": "El Salvador",
+    "date": "2020-01-30",
+    "value": 4508,
+    "color": "c1",
+    "wrong": "2019-12-19",
+    "wrong_tip": "<b>El Salvador · 2019-12-19</b><br>una marca de material quirúrgico («Covidien») en una lista de compras",
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>El Salvador · 2020-01-30</b><br>PDC<br>4.508 usos hasta 2025"
+   },
+   {
+    "label": "Brasil",
+    "date": "2020-02-04",
+    "value": 10337,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Brasil · 2020-02-04</b><br>PSL<br>10.337 usos hasta 2025"
+   },
+   {
+    "label": "España",
+    "date": "2020-02-04",
+    "value": 3751,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>España · 2020-02-04</b><br>UP<br>3.751 usos hasta 2025"
+   },
+   {
+    "label": "Perú",
+    "date": "2020-02-05",
+    "value": 5056,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Perú · 2020-02-05</b><br>FUERZA POPULAR<br>5.056 usos hasta 2025"
+   },
+   {
+    "label": "Portugal",
+    "date": "2020-03-04",
+    "value": 3460,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Portugal · 2020-03-04</b><br>PS<br>3.460 usos hasta 2025"
+   },
+   {
+    "label": "Costa Rica",
+    "date": "2020-03-05",
+    "value": 1435,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Costa Rica · 2020-03-05</b><br>UNIDAD SOCIAL CRISTIANA<br>1.435 usos hasta 2025"
+   },
+   {
+    "label": "Uruguay",
+    "date": "2020-03-17",
+    "value": 3948,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Uruguay · 2020-03-17</b><br>Partido Nacional<br>3.948 usos hasta 2025"
+   },
+   {
+    "label": "Rep. Dominicana",
+    "date": "2020-03-19",
+    "value": 506,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Rep. Dominicana · 2020-03-19</b><br>orador no vinculado<br>506 usos hasta 2025"
+   },
+   {
+    "label": "Ecuador",
+    "date": "2020-03-24",
+    "value": 2453,
+    "color": "c1",
+    "wrong": "2019-06-20",
+    "wrong_tip": "<b>Ecuador · 2019-06-20</b><br>el nombre de una organización que empieza por «Covid», en listas de oficios leídas en el pleno (también el 2019-10-24)",
+    "gap": [
+     "2020-02-18",
+     "2020-03-24"
+    ],
+    "gap_tip": "<b>Ecuador</b><br>sin sesiones del 2020-02-18 al 2020-03-24",
+    "tip": "<b>Ecuador · 2020-03-24</b><br>orador no vinculado<br>2.453 usos hasta 2025"
+   },
+   {
+    "label": "Colombia",
+    "date": "2020-04-21",
+    "value": 2289,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": [
+     "2019-12-20",
+     "2020-04-21"
+    ],
+    "gap_tip": "<b>Colombia</b><br>sin sesiones del 2019-12-20 al 2020-04-21",
+    "tip": "<b>Colombia · 2020-04-21</b><br>Cambio Radical<br>2.289 usos hasta 2025"
+   },
+   {
+    "label": "Argentina",
+    "date": "2020-05-13",
+    "value": 964,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": [
+     "2020-03-01",
+     "2020-05-13"
+    ],
+    "gap_tip": "<b>Argentina</b><br>sin sesiones del 2020-03-01 al 2020-05-13",
+    "tip": "<b>Argentina · 2020-05-13</b><br>FRENTE RENOVADOR, FEDERAL UNIDOS POR UNA NUEVA ARGENTINA, FRENTE DE TODOS<br>964 usos hasta 2025"
+   },
+   {
+    "label": "Paraguay",
+    "date": "2020-09-02",
+    "value": 1070,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": [
+     "2019-06-01",
+     "2020-09-02"
+    ],
+    "gap_tip": "<b>Paraguay</b><br>el corpus no tiene sesiones hasta el 2020-09-02",
+    "tip": "<b>Paraguay · 2020-09-02</b><br>Partido Liberal Radical Auténtico<br>1.070 usos hasta 2025"
+   }
+  ]
+ },
+ "en": {
+  "type": "timeline",
+  "x_domain": [
+   "2019-06-01",
+   "2020-10-01"
+  ],
+  "months": [
+   "Jan",
+   "Feb",
+   "Mar",
+   "Apr",
+   "May",
+   "Jun",
+   "Jul",
+   "Aug",
+   "Sep",
+   "Oct",
+   "Nov",
+   "Dec"
+  ],
+  "ref_date": "2020-03-11",
+  "ref_label": "11 Mar: WHO declares the pandemic",
+  "size": 10337,
+  "title": "First use of 'coronavirus' or 'covid' on each floor",
+  "sub": "Hollow circle: the first use term_counter gives, which reading disproves. Grey band: weeks without sittings around the declaration. Dot size is the total number of uses up to 2025.",
+  "aria": "Date of first use by country",
+  "rows": [
+   {
+    "label": "Mexico",
+    "date": "2020-01-28",
+    "value": 5414,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Mexico · 2020-01-28</b><br>MORENA<br>5,414 uses up to 2025"
+   },
+   {
+    "label": "Chile",
+    "date": "2020-01-29",
+    "value": 3660,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Chile · 2020-01-29</b><br>IND<br>3,660 uses up to 2025"
+   },
+   {
+    "label": "Guatemala",
+    "date": "2020-01-30",
+    "value": 2276,
+    "color": "c1",
+    "wrong": "2020-01-21",
+    "wrong_tip": "<b>Guatemala · 2020-01-21</b><br>a sitting dated 21 January 2020 that speaks of 'COVID-19' in the past tense: the date is wrong",
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Guatemala · 2020-01-30</b><br>speaker not linked<br>2,276 uses up to 2025"
+   },
+   {
+    "label": "Panama",
+    "date": "2020-01-30",
+    "value": 2215,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Panama · 2020-01-30</b><br>CD<br>2,215 uses up to 2025"
+   },
+   {
+    "label": "El Salvador",
+    "date": "2020-01-30",
+    "value": 4508,
+    "color": "c1",
+    "wrong": "2019-12-19",
+    "wrong_tip": "<b>El Salvador · 2019-12-19</b><br>a brand of surgical supplies ('Covidien') in a purchase list",
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>El Salvador · 2020-01-30</b><br>PDC<br>4,508 uses up to 2025"
+   },
+   {
+    "label": "Brazil",
+    "date": "2020-02-04",
+    "value": 10337,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Brazil · 2020-02-04</b><br>PSL<br>10,337 uses up to 2025"
+   },
+   {
+    "label": "Spain",
+    "date": "2020-02-04",
+    "value": 3751,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Spain · 2020-02-04</b><br>UP<br>3,751 uses up to 2025"
+   },
+   {
+    "label": "Peru",
+    "date": "2020-02-05",
+    "value": 5056,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Peru · 2020-02-05</b><br>FUERZA POPULAR<br>5,056 uses up to 2025"
+   },
+   {
+    "label": "Portugal",
+    "date": "2020-03-04",
+    "value": 3460,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Portugal · 2020-03-04</b><br>PS<br>3,460 uses up to 2025"
+   },
+   {
+    "label": "Costa Rica",
+    "date": "2020-03-05",
+    "value": 1435,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Costa Rica · 2020-03-05</b><br>UNIDAD SOCIAL CRISTIANA<br>1,435 uses up to 2025"
+   },
+   {
+    "label": "Uruguay",
+    "date": "2020-03-17",
+    "value": 3948,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Uruguay · 2020-03-17</b><br>Partido Nacional<br>3,948 uses up to 2025"
+   },
+   {
+    "label": "Dominican Rep.",
+    "date": "2020-03-19",
+    "value": 506,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": null,
+    "gap_tip": null,
+    "tip": "<b>Dominican Rep. · 2020-03-19</b><br>speaker not linked<br>506 uses up to 2025"
+   },
+   {
+    "label": "Ecuador",
+    "date": "2020-03-24",
+    "value": 2453,
+    "color": "c1",
+    "wrong": "2019-06-20",
+    "wrong_tip": "<b>Ecuador · 2019-06-20</b><br>the name of an organisation that begins with 'Covid', in lists of letters read into the record (again on 2019-10-24)",
+    "gap": [
+     "2020-02-18",
+     "2020-03-24"
+    ],
+    "gap_tip": "<b>Ecuador</b><br>no sittings from 2020-02-18 to 2020-03-24",
+    "tip": "<b>Ecuador · 2020-03-24</b><br>speaker not linked<br>2,453 uses up to 2025"
+   },
+   {
+    "label": "Colombia",
+    "date": "2020-04-21",
+    "value": 2289,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": [
+     "2019-12-20",
+     "2020-04-21"
+    ],
+    "gap_tip": "<b>Colombia</b><br>no sittings from 2019-12-20 to 2020-04-21",
+    "tip": "<b>Colombia · 2020-04-21</b><br>Cambio Radical<br>2,289 uses up to 2025"
+   },
+   {
+    "label": "Argentina",
+    "date": "2020-05-13",
+    "value": 964,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": [
+     "2020-03-01",
+     "2020-05-13"
+    ],
+    "gap_tip": "<b>Argentina</b><br>no sittings from 2020-03-01 to 2020-05-13",
+    "tip": "<b>Argentina · 2020-05-13</b><br>FRENTE RENOVADOR, FEDERAL UNIDOS POR UNA NUEVA ARGENTINA, FRENTE DE TODOS<br>964 uses up to 2025"
+   },
+   {
+    "label": "Paraguay",
+    "date": "2020-09-02",
+    "value": 1070,
+    "color": "c1",
+    "wrong": null,
+    "wrong_tip": null,
+    "gap": [
+     "2019-06-01",
+     "2020-09-02"
+    ],
+    "gap_tip": "<b>Paraguay</b><br>the corpus has no sittings until 2020-09-02",
+    "tip": "<b>Paraguay · 2020-09-02</b><br>Partido Liberal Radical Auténtico<br>1,070 uses up to 2025"
+   }
+  ]
+ }
+}

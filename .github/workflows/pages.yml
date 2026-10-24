@@ -1,0 +1,46 @@
+# Builds the tutorial site from docs/tutorial/ and publishes it on GitHub Pages
+# (https://rodrodr.github.io/parlaibero-tools/). The build only renders: the data behind the charts and tables
+# (docs/tutorial/web/data/, web/redes/, img/) is produced locally by casos.py and datos.py and committed.
+name: Tutorial site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/tutorial/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "markdown-it-py==4.2.0"
+      - run: python docs/tutorial/web/build.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

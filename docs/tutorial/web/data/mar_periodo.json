@@ -1,0 +1,264 @@
+{
+ "es": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Palabras más propias de cada reforma: la de 2016–2017 y la de 2019",
+  "sub": "Log-odds ponderado (z) en la biblioteca, sin la presidencia; sin nombres de persona.",
+  "aria": "distinctive words",
+  "left": {
+   "title": "2016–2017",
+   "color": "c7",
+   "items": [
+    [
+     "trabalhista",
+     14.2
+    ],
+    [
+     "golpe",
+     13.7
+    ],
+    [
+     "direitos",
+     13.3
+    ],
+    [
+     "mulheres",
+     12.1
+    ],
+    [
+     "de",
+     11.5
+    ],
+    [
+     "em",
+     11.3
+    ],
+    [
+     "as",
+     11.3
+    ],
+    [
+     "trabalho",
+     10.8
+    ],
+    [
+     "terceirização",
+     10.6
+    ],
+    [
+     "trabalhadores",
+     9.7
+    ],
+    [
+     "empresas",
+     9.6
+    ],
+    [
+     "ano",
+     9.1
+    ],
+    [
+     "contra",
+     9.0
+    ],
+    [
+     "art",
+     8.9
+    ]
+   ]
+  },
+  "right": {
+   "title": "2019",
+   "color": "c4",
+   "items": [
+    [
+     "reais",
+     18.6
+    ],
+    [
+     "sra",
+     17.7
+    ],
+    [
+     "pobres",
+     16.2
+    ],
+    [
+     "aqui",
+     15.4
+    ],
+    [
+     "eu",
+     15.3
+    ],
+    [
+     "nós",
+     13.9
+    ],
+    [
+     "oposição",
+     13.6
+    ],
+    [
+     "educação",
+     13.5
+    ],
+    [
+     "deputado",
+     13.4
+    ],
+    [
+     "ganha",
+     12.4
+    ],
+    [
+     "economia",
+     12.3
+    ],
+    [
+     "mais",
+     12.3
+    ],
+    [
+     "capitalização",
+     12.2
+    ],
+    [
+     "privilégios",
+     12.1
+    ]
+   ]
+  }
+ },
+ "en": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Words most typical of each reform: 2016–2017 and 2019",
+  "sub": "Weighted log-odds (z) in the library, without the chair; personal names left out.",
+  "aria": "distinctive words",
+  "left": {
+   "title": "2016–2017",
+   "color": "c7",
+   "items": [
+    [
+     "trabalhista",
+     14.2
+    ],
+    [
+     "golpe",
+     13.7
+    ],
+    [
+     "direitos",
+     13.3
+    ],
+    [
+     "mulheres",
+     12.1
+    ],
+    [
+     "de",
+     11.5
+    ],
+    [
+     "em",
+     11.3
+    ],
+    [
+     "as",
+     11.3
+    ],
+    [
+     "trabalho",
+     10.8
+    ],
+    [
+     "terceirização",
+     10.6
+    ],
+    [
+     "trabalhadores",
+     9.7
+    ],
+    [
+     "empresas",
+     9.6
+    ],
+    [
+     "ano",
+     9.1
+    ],
+    [
+     "contra",
+     9.0
+    ],
+    [
+     "art",
+     8.9
+    ]
+   ]
+  },
+  "right": {
+   "title": "2019",
+   "color": "c4",
+   "items": [
+    [
+     "reais",
+     18.6
+    ],
+    [
+     "sra",
+     17.7
+    ],
+    [
+     "pobres",
+     16.2
+    ],
+    [
+     "aqui",
+     15.4
+    ],
+    [
+     "eu",
+     15.3
+    ],
+    [
+     "nós",
+     13.9
+    ],
+    [
+     "oposição",
+     13.6
+    ],
+    [
+     "educação",
+     13.5
+    ],
+    [
+     "deputado",
+     13.4
+    ],
+    [
+     "ganha",
+     12.4
+    ],
+    [
+     "economia",
+     12.3
+    ],
+    [
+     "mais",
+     12.3
+    ],
+    [
+     "capitalização",
+     12.2
+    ],
+    [
+     "privilégios",
+     12.1
+    ]
+   ]
+  }
+ }
+}

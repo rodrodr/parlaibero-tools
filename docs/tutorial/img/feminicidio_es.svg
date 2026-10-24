@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="t d" font-family="Archivo, 'Helvetica Neue', Arial, sans-serif" class="pi-chart">
+<title id="t">«feminicidio» en seis parlamentos</title><desc id="d">apariciones por millón de palabras · media móvil de 3 años · BR, CL, CO, EC, MX, PE · solo habla parlamentaria · sin turnos de más de 10 000 palabras. Fuente: ParlaIbero, Harvard Dataverse · 6 datasets</desc>
+<style>.pi-chart{--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--grid:#e6e5e0;--axis:#a3a29c;--s0:#2a78d6;--s1:#eb6834;--s2:#1baf7a;--s3:#eda100;--s4:#e87ba4;--s5:#008300;--s6:#4a3aa7;--s7:#e34948;}.pi-chart .bg{fill:var(--surface)}.pi-chart .t1{fill:var(--ink);font-size:20px;font-weight:700}.pi-chart .t2{fill:var(--ink2);font-size:14px}.pi-chart .tick{fill:var(--ink2);font-size:12px}.pi-chart .grid{stroke:var(--grid);stroke-width:1}.pi-chart .axis{stroke:var(--axis);stroke-width:1}.pi-chart .lab{fill:var(--ink);font-size:13px}.pi-chart .note{fill:var(--ink2);font-size:11px}.pi-chart .c0{stroke:var(--s0)}.pi-chart .f0{fill:var(--s0)}.pi-chart .c1{stroke:var(--s1)}.pi-chart .f1{fill:var(--s1)}.pi-chart .c2{stroke:var(--s2)}.pi-chart .f2{fill:var(--s2)}.pi-chart .c3{stroke:var(--s3)}.pi-chart .f3{fill:var(--s3)}.pi-chart .c4{stroke:var(--s4)}.pi-chart .f4{fill:var(--s4)}.pi-chart .c5{stroke:var(--s5)}.pi-chart .f5{fill:var(--s5)}.pi-chart .c6{stroke:var(--s6)}.pi-chart .f6{fill:var(--s6)}.pi-chart .c7{stroke:var(--s7)}.pi-chart .f7{fill:var(--s7)}.pi-chart .hollow{fill:var(--surface);stroke-width:2}</style>
+<rect class="bg" width="960" height="560"/>
+<text class="t1" x="64" y="34">«feminicidio» en seis parlamentos</text>
+<text class="t2" x="64" y="56">apariciones por millón de palabras · media móvil de 3 años · BR, CL, CO, EC, MX, PE · solo habla parlamentaria</text>
+<text class="t2" x="64" y="74">sin turnos de más de 10 000 palabras</text>
+<line class="c0" x1="64" y1="98" x2="82" y2="98" stroke-width="3" stroke-linecap="round"/>
+<text class="lab" x="88" y="102">BR</text>
+<line class="c1" x1="124.4" y1="98" x2="142.4" y2="98" stroke-width="3" stroke-linecap="round"/>
+<text class="lab" x="148.4" y="102">CL</text>
+<line class="c2" x1="184.8" y1="98" x2="202.8" y2="98" stroke-width="3" stroke-linecap="round"/>
+<text class="lab" x="208.8" y="102">CO</text>
+<line class="c3" x1="245.20000000000002" y1="98" x2="263.20000000000005" y2="98" stroke-width="3" stroke-linecap="round"/>
+<text class="lab" x="269.20000000000005" y="102">EC</text>
+<line class="c4" x1="305.6" y1="98" x2="323.6" y2="98" stroke-width="3" stroke-linecap="round"/>
+<text class="lab" x="329.6" y="102">MX</text>
+<line class="c5" x1="366.0" y1="98" x2="384.0" y2="98" stroke-width="3" stroke-linecap="round"/>
+<text class="lab" x="390.0" y="102">PE</text>
+<line class="grid" x1="64" y1="482.0" x2="840" y2="482.0"/>
+<text class="tick" x="56" y="486.0" text-anchor="end">0</text>
+<line class="grid" x1="64" y1="364.7" x2="840" y2="364.7"/>
+<text class="tick" x="56" y="368.7" text-anchor="end">50</text>
+<line class="grid" x1="64" y1="247.3" x2="840" y2="247.3"/>
+<text class="tick" x="56" y="251.3" text-anchor="end">100</text>
+<line class="grid" x1="64" y1="130.0" x2="840" y2="130.0"/>
+<text class="tick" x="56" y="134.0" text-anchor="end">150</text>
+<text class="tick" x="64" y="120">apariciones por millón de palabras</text>
+<line class="axis" x1="64" y1="482" x2="840" y2="482"/>
+<text class="tick" x="64.0" y="502" text-anchor="middle">2000</text>
+<text class="tick" x="219.2" y="502" text-anchor="middle">2005</text>
+<text class="tick" x="374.4" y="502" text-anchor="middle">2010</text>
+<text class="tick" x="529.6" y="502" text-anchor="middle">2015</text>
+<text class="tick" x="684.8" y="502" text-anchor="middle">2020</text>
+<text class="tick" x="840.0" y="502" text-anchor="middle">2025</text>
+<polyline class="c0" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="157.1,482.0 188.2,482.0 219.2,482.0 250.2,482.0 281.3,482.0 312.3,482.0 343.4,482.0 374.4,481.9 405.4,481.1 436.5,472.8 467.5,469.7 498.6,444.8 529.6,431.7 560.6,412.7 591.7,382.6 622.7,357.3 653.8,359.0 684.8,357.2 715.8,378.8 746.9,343.8 777.9,318.0 809.0,294.7 840.0,284.3"/>
+<polyline class="c1" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="64.0,482.0 95.0,482.0 126.1,482.0 157.1,482.0 188.2,481.3 219.2,480.1 250.2,462.9 281.3,435.1 312.3,434.7 343.4,437.6 374.4,463.1 405.4,463.3 436.5,472.0 467.5,472.1 498.6,472.9 529.6,475.7 560.6,476.8 591.7,437.4 622.7,426.8 653.8,390.5 684.8,418.6 715.8,399.1 746.9,391.0 777.9,395.1 809.0,417.6 840.0,454.9"/>
+<polyline class="c2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="64.0,482.0 95.0,482.0 126.1,482.0 157.1,482.0 188.2,482.0 219.2,482.0 250.2,482.0 281.3,481.4 312.3,481.4 343.4,480.6 374.4,481.2 405.4,481.2 436.5,482.0 467.5,481.3 498.6,446.2 529.6,436.1 560.6,430.3 591.7,465.4 622.7,474.3 653.8,472.3 684.8,467.2 715.8,439.3 746.9,331.5 777.9,300.6 809.0,316.6 840.0,408.2"/>
+<polyline class="c3" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="64.0,482.0 95.0,482.0 126.1,482.0 157.1,482.0 188.2,482.0 219.2,482.0 250.2,482.0 281.3,482.0 312.3,482.0 343.4,482.0 374.4,481.6 405.4,470.0 436.5,441.6 467.5,432.1 498.6,436.5 529.6,463.2 560.6,411.2 591.7,409.1 622.7,397.1 653.8,455.4 684.8,459.5 715.8,439.1 746.9,352.6 777.9,292.2 809.0,319.8 840.0,373.9"/>
+<polyline class="c4" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="64.0,482.0 95.0,482.0 126.1,475.4 157.1,464.4 188.2,463.2 219.2,461.4 250.2,469.8 281.3,470.1 312.3,474.4 343.4,475.8 374.4,458.0 405.4,431.0 436.5,405.5 467.5,406.6 498.6,406.9 529.6,399.6 560.6,378.0 591.7,359.9 622.7,321.2 653.8,206.6 684.8,201.1 715.8,143.9 746.9,246.6 777.9,225.0 809.0,320.2 840.0,315.8"/>
+<polyline class="c5" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="64.0,482.0 95.0,482.0 126.1,482.0 157.1,482.0 188.2,482.0 219.2,482.0 250.2,481.5 281.3,481.5 312.3,481.5 343.4,475.0 374.4,396.0 405.4,377.7 436.5,324.2 467.5,398.4 498.6,380.7 529.6,431.4 560.6,420.2 591.7,417.6 622.7,392.1 653.8,377.0 684.8,398.1 715.8,419.6 746.9,442.6 777.9,453.4 809.0,465.9 840.0,470.2"/>
+<circle class="f0" cx="850" cy="284.3" r="4"/>
+<text class="lab" x="858" y="288.3">BR</text>
+<circle class="f4" cx="850" cy="315.8" r="4"/>
+<text class="lab" x="858" y="319.8">MX</text>
+<circle class="f3" cx="850" cy="373.9" r="4"/>
+<text class="lab" x="858" y="377.9">EC</text>
+<circle class="f2" cx="850" cy="408.2" r="4"/>
+<text class="lab" x="858" y="412.2">CO</text>
+<circle class="f1" cx="850" cy="454.9" r="4"/>
+<text class="lab" x="858" y="458.9">CL</text>
+<circle class="f5" cx="850" cy="470.9" r="4"/>
+<text class="lab" x="858" y="474.9">PE</text>
+<text class="note" x="64" y="526">Fuente: ParlaIbero, Harvard Dataverse · 6 datasets</text>
+</svg>

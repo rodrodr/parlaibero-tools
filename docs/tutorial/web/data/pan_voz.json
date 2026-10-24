@@ -1,0 +1,240 @@
+{
+ "es": {
+  "type": "dumbbell",
+  "log": true,
+  "domain": [
+   0.3,
+   2.5
+  ],
+  "ticks": [
+   0.5,
+   1,
+   2
+  ],
+  "ratio_label": "pandemia",
+  "a_color": "c0",
+  "b_color": "c2",
+  "ratio_digits": 2,
+  "title": "Voz de las diputadas frente a su peso en el registro: debates de la pandemia y todo el discurso",
+  "sub": "1 = hablan en proporción a su peso. Escala logarítmica. Solo las cámaras con 100 intervenciones y 10 diputadas en la biblioteca.",
+  "legend": [
+   {
+    "label": "Debates de la pandemia",
+    "color": "c2",
+    "dot": true
+   },
+   {
+    "label": "Todo el discurso del 10-feb al 9-jul de 2020",
+    "color": "c0",
+    "dot": true,
+    "hollow": true
+   }
+  ],
+  "aria": "voice ratio",
+  "rows": [
+   {
+    "label": "Brasil",
+    "a": 1.8998,
+    "b": 1.9862,
+    "ratio": 1.9862,
+    "tip": "<b>Brasil</b><br>pandemia: 1,99 (49 diputadas)<br>todo el discurso: 1,90"
+   },
+   {
+    "label": "Colombia",
+    "a": 0.9132,
+    "b": 1.2518,
+    "ratio": 1.2518,
+    "tip": "<b>Colombia</b><br>pandemia: 1,25 (20 diputadas)<br>todo el discurso: 0,91"
+   },
+   {
+    "label": "Panamá",
+    "a": 0.9875,
+    "b": 1.1248,
+    "ratio": 1.1248,
+    "tip": "<b>Panamá</b><br>pandemia: 1,12 (16 diputadas)<br>todo el discurso: 0,99"
+   },
+   {
+    "label": "Argentina",
+    "a": 1.0487,
+    "b": 1.0763,
+    "ratio": 1.0763,
+    "tip": "<b>Argentina</b><br>pandemia: 1,08 (33 diputadas)<br>todo el discurso: 1,05"
+   },
+   {
+    "label": "Costa Rica",
+    "a": 0.7867,
+    "b": 1.0189,
+    "ratio": 1.0189,
+    "tip": "<b>Costa Rica</b><br>pandemia: 1,02 (24 diputadas)<br>todo el discurso: 0,79"
+   },
+   {
+    "label": "Chile",
+    "a": 0.9973,
+    "b": 0.9971,
+    "ratio": 0.9971,
+    "tip": "<b>Chile</b><br>pandemia: 1,00 (30 diputadas)<br>todo el discurso: 1,00"
+   },
+   {
+    "label": "Portugal",
+    "a": 0.869,
+    "b": 0.941,
+    "ratio": 0.941,
+    "tip": "<b>Portugal</b><br>pandemia: 0,94 (55 diputadas)<br>todo el discurso: 0,87"
+   },
+   {
+    "label": "Perú",
+    "a": 0.9502,
+    "b": 0.9287,
+    "ratio": 0.9287,
+    "tip": "<b>Perú</b><br>pandemia: 0,93 (29 diputadas)<br>todo el discurso: 0,95"
+   },
+   {
+    "label": "España",
+    "a": 0.7891,
+    "b": 0.781,
+    "ratio": 0.781,
+    "tip": "<b>España</b><br>pandemia: 0,78 (52 diputadas)<br>todo el discurso: 0,79"
+   },
+   {
+    "label": "Ecuador",
+    "a": 0.7225,
+    "b": 0.7597,
+    "ratio": 0.7597,
+    "tip": "<b>Ecuador</b><br>pandemia: 0,76 (40 diputadas)<br>todo el discurso: 0,72"
+   },
+   {
+    "label": "El Salvador",
+    "a": 0.5837,
+    "b": 0.6607,
+    "ratio": 0.6607,
+    "tip": "<b>El Salvador</b><br>pandemia: 0,66 (21 diputadas)<br>todo el discurso: 0,58"
+   },
+   {
+    "label": "Guatemala",
+    "a": 0.7007,
+    "b": 0.549,
+    "ratio": 0.549,
+    "tip": "<b>Guatemala</b><br>pandemia: 0,55 (17 diputadas)<br>todo el discurso: 0,70"
+   }
+  ]
+ },
+ "en": {
+  "type": "dumbbell",
+  "log": true,
+  "domain": [
+   0.3,
+   2.5
+  ],
+  "ticks": [
+   0.5,
+   1,
+   2
+  ],
+  "ratio_label": "pandemic",
+  "a_color": "c0",
+  "b_color": "c2",
+  "ratio_digits": 2,
+  "title": "Women deputies' voice against their weight on the register: pandemic debates and all speech",
+  "sub": "1 = they speak in proportion to their weight. Log scale. Only chambers with 100 interventions and 10 women in the library.",
+  "legend": [
+   {
+    "label": "Pandemic debates",
+    "color": "c2",
+    "dot": true
+   },
+   {
+    "label": "All speech, 10 Feb to 9 Jul 2020",
+    "color": "c0",
+    "dot": true,
+    "hollow": true
+   }
+  ],
+  "aria": "voice ratio",
+  "rows": [
+   {
+    "label": "Brazil",
+    "a": 1.8998,
+    "b": 1.9862,
+    "ratio": 1.9862,
+    "tip": "<b>Brazil</b><br>pandemic: 1.99 (49 women)<br>all speech: 1.90"
+   },
+   {
+    "label": "Colombia",
+    "a": 0.9132,
+    "b": 1.2518,
+    "ratio": 1.2518,
+    "tip": "<b>Colombia</b><br>pandemic: 1.25 (20 women)<br>all speech: 0.91"
+   },
+   {
+    "label": "Panama",
+    "a": 0.9875,
+    "b": 1.1248,
+    "ratio": 1.1248,
+    "tip": "<b>Panama</b><br>pandemic: 1.12 (16 women)<br>all speech: 0.99"
+   },
+   {
+    "label": "Argentina",
+    "a": 1.0487,
+    "b": 1.0763,
+    "ratio": 1.0763,
+    "tip": "<b>Argentina</b><br>pandemic: 1.08 (33 women)<br>all speech: 1.05"
+   },
+   {
+    "label": "Costa Rica",
+    "a": 0.7867,
+    "b": 1.0189,
+    "ratio": 1.0189,
+    "tip": "<b>Costa Rica</b><br>pandemic: 1.02 (24 women)<br>all speech: 0.79"
+   },
+   {
+    "label": "Chile",
+    "a": 0.9973,
+    "b": 0.9971,
+    "ratio": 0.9971,
+    "tip": "<b>Chile</b><br>pandemic: 1.00 (30 women)<br>all speech: 1.00"
+   },
+   {
+    "label": "Portugal",
+    "a": 0.869,
+    "b": 0.941,
+    "ratio": 0.941,
+    "tip": "<b>Portugal</b><br>pandemic: 0.94 (55 women)<br>all speech: 0.87"
+   },
+   {
+    "label": "Peru",
+    "a": 0.9502,
+    "b": 0.9287,
+    "ratio": 0.9287,
+    "tip": "<b>Peru</b><br>pandemic: 0.93 (29 women)<br>all speech: 0.95"
+   },
+   {
+    "label": "Spain",
+    "a": 0.7891,
+    "b": 0.781,
+    "ratio": 0.781,
+    "tip": "<b>Spain</b><br>pandemic: 0.78 (52 women)<br>all speech: 0.79"
+   },
+   {
+    "label": "Ecuador",
+    "a": 0.7225,
+    "b": 0.7597,
+    "ratio": 0.7597,
+    "tip": "<b>Ecuador</b><br>pandemic: 0.76 (40 women)<br>all speech: 0.72"
+   },
+   {
+    "label": "El Salvador",
+    "a": 0.5837,
+    "b": 0.6607,
+    "ratio": 0.6607,
+    "tip": "<b>El Salvador</b><br>pandemic: 0.66 (21 women)<br>all speech: 0.58"
+   },
+   {
+    "label": "Guatemala",
+    "a": 0.7007,
+    "b": 0.549,
+    "ratio": 0.549,
+    "tip": "<b>Guatemala</b><br>pandemic: 0.55 (17 women)<br>all speech: 0.70"
+   }
+  ]
+ }
+}

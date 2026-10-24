@@ -1,0 +1,306 @@
+{
+ "es": {
+  "type": "dumbbell",
+  "domain": [
+   0,
+   0.7
+  ],
+  "ticks": [
+   0,
+   0.1,
+   0.2,
+   0.3,
+   0.4,
+   0.5,
+   0.6,
+   0.7
+  ],
+  "pct": true,
+  "a_color": "c0",
+  "b_color": "c2",
+  "ratio_label": "razón",
+  "ratio_digits": 2,
+  "title": "Diputadas desde 2021: peso en el registro y parte de las palabras",
+  "sub": "Sin la presidencia ni los turnos de más de 10.000 palabras. A la derecha, la razón entre las dos.",
+  "legend": [
+   {
+    "label": "Parte de las palabras",
+    "color": "c2",
+    "dot": true
+   },
+   {
+    "label": "Peso en el registro",
+    "color": "c0",
+    "dot": true,
+    "hollow": true
+   }
+  ],
+  "aria": "voice and seats",
+  "rows": [
+   {
+    "label": "Paraguay",
+    "a": 0.151,
+    "b": 0.2757,
+    "ratio": 1.8255,
+    "tip": "<b>Paraguay</b><br>palabras: 27,6 %<br>turnos: 25,8 %<br>registro: 15,1 %<br>27 diputadas hablan"
+   },
+   {
+    "label": "Brasil",
+    "a": 0.1486,
+    "b": 0.2192,
+    "ratio": 1.4749,
+    "tip": "<b>Brasil</b><br>palabras: 21,9 %<br>turnos: 23,1 %<br>registro: 14,9 %<br>153 diputadas hablan"
+   },
+   {
+    "label": "Guatemala",
+    "a": 0.1856,
+    "b": 0.25,
+    "ratio": 1.3469,
+    "tip": "<b>Guatemala</b><br>palabras: 25,0 %<br>turnos: 28,9 %<br>registro: 18,6 %<br>48 diputadas hablan"
+   },
+   {
+    "label": "México",
+    "a": 0.4814,
+    "b": 0.6004,
+    "ratio": 1.2472,
+    "tip": "<b>México</b><br>palabras: 60,0 %<br>turnos: 61,4 %<br>registro: 48,1 %<br>723 diputadas hablan"
+   },
+   {
+    "label": "Ecuador",
+    "a": 0.4022,
+    "b": 0.4392,
+    "ratio": 1.092,
+    "tip": "<b>Ecuador</b><br>palabras: 43,9 %<br>turnos: 42,5 %<br>registro: 40,2 %<br>174 diputadas hablan"
+   },
+   {
+    "label": "Perú",
+    "a": 0.3258,
+    "b": 0.3391,
+    "ratio": 1.0407,
+    "tip": "<b>Perú</b><br>palabras: 33,9 %<br>turnos: 35,2 %<br>registro: 32,6 %<br>88 diputadas hablan"
+   },
+   {
+    "label": "Costa Rica",
+    "a": 0.4483,
+    "b": 0.4561,
+    "ratio": 1.0174,
+    "tip": "<b>Costa Rica</b><br>palabras: 45,6 %<br>turnos: 44,0 %<br>registro: 44,8 %<br>52 diputadas hablan"
+   },
+   {
+    "label": "Colombia",
+    "a": 0.2349,
+    "b": 0.2361,
+    "ratio": 1.005,
+    "tip": "<b>Colombia</b><br>palabras: 23,6 %<br>turnos: 20,4 %<br>registro: 23,5 %<br>77 diputadas hablan"
+   },
+   {
+    "label": "Chile",
+    "a": 0.2897,
+    "b": 0.2909,
+    "ratio": 1.0043,
+    "tip": "<b>Chile</b><br>palabras: 29,1 %<br>turnos: 27,6 %<br>registro: 29,0 %<br>73 diputadas hablan"
+   },
+   {
+    "label": "El Salvador",
+    "a": 0.4122,
+    "b": 0.3889,
+    "ratio": 0.9435,
+    "tip": "<b>El Salvador</b><br>palabras: 38,9 %<br>turnos: 22,7 %<br>registro: 41,2 %<br>82 diputadas hablan"
+   },
+   {
+    "label": "Argentina",
+    "a": 0.4157,
+    "b": 0.378,
+    "ratio": 0.9091,
+    "tip": "<b>Argentina</b><br>palabras: 37,8 %<br>turnos: 38,1 %<br>registro: 41,6 %<br>198 diputadas hablan"
+   },
+   {
+    "label": "España",
+    "a": 0.4432,
+    "b": 0.3885,
+    "ratio": 0.8765,
+    "tip": "<b>España</b><br>palabras: 38,9 %<br>turnos: 38,9 %<br>registro: 44,3 %<br>271 diputadas hablan"
+   },
+   {
+    "label": "Portugal",
+    "a": 0.4669,
+    "b": 0.3686,
+    "ratio": 0.7896,
+    "tip": "<b>Portugal</b><br>palabras: 36,9 %<br>turnos: 26,2 %<br>registro: 46,7 %<br>218 diputadas hablan"
+   },
+   {
+    "label": "Uruguay",
+    "a": 0.3692,
+    "b": 0.2723,
+    "ratio": 0.7375,
+    "tip": "<b>Uruguay</b><br>palabras: 27,2 %<br>turnos: 25,1 %<br>registro: 36,9 %<br>161 diputadas hablan"
+   },
+   {
+    "label": "Panamá",
+    "a": 0.3282,
+    "b": 0.2323,
+    "ratio": 0.7079,
+    "tip": "<b>Panamá</b><br>palabras: 23,2 %<br>turnos: 22,9 %<br>registro: 32,8 %<br>61 diputadas hablan"
+   },
+   {
+    "label": "Rep. Dominicana",
+    "a": 0.3236,
+    "b": 0.1222,
+    "ratio": 0.3775,
+    "tip": "<b>Rep. Dominicana</b><br>palabras: 12,2 %<br>turnos: 11,3 %<br>registro: 32,4 %<br>94 diputadas hablan"
+   }
+  ]
+ },
+ "en": {
+  "type": "dumbbell",
+  "domain": [
+   0,
+   0.7
+  ],
+  "ticks": [
+   0,
+   0.1,
+   0.2,
+   0.3,
+   0.4,
+   0.5,
+   0.6,
+   0.7
+  ],
+  "pct": true,
+  "a_color": "c0",
+  "b_color": "c2",
+  "ratio_label": "ratio",
+  "ratio_digits": 2,
+  "title": "Women deputies since 2021: weight on the register and share of the words",
+  "sub": "Without the chair or turns over 10,000 words. On the right, the ratio of the two.",
+  "legend": [
+   {
+    "label": "Share of the words",
+    "color": "c2",
+    "dot": true
+   },
+   {
+    "label": "Weight on the register",
+    "color": "c0",
+    "dot": true,
+    "hollow": true
+   }
+  ],
+  "aria": "voice and seats",
+  "rows": [
+   {
+    "label": "Paraguay",
+    "a": 0.151,
+    "b": 0.2757,
+    "ratio": 1.8255,
+    "tip": "<b>Paraguay</b><br>words: 27.6%<br>turns: 25.8%<br>register: 15.1%<br>27 women speak"
+   },
+   {
+    "label": "Brazil",
+    "a": 0.1486,
+    "b": 0.2192,
+    "ratio": 1.4749,
+    "tip": "<b>Brazil</b><br>words: 21.9%<br>turns: 23.1%<br>register: 14.9%<br>153 women speak"
+   },
+   {
+    "label": "Guatemala",
+    "a": 0.1856,
+    "b": 0.25,
+    "ratio": 1.3469,
+    "tip": "<b>Guatemala</b><br>words: 25.0%<br>turns: 28.9%<br>register: 18.6%<br>48 women speak"
+   },
+   {
+    "label": "Mexico",
+    "a": 0.4814,
+    "b": 0.6004,
+    "ratio": 1.2472,
+    "tip": "<b>Mexico</b><br>words: 60.0%<br>turns: 61.4%<br>register: 48.1%<br>723 women speak"
+   },
+   {
+    "label": "Ecuador",
+    "a": 0.4022,
+    "b": 0.4392,
+    "ratio": 1.092,
+    "tip": "<b>Ecuador</b><br>words: 43.9%<br>turns: 42.5%<br>register: 40.2%<br>174 women speak"
+   },
+   {
+    "label": "Peru",
+    "a": 0.3258,
+    "b": 0.3391,
+    "ratio": 1.0407,
+    "tip": "<b>Peru</b><br>words: 33.9%<br>turns: 35.2%<br>register: 32.6%<br>88 women speak"
+   },
+   {
+    "label": "Costa Rica",
+    "a": 0.4483,
+    "b": 0.4561,
+    "ratio": 1.0174,
+    "tip": "<b>Costa Rica</b><br>words: 45.6%<br>turns: 44.0%<br>register: 44.8%<br>52 women speak"
+   },
+   {
+    "label": "Colombia",
+    "a": 0.2349,
+    "b": 0.2361,
+    "ratio": 1.005,
+    "tip": "<b>Colombia</b><br>words: 23.6%<br>turns: 20.4%<br>register: 23.5%<br>77 women speak"
+   },
+   {
+    "label": "Chile",
+    "a": 0.2897,
+    "b": 0.2909,
+    "ratio": 1.0043,
+    "tip": "<b>Chile</b><br>words: 29.1%<br>turns: 27.6%<br>register: 29.0%<br>73 women speak"
+   },
+   {
+    "label": "El Salvador",
+    "a": 0.4122,
+    "b": 0.3889,
+    "ratio": 0.9435,
+    "tip": "<b>El Salvador</b><br>words: 38.9%<br>turns: 22.7%<br>register: 41.2%<br>82 women speak"
+   },
+   {
+    "label": "Argentina",
+    "a": 0.4157,
+    "b": 0.378,
+    "ratio": 0.9091,
+    "tip": "<b>Argentina</b><br>words: 37.8%<br>turns: 38.1%<br>register: 41.6%<br>198 women speak"
+   },
+   {
+    "label": "Spain",
+    "a": 0.4432,
+    "b": 0.3885,
+    "ratio": 0.8765,
+    "tip": "<b>Spain</b><br>words: 38.9%<br>turns: 38.9%<br>register: 44.3%<br>271 women speak"
+   },
+   {
+    "label": "Portugal",
+    "a": 0.4669,
+    "b": 0.3686,
+    "ratio": 0.7896,
+    "tip": "<b>Portugal</b><br>words: 36.9%<br>turns: 26.2%<br>register: 46.7%<br>218 women speak"
+   },
+   {
+    "label": "Uruguay",
+    "a": 0.3692,
+    "b": 0.2723,
+    "ratio": 0.7375,
+    "tip": "<b>Uruguay</b><br>words: 27.2%<br>turns: 25.1%<br>register: 36.9%<br>161 women speak"
+   },
+   {
+    "label": "Panama",
+    "a": 0.3282,
+    "b": 0.2323,
+    "ratio": 0.7079,
+    "tip": "<b>Panama</b><br>words: 23.2%<br>turns: 22.9%<br>register: 32.8%<br>61 women speak"
+   },
+   {
+    "label": "Dominican Rep.",
+    "a": 0.3236,
+    "b": 0.1222,
+    "ratio": 0.3775,
+    "tip": "<b>Dominican Rep.</b><br>words: 12.2%<br>turns: 11.3%<br>register: 32.4%<br>94 women speak"
+   }
+  ]
+ }
+}

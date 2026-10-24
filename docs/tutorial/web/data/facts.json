@@ -1,0 +1,153 @@
+{
+ "mcp_version": "0.6.0",
+ "versions": {
+  "AR": "2.0",
+  "BR": "2.0",
+  "CL": "2.0",
+  "CO": "2.0",
+  "CR": "2.0",
+  "DO": "2.0",
+  "EC": "2.0",
+  "ES": "2.0",
+  "GT": "2.0",
+  "MX": "2.0",
+  "PA": "2.0",
+  "PE": "1.0",
+  "PT": "2.0",
+  "PY": "2.0",
+  "SV": "2.0",
+  "UY": "2.0"
+ },
+ "tools": 31,
+ "corpus": {
+  "sessions": 52718,
+  "speech_rows": 9868087,
+  "years": [
+   "1976",
+   "2026"
+  ],
+  "export_rows": 433,
+  "explorer_files": 15
+ },
+ "feminicidio": {
+  "occurrences": 16796,
+  "interventions": 5182,
+  "sessions": 2260,
+  "speakers": 2103,
+  "linked_deputies": 1828
+ },
+ "pandemia": {
+  "library_items": 5397,
+  "library_countries": 15,
+  "others_es": 12,
+  "first": {
+   "AR": "2020-05-13",
+   "BR": "2020-02-04",
+   "CL": "2020-01-29",
+   "CO": "2020-04-21",
+   "CR": "2020-03-05",
+   "DO": "2020-03-19",
+   "EC": "2020-03-24",
+   "ES": "2020-02-04",
+   "GT": "2020-01-30",
+   "MX": "2020-01-28",
+   "PA": "2020-01-30",
+   "PE": "2020-02-05",
+   "PT": "2020-03-04",
+   "PY": "2020-09-02",
+   "SV": "2020-01-30",
+   "UY": "2020-03-17"
+  }
+ },
+ "voz": {
+  "mx": {
+   "LXII": {
+    "seats": 0.4217,
+    "voice": 0.4147,
+    "ratio": 0.9833,
+    "rest": 0.5454626664572358,
+    "ratio_rest": 1.2934850994954608,
+    "mesa_f": 3,
+    "mesa_m": 10
+   },
+   "LXIII": {
+    "seats": 0.4246,
+    "voice": 0.5771,
+    "ratio": 1.3593,
+    "rest": 0.4821231850868453,
+    "ratio_rest": 1.1354761777834323,
+    "mesa_f": 8,
+    "mesa_m": 4
+   },
+   "LXIV": {
+    "seats": 0.4524,
+    "voice": 0.6669,
+    "ratio": 1.4742,
+    "rest": 0.5758899989825048,
+    "ratio_rest": 1.272966399165572,
+    "mesa_f": 8,
+    "mesa_m": 3
+   },
+   "LXV": {
+    "seats": 0.482,
+    "voice": 0.6394,
+    "ratio": 1.3267,
+    "rest": 0.6218150285501916,
+    "ratio_rest": 1.2900726733406465,
+    "mesa_f": 7,
+    "mesa_m": 3
+   },
+   "LXVI": {
+    "seats": 0.4857,
+    "voice": 0.4671,
+    "ratio": 0.9617,
+    "rest": 0.5075721072096147,
+    "ratio_rest": 1.0450321334354842,
+    "mesa_f": 2,
+    "mesa_m": 2
+   }
+  },
+  "psoe": {
+   "members_share": 0.3821,
+   "voice_share": 0.19879999999999998
+  }
+ },
+ "marcos": {
+  "items": 3126,
+  "sessions": 505,
+  "speakers": 466,
+  "words": 1716163,
+  "themes": 9,
+  "nodes": 245,
+  "edges": 1666,
+  "groups_n": {
+   "rest": 504,
+   "esquerda": 2090,
+   "direita": 532
+  },
+  "homonym_mentions": 103,
+  "minister_mentions": 165,
+  "ei_before": {
+   "esquerda": -0.272,
+   "rest": -0.294,
+   "direita": 0.273
+  },
+  "ei_after": {
+   "esquerda": 0.623,
+   "rest": -0.143,
+   "direita": 0.059
+  },
+  "counts": {
+   "mentions_found": {
+    "reference": 1849,
+    "resolved": 1773,
+    "address": 1766,
+    "editorial": 177,
+    "self": 69,
+    "ambiguous": 7
+   },
+   "unresolvable_courtesy_forms": 836,
+   "ambiguous": 7
+  }
+ }
+}

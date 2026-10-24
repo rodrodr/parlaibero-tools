@@ -1,0 +1,298 @@
+{
+ "es": {
+  "type": "dumbbell",
+  "log": true,
+  "domain": [
+   0.1,
+   120
+  ],
+  "ticks": [
+   0.1,
+   1,
+   10,
+   100
+  ],
+  "a_color": "c0",
+  "b_color": "c2",
+  "ratio_label": "×",
+  "ratio_digits": 1,
+  "title": "Usos por millón de palabras de diputadas y diputados, desde 2012",
+  "sub": "Escala logarítmica. A la derecha, cuántas veces más la usan ellas.",
+  "legend": [
+   {
+    "label": "Diputadas",
+    "color": "c2",
+    "dot": true
+   },
+   {
+    "label": "Diputados",
+    "color": "c0",
+    "dot": true,
+    "hollow": true
+   }
+  ],
+  "aria": "Frecuencia por sexo y país",
+  "rows": [
+   {
+    "label": "Brasil",
+    "a": 7.73,
+    "b": 83.43,
+    "ratio": 10.79301423027167,
+    "tip": "<b>Brasil</b><br>diputadas: 83,43 (1.232 usos)<br>diputados: 7,73 (710 usos)"
+   },
+   {
+    "label": "El Salvador",
+    "a": 2.28,
+    "b": 24.01,
+    "ratio": 10.530701754385966,
+    "tip": "<b>El Salvador</b><br>diputadas: 24,01 (110 usos)<br>diputados: 2,28 (21 usos)"
+   },
+   {
+    "label": "Colombia",
+    "a": 5.52,
+    "b": 45.92,
+    "ratio": 8.318840579710146,
+    "tip": "<b>Colombia</b><br>diputadas: 45,92 (204 usos)<br>diputados: 5,52 (115 usos)"
+   },
+   {
+    "label": "Paraguay",
+    "a": 4.29,
+    "b": 31.23,
+    "ratio": 7.27972027972028,
+    "tip": "<b>Paraguay</b><br>diputadas: 31,23 (49 usos)<br>diputados: 4,29 (26 usos)"
+   },
+   {
+    "label": "Chile",
+    "a": 9.1,
+    "b": 65.53,
+    "ratio": 7.201098901098901,
+    "tip": "<b>Chile</b><br>diputadas: 65,53 (555 usos)<br>diputados: 9,10 (301 usos)"
+   },
+   {
+    "label": "Costa Rica",
+    "a": 3.57,
+    "b": 21.44,
+    "ratio": 6.005602240896359,
+    "tip": "<b>Costa Rica</b><br>diputadas: 21,44 (286 usos)<br>diputados: 3,57 (106 usos)"
+   },
+   {
+    "label": "Perú",
+    "a": 6.57,
+    "b": 36.43,
+    "ratio": 5.54490106544901,
+    "tip": "<b>Perú</b><br>diputadas: 36,43 (393 usos)<br>diputados: 6,57 (180 usos)"
+   },
+   {
+    "label": "Ecuador",
+    "a": 12.08,
+    "b": 62.81,
+    "ratio": 5.199503311258279,
+    "tip": "<b>Ecuador</b><br>diputadas: 62,81 (517 usos)<br>diputados: 12,08 (161 usos)"
+   },
+   {
+    "label": "México",
+    "a": 9.58,
+    "b": 45.72,
+    "ratio": 4.772442588726514,
+    "tip": "<b>México</b><br>diputadas: 45,72 (2.478 usos)<br>diputados: 9,58 (408 usos)"
+   },
+   {
+    "label": "España",
+    "a": 0.15,
+    "b": 0.59,
+    "ratio": 3.933333333333333,
+    "tip": "<b>España</b><br>diputadas: 0,59 (9 usos)<br>diputados: 0,15 (4 usos)"
+   },
+   {
+    "label": "Portugal",
+    "a": 0.22,
+    "b": 0.77,
+    "ratio": 3.5,
+    "tip": "<b>Portugal</b><br>diputadas: 0,77 (9 usos)<br>diputados: 0,22 (5 usos)"
+   },
+   {
+    "label": "Uruguay",
+    "a": 4.33,
+    "b": 14.98,
+    "ratio": 3.459584295612009,
+    "tip": "<b>Uruguay</b><br>diputadas: 14,98 (129 usos)<br>diputados: 4,33 (156 usos)"
+   },
+   {
+    "label": "Rep. Dominicana",
+    "a": 10.95,
+    "b": 37.36,
+    "ratio": 3.411872146118722,
+    "tip": "<b>Rep. Dominicana</b><br>diputadas: 37,36 (46 usos)<br>diputados: 10,95 (65 usos)"
+   },
+   {
+    "label": "Guatemala",
+    "a": 6.92,
+    "b": 17.72,
+    "ratio": 2.560693641618497,
+    "tip": "<b>Guatemala</b><br>diputadas: 17,72 (40 usos)<br>diputados: 6,92 (82 usos)"
+   },
+   {
+    "label": "Argentina",
+    "a": 10.11,
+    "b": 18.79,
+    "ratio": 1.8585558852621167,
+    "tip": "<b>Argentina</b><br>diputadas: 18,79 (148 usos)<br>diputados: 10,11 (214 usos)"
+   },
+   {
+    "label": "Panamá",
+    "a": 15.19,
+    "b": 19.79,
+    "ratio": 1.3028308097432522,
+    "tip": "<b>Panamá</b><br>diputadas: 19,79 (76 usos)<br>diputados: 15,19 (192 usos)"
+   }
+  ]
+ },
+ "en": {
+  "type": "dumbbell",
+  "log": true,
+  "domain": [
+   0.1,
+   120
+  ],
+  "ticks": [
+   0.1,
+   1,
+   10,
+   100
+  ],
+  "a_color": "c0",
+  "b_color": "c2",
+  "ratio_label": "×",
+  "ratio_digits": 1,
+  "title": "Uses per million words by women and men deputies, since 2012",
+  "sub": "Log scale. On the right, how many times more often women use it.",
+  "legend": [
+   {
+    "label": "Women",
+    "color": "c2",
+    "dot": true
+   },
+   {
+    "label": "Men",
+    "color": "c0",
+    "dot": true,
+    "hollow": true
+   }
+  ],
+  "aria": "Frequency by sex and country",
+  "rows": [
+   {
+    "label": "Brazil",
+    "a": 7.73,
+    "b": 83.43,
+    "ratio": 10.79301423027167,
+    "tip": "<b>Brazil</b><br>women: 83.43 (1,232 uses)<br>men: 7.73 (710 uses)"
+   },
+   {
+    "label": "El Salvador",
+    "a": 2.28,
+    "b": 24.01,
+    "ratio": 10.530701754385966,
+    "tip": "<b>El Salvador</b><br>women: 24.01 (110 uses)<br>men: 2.28 (21 uses)"
+   },
+   {
+    "label": "Colombia",
+    "a": 5.52,
+    "b": 45.92,
+    "ratio": 8.318840579710146,
+    "tip": "<b>Colombia</b><br>women: 45.92 (204 uses)<br>men: 5.52 (115 uses)"
+   },
+   {
+    "label": "Paraguay",
+    "a": 4.29,
+    "b": 31.23,
+    "ratio": 7.27972027972028,
+    "tip": "<b>Paraguay</b><br>women: 31.23 (49 uses)<br>men: 4.29 (26 uses)"
+   },
+   {
+    "label": "Chile",
+    "a": 9.1,
+    "b": 65.53,
+    "ratio": 7.201098901098901,
+    "tip": "<b>Chile</b><br>women: 65.53 (555 uses)<br>men: 9.10 (301 uses)"
+   },
+   {
+    "label": "Costa Rica",
+    "a": 3.57,
+    "b": 21.44,
+    "ratio": 6.005602240896359,
+    "tip": "<b>Costa Rica</b><br>women: 21.44 (286 uses)<br>men: 3.57 (106 uses)"
+   },
+   {
+    "label": "Peru",
+    "a": 6.57,
+    "b": 36.43,
+    "ratio": 5.54490106544901,
+    "tip": "<b>Peru</b><br>women: 36.43 (393 uses)<br>men: 6.57 (180 uses)"
+   },
+   {
+    "label": "Ecuador",
+    "a": 12.08,
+    "b": 62.81,
+    "ratio": 5.199503311258279,
+    "tip": "<b>Ecuador</b><br>women: 62.81 (517 uses)<br>men: 12.08 (161 uses)"
+   },
+   {
+    "label": "Mexico",
+    "a": 9.58,
+    "b": 45.72,
+    "ratio": 4.772442588726514,
+    "tip": "<b>Mexico</b><br>women: 45.72 (2,478 uses)<br>men: 9.58 (408 uses)"
+   },
+   {
+    "label": "Spain",
+    "a": 0.15,
+    "b": 0.59,
+    "ratio": 3.933333333333333,
+    "tip": "<b>Spain</b><br>women: 0.59 (9 uses)<br>men: 0.15 (4 uses)"
+   },
+   {
+    "label": "Portugal",
+    "a": 0.22,
+    "b": 0.77,
+    "ratio": 3.5,
+    "tip": "<b>Portugal</b><br>women: 0.77 (9 uses)<br>men: 0.22 (5 uses)"
+   },
+   {
+    "label": "Uruguay",
+    "a": 4.33,
+    "b": 14.98,
+    "ratio": 3.459584295612009,
+    "tip": "<b>Uruguay</b><br>women: 14.98 (129 uses)<br>men: 4.33 (156 uses)"
+   },
+   {
+    "label": "Dominican Rep.",
+    "a": 10.95,
+    "b": 37.36,
+    "ratio": 3.411872146118722,
+    "tip": "<b>Dominican Rep.</b><br>women: 37.36 (46 uses)<br>men: 10.95 (65 uses)"
+   },
+   {
+    "label": "Guatemala",
+    "a": 6.92,
+    "b": 17.72,
+    "ratio": 2.560693641618497,
+    "tip": "<b>Guatemala</b><br>women: 17.72 (40 uses)<br>men: 6.92 (82 uses)"
+   },
+   {
+    "label": "Argentina",
+    "a": 10.11,
+    "b": 18.79,
+    "ratio": 1.8585558852621167,
+    "tip": "<b>Argentina</b><br>women: 18.79 (148 uses)<br>men: 10.11 (214 uses)"
+   },
+   {
+    "label": "Panama",
+    "a": 15.19,
+    "b": 19.79,
+    "ratio": 1.3028308097432522,
+    "tip": "<b>Panama</b><br>women: 19.79 (76 uses)<br>men: 15.19 (192 uses)"
+   }
+  ]
+ }
+}

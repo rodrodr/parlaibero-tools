@@ -15,3 +15,7 @@ build/
 docs/anexo_golpe_8jan.tsv
 docs/anexo_golpe_8jan_externos.tsv
 docs/ejemplos_golpe_8jan/
+docs/tutorial/nombres.local.json
+
+# the tutorial site, built by docs/tutorial/web/build.py (GitHub Actions publishes it)
+site/

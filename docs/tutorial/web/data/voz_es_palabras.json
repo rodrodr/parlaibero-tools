@@ -1,0 +1,232 @@
+{
+ "es": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Palabras más propias de diputadas y de diputados · España, desde diciembre de 2019",
+  "sub": "Log-odds ponderado (z), sin la presidencia.",
+  "aria": "distinctive words by sex",
+  "left": {
+   "title": "diputadas",
+   "color": "c2",
+   "items": [
+    [
+     "mujeres",
+     63.1
+    ],
+    [
+     "violencia",
+     36.5
+    ],
+    [
+     "las",
+     35.9
+    ],
+    [
+     "per",
+     35.3
+    ],
+    [
+     "els",
+     34.5
+    ],
+    [
+     "personas",
+     32.1
+    ],
+    [
+     "sexual",
+     30.4
+    ],
+    [
+     "nosotras",
+     29.6
+    ],
+    [
+     "igualdad",
+     29.2
+    ],
+    [
+     "les",
+     28.4
+    ],
+    [
+     "mujer",
+     26.1
+    ],
+    [
+     "perquè",
+     26.1
+    ]
+   ]
+  },
+  "right": {
+   "title": "diputados",
+   "color": "c0",
+   "items": [
+    [
+     "españa",
+     29.4
+    ],
+    [
+     "do",
+     28.2
+    ],
+    [
+     "señor",
+     28.1
+    ],
+    [
+     "non",
+     24.7
+    ],
+    [
+     "caso",
+     24.7
+    ],
+    [
+     "bng",
+     24.2
+    ],
+    [
+     "del",
+     22.8
+    ],
+    [
+     "creo",
+     22.7
+    ],
+    [
+     "muchas",
+     21.2
+    ],
+    [
+     "as",
+     21.1
+    ],
+    [
+     "unión",
+     20.9
+    ],
+    [
+     "señora",
+     20.6
+    ]
+   ]
+  }
+ },
+ "en": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Words most typical of women and of men deputies · Spain, since December 2019",
+  "sub": "Weighted log-odds (z), without the chair.",
+  "aria": "distinctive words by sex",
+  "left": {
+   "title": "women",
+   "color": "c2",
+   "items": [
+    [
+     "mujeres",
+     63.1
+    ],
+    [
+     "violencia",
+     36.5
+    ],
+    [
+     "las",
+     35.9
+    ],
+    [
+     "per",
+     35.3
+    ],
+    [
+     "els",
+     34.5
+    ],
+    [
+     "personas",
+     32.1
+    ],
+    [
+     "sexual",
+     30.4
+    ],
+    [
+     "nosotras",
+     29.6
+    ],
+    [
+     "igualdad",
+     29.2
+    ],
+    [
+     "les",
+     28.4
+    ],
+    [
+     "mujer",
+     26.1
+    ],
+    [
+     "perquè",
+     26.1
+    ]
+   ]
+  },
+  "right": {
+   "title": "men",
+   "color": "c0",
+   "items": [
+    [
+     "españa",
+     29.4
+    ],
+    [
+     "do",
+     28.2
+    ],
+    [
+     "señor",
+     28.1
+    ],
+    [
+     "non",
+     24.7
+    ],
+    [
+     "caso",
+     24.7
+    ],
+    [
+     "bng",
+     24.2
+    ],
+    [
+     "del",
+     22.8
+    ],
+    [
+     "creo",
+     22.7
+    ],
+    [
+     "muchas",
+     21.2
+    ],
+    [
+     "as",
+     21.1
+    ],
+    [
+     "unión",
+     20.9
+    ],
+    [
+     "señora",
+     20.6
+    ]
+   ]
+  }
+ }
+}

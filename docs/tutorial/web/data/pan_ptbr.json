@@ -1,0 +1,232 @@
+{
+ "es": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Palabras más propias de Portugal y de Brasil en los debates de la pandemia",
+  "sub": "Log-odds ponderado (z) en la biblioteca, sin turnos de más de 10.000 palabras y sin nombres de persona.",
+  "aria": "distinctive words",
+  "left": {
+   "title": "Portugal",
+   "color": "c1",
+   "items": [
+    [
+     "as",
+     26.4
+    ],
+    [
+     "srs",
+     24.7
+    ],
+    [
+     "resposta",
+     24.4
+    ],
+    [
+     "de",
+     23.1
+    ],
+    [
+     "medidas",
+     22.3
+    ],
+    [
+     "das",
+     20.2
+    ],
+    [
+     "psd",
+     19.4
+    ],
+    [
+     "portugal",
+     18.5
+    ],
+    [
+     "emergência",
+     17.4
+    ],
+    [
+     "baixa",
+     17.2
+    ],
+    [
+     "covid",
+     16.7
+    ],
+    [
+     "estas",
+     16.6
+    ]
+   ]
+  },
+  "right": {
+   "title": "Brasil",
+   "color": "c0",
+   "items": [
+    [
+     "presidente",
+     27.0
+    ],
+    [
+     "nós",
+     21.8
+    ],
+    [
+     "eu",
+     20.3
+    ],
+    [
+     "ele",
+     16.7
+    ],
+    [
+     "esse",
+     16.1
+    ],
+    [
+     "essa",
+     15.9
+    ],
+    [
+     "projeto",
+     15.6
+    ],
+    [
+     "quero",
+     15.4
+    ],
+    [
+     "coronavírus",
+     14.1
+    ],
+    [
+     "muito",
+     13.9
+    ],
+    [
+     "isso",
+     13.7
+    ],
+    [
+     "brasil",
+     13.6
+    ]
+   ]
+  }
+ },
+ "en": {
+  "type": "diverging",
+  "value_label": "z",
+  "title": "Words most typical of Portugal and of Brazil in the pandemic debates",
+  "sub": "Weighted log-odds (z) in the library, without turns over 10,000 words and without personal names.",
+  "aria": "distinctive words",
+  "left": {
+   "title": "Portugal",
+   "color": "c1",
+   "items": [
+    [
+     "as",
+     26.4
+    ],
+    [
+     "srs",
+     24.7
+    ],
+    [
+     "resposta",
+     24.4
+    ],
+    [
+     "de",
+     23.1
+    ],
+    [
+     "medidas",
+     22.3
+    ],
+    [
+     "das",
+     20.2
+    ],
+    [
+     "psd",
+     19.4
+    ],
+    [
+     "portugal",
+     18.5
+    ],
+    [
+     "emergência",
+     17.4
+    ],
+    [
+     "baixa",
+     17.2
+    ],
+    [
+     "covid",
+     16.7
+    ],
+    [
+     "estas",
+     16.6
+    ]
+   ]
+  },
+  "right": {
+   "title": "Brazil",
+   "color": "c0",
+   "items": [
+    [
+     "presidente",
+     27.0
+    ],
+    [
+     "nós",
+     21.8
+    ],
+    [
+     "eu",
+     20.3
+    ],
+    [
+     "ele",
+     16.7
+    ],
+    [
+     "esse",
+     16.1
+    ],
+    [
+     "essa",
+     15.9
+    ],
+    [
+     "projeto",
+     15.6
+    ],
+    [
+     "quero",
+     15.4
+    ],
+    [
+     "coronavírus",
+     14.1
+    ],
+    [
+     "muito",
+     13.9
+    ],
+    [
+     "isso",
+     13.7
+    ],
+    [
+     "brasil",
+     13.6
+    ]
+   ]
+  }
+ }
+}

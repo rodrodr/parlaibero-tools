@@ -49,8 +49,10 @@ Después basta con pedirlo en lenguaje natural: *«descarga El Salvador y dime q
 de seguridad desde 2019»*, *«¿cuánto se menciona la corrupción en el Congreso peruano por
 década?»*, *«compara el peso de las diputadas en el habla de España y Portugal»*.
 
-**¿Por dónde empezar?** El [tutorial](docs/tutorial/TUTORIAL.md) recorre las herramientas con preguntas reales y
-lo que devuelven, de la descarga a las redes y la nota de métodos (también [en inglés](docs/tutorial/TUTORIAL.en.md)).
+**¿Por dónde empezar?** El [tutorial](https://rodrodr.github.io/parlaibero-tools/) recorre cuatro estudios completos
+(la difusión de una palabra, la reacción a la pandemia, la voz de las diputadas frente a su peso en la cámara y los
+marcos de la reforma de las pensiones en Brasil) con sus peticiones, resultados reales y comprobaciones, y una ficha de
+cada una de las 31 herramientas. Está en español e inglés; el texto fuente está en [`docs/tutorial/`](docs/tutorial/).
 
 | herramienta | qué hace |
 |---|---|
@@ -158,8 +160,8 @@ This repository provides:
   (Claude Code, Claude Desktop, Cursor, Codex, Gemini CLI…) search, count and read them. Install it
   in Claude Code with
   `claude mcp add parlaibero -s user -- uvx parlaibero-mcp`.
-  See [`mcp/README.md`](mcp/README.md) for other clients, and the [tutorial](docs/tutorial/TUTORIAL.en.md)
-  for a walk through the tools with real questions and results.
+  See [`mcp/README.md`](mcp/README.md) for other clients, and the [tutorial](https://rodrodr.github.io/parlaibero-tools/#en)
+  for four complete studies with real requests, results and checks, and a card for each tool.
 - **[`skills/`](skills/), the 21 `diaries-*` Claude Code skills** and their Python code: the
   pipeline that turned session diaries (PDF/HTML) into the corpus, from OCR to the canonical
   16-column matrix. Install them with `bash install_skills.sh`. The skills are written in Spanish

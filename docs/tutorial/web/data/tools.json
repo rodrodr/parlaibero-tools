@@ -1,0 +1,1940 @@
+{
+ "groups": [
+  {
+   "id": "datos",
+   "es": "Datos, cobertura y cita",
+   "en": "Data, coverage and citation",
+   "tools": [
+    {
+     "name": "list_countries",
+     "description": "List the 16 ParlaIbero datasets: DOI, published version, size, and whether each one is already downloaded locally (with rows, sessions and date range).",
+     "params": [],
+     "used_in": [
+      {
+       "page": "index",
+       "section": "2",
+       "es": "Inicio § 2",
+       "en": "Home § 2"
+      }
+     ],
+     "summary": {
+      "es": "Los 16 conjuntos: DOI, versión, tamaño y si ya están descargados.",
+      "en": "The 16 datasets: DOI, version, size and whether they are downloaded."
+     },
+     "example": {
+      "es": "¿Qué parlamentos hay y cuáles tengo ya descargados?",
+      "en": "Which parliaments are there, and which have I downloaded?"
+     }
+    },
+    {
+     "name": "download_country",
+     "description": "Download a country's dataset from Harvard Dataverse (MD5-verified) and load it into the local database. Skips files already current. Large countries (BR, MX, ES, PT, EC) are 1-1.5 GB: if the client times out, run `parlaibero-mcp download XX` in a terminal instead.",
+     "params": [
+      {
+       "name": "country",
+       "kind": "string",
+       "description": "ISO2 code (ES, MX, BR…) or country name"
+      },
+      {
+       "name": "force",
+       "kind": "boolean = false",
+       "description": "Re-download even if the local copy is current"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Descarga un país de Dataverse (con MD5) y lo carga en la base local.",
+      "en": "Downloads a country from Dataverse (MD5-checked) and loads it into the local database."
+     },
+     "example": {
+      "es": "Descarga Uruguay y Paraguay.",
+      "en": "Download Uruguay and Paraguay."
+     }
+    },
+    {
+     "name": "import_from_folder",
+     "description": "Load ParlaIbero CSV files that were downloaded by hand from Dataverse.",
+     "params": [
+      {
+       "name": "folder",
+       "kind": "string",
+       "description": "Folder with {ISO}_interventions.csv (and optionally {ISO}_deputies.csv), or with one subfolder per country"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Carga los CSV de ParlaIbero que bajaste a mano.",
+      "en": "Loads ParlaIbero CSV files you downloaded by hand."
+     },
+     "example": {
+      "es": "Importa los CSV de Chile que tengo en ~/Descargas/chile.",
+      "en": "Import the Chile CSV files I have in ~/Downloads/chile."
+     }
+    },
+    {
+     "name": "coverage",
+     "description": "Data-quality check before interpreting a trend: sessions, rows, speech words, linked and sex-known shares per period, missing years and low-base periods, plus each corpus's linkage figures. Call it before comparing countries or reading peaks.",
+     "params": [
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "by",
+       "kind": "year | legislature = \"year\"",
+       "description": "Period"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "index",
+       "section": "2",
+       "es": "Inicio § 2",
+       "en": "Home § 2"
+      }
+     ],
+     "summary": {
+      "es": "La base de cada periodo: sesiones, palabras, vinculación, años que faltan o son finos.",
+      "en": "The base behind each period: sittings, words, linkage, missing or thin years."
+     },
+     "example": {
+      "es": "Antes de comparar Argentina, España, México y Uruguay en 2022 y 2023, dime qué base tiene cada año.",
+      "en": "Before comparing Argentina, Spain, Mexico and Uruguay in 2022 and 2023, tell me what base each year has."
+     }
+    },
+    {
+     "name": "describe_data",
+     "description": "Schema of the local DuckDB tables, the countries loaded, and example queries.",
+     "params": [],
+     "used_in": [],
+     "summary": {
+      "es": "El esquema de las tablas locales y consultas de ejemplo, para escribir SQL.",
+      "en": "The schema of the local tables and example queries, for writing SQL."
+     },
+     "example": {
+      "es": "¿Qué columnas tiene la tabla de intervenciones y qué otras tablas hay?",
+      "en": "What columns does the interventions table have, and which other tables are there?"
+     }
+    },
+    {
+     "name": "get_documentation",
+     "description": "Return a documentation file deposited with a country's dataset. Works before the data are downloaded (small files are fetched from Dataverse).",
+     "params": [
+      {
+       "name": "country",
+       "kind": "string",
+       "description": "ISO2 code (ES, MX, BR…) or country name"
+      },
+      {
+       "name": "document",
+       "kind": "readme | data_dictionary | known_limitations | process_report | corpus_info | match_methods | dataset_jsonld = \"readme\"",
+       "description": "readme (overview, sources, coverage) · data_dictionary (columns) · known_limitations (caveats) · process_report (how it was built) · corpus_info (machine-readable facts, linkage rates) · match_methods · dataset_jsonld (schema.org metadata)"
+      },
+      {
+       "name": "language",
+       "kind": "en | es | pt = \"en\"",
+       "description": "Language of the markdown documents"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "La documentación depositada con cada país: limitaciones, información del corpus, libro de códigos.",
+      "en": "The documentation deposited with each country: limitations, corpus information, codebook."
+     },
+     "example": {
+      "es": "¿Qué limitaciones conocidas tiene el corpus de Paraguay?",
+      "en": "What known limitations does the Paraguay corpus have?"
+     }
+    },
+    {
+     "name": "how_to_cite",
+     "description": "Formatted citation (latest published version) and DOI of a country's dataset.",
+     "params": [
+      {
+       "name": "country",
+       "kind": "string",
+       "description": "ISO2 code (ES, MX, BR…) or country name"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "index",
+       "section": "5",
+       "es": "Inicio § 5",
+       "en": "Home § 5"
+      }
+     ],
+     "summary": {
+      "es": "La cita y el DOI de la última versión de un país.",
+      "en": "The citation and DOI of a country's latest version."
+     },
+     "example": {
+      "es": "Dame la cita del conjunto de Brasil para la bibliografía.",
+      "en": "Give me the citation of the Brazil dataset for the references."
+     }
+    }
+   ]
+  },
+  {
+   "id": "frecuencias",
+   "es": "Frecuencias",
+   "en": "Frequencies",
+   "tools": [
+    {
+     "name": "ngram_viewer",
+     "description": "Google Books Ngram-style viewer: yearly frequency of one or more words or phrases, with the base behind every point (words, sessions) and low-base years flagged. Optionally writes the chart to an SVG or HTML file.",
+     "params": [
+      {
+       "name": "terms",
+       "kind": "string",
+       "description": "Comma-separated series; '+' sums variants into one series ('corrupción+corrupção'); '*' ends a prefix ('democrati*'). Whole words, case- and accent-insensitive."
+      },
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "split_by_country",
+       "kind": "boolean = false",
+       "description": "One line per term × country instead of pooling the countries"
+      },
+      {
+       "name": "measure",
+       "kind": "per_million | count | interventions_pct = \"per_million\"",
+       "description": "per_million: occurrences per million words (comparable across years); count: raw occurrences; interventions_pct: % of interventions using the term"
+      },
+      {
+       "name": "smoothing",
+       "kind": "integer = 0",
+       "description": "Centred moving average over ±N years (Google Ngram uses 3)"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "party",
+       "kind": "string",
+       "description": "Party label as an ILIKE pattern, e.g. 'PSOE' or '%Frente%'"
+      },
+      {
+       "name": "sex",
+       "kind": "M | F",
+       "description": "Speaker's sex (linked deputies only)"
+      },
+      {
+       "name": "speech_only",
+       "kind": "boolean = true",
+       "description": "Only rows with dm_speech = 1 (recommended)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      },
+      {
+       "name": "chart_path",
+       "kind": "string",
+       "description": "Write a chart: '.svg' (static figure for papers and slides) or '.html' (page with hover, dark mode and data table). At most 8 series."
+      },
+      {
+       "name": "title",
+       "kind": "string",
+       "description": ""
+      },
+      {
+       "name": "language",
+       "kind": "es | en | pt = \"es\"",
+       "description": "Language of the chart labels"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "feminicidio",
+       "section": "2",
+       "es": "Feminicidio § 2",
+       "en": "Femicide § 2"
+      },
+      {
+       "page": "feminicidio",
+       "section": "5",
+       "es": "Feminicidio § 5",
+       "en": "Femicide § 5"
+      }
+     ],
+     "summary": {
+      "es": "Frecuencia anual de palabras o frases, con la base de cada punto; dibuja SVG o HTML.",
+      "en": "Yearly frequency of words or phrases, with the base of every point; draws SVG or HTML."
+     },
+     "example": {
+      "es": "Dibuja «inflación» por millón de palabras en Argentina y Uruguay desde 1990.",
+      "en": "Chart 'inflación' per million words in Argentina and Uruguay since 1990."
+     }
+    },
+    {
+     "name": "term_counter",
+     "description": "Counter for one or more terms: occurrences, interventions, sessions, speakers, breakdown by sex and party (with per-million rates), and the FIRST and LAST use in each country, with the intervention id — when a term entered each chamber's vocabulary.",
+     "params": [
+      {
+       "name": "terms",
+       "kind": "string",
+       "description": "Comma-separated series; '+' sums variants into one series ('corrupción+corrupção'); '*' ends a prefix ('democrati*'). Whole words, case- and accent-insensitive."
+      },
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "party",
+       "kind": "string",
+       "description": "Party label as an ILIKE pattern, e.g. 'PSOE' or '%Frente%'"
+      },
+      {
+       "name": "sex",
+       "kind": "M | F",
+       "description": "Speaker's sex (linked deputies only)"
+      },
+      {
+       "name": "speech_only",
+       "kind": "boolean = true",
+       "description": "Only rows with dm_speech = 1 (recommended)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "feminicidio",
+       "section": "1",
+       "es": "Feminicidio § 1",
+       "en": "Femicide § 1"
+      },
+      {
+       "page": "pandemia",
+       "section": "1",
+       "es": "Pandemia § 1",
+       "en": "Pandemic § 1"
+      }
+     ],
+     "summary": {
+      "es": "Totales de un término, por sexo y partido, y su primer y último uso en cada país.",
+      "en": "A term's totals, by sex and party, and its first and last use in each country."
+     },
+     "example": {
+      "es": "¿Cuándo se dijo por primera vez «inteligencia artificial» en cada parlamento?",
+      "en": "When was 'inteligencia artificial' first said in each parliament?"
+     }
+    },
+    {
+     "name": "term_frequency",
+     "description": "How often a term is used, grouped by year, decade, country, legislature, party, sex, speaker, session type or session: occurrences, interventions using it, total words and occurrences per million words. Same counting as ngram_viewer. by='session' lists the sessions where the term concentrates — a way to find the date of an event in each chamber.",
+     "params": [
+      {
+       "name": "pattern",
+       "kind": "string",
+       "description": "Word or phrase; '+' sums variants, '*' ends a prefix"
+      },
+      {
+       "name": "by",
+       "kind": "year | decade | country | legislature | party | sex | speaker | session_type | session = \"year\"",
+       "description": "Grouping dimension"
+      },
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "party",
+       "kind": "string",
+       "description": "Party label as an ILIKE pattern, e.g. 'PSOE' or '%Frente%'"
+      },
+      {
+       "name": "sex",
+       "kind": "M | F",
+       "description": "Speaker's sex (linked deputies only)"
+      },
+      {
+       "name": "speech_only",
+       "kind": "boolean = true",
+       "description": "Only rows with dm_speech = 1 (recommended)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      },
+      {
+       "name": "max_rows",
+       "kind": "integer = 300",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "feminicidio",
+       "section": "3",
+       "es": "Feminicidio § 3",
+       "en": "Femicide § 3"
+      },
+      {
+       "page": "marcos",
+       "section": "4",
+       "es": "Marcos § 4",
+       "en": "Frames § 4"
+      }
+     ],
+     "summary": {
+      "es": "Frecuencia agrupada por año, país, legislatura, partido, sexo, orador o sesión.",
+      "en": "Frequency grouped by year, country, legislature, party, sex, speaker or sitting."
+     },
+     "example": {
+      "es": "¿En qué sesiones de Chile se usa más «pensiones»?",
+      "en": "In which Chilean sittings is 'pensiones' used most?"
+     }
+    }
+   ]
+  },
+  {
+   "id": "grupos",
+   "es": "Grupos: quién habla y cómo",
+   "en": "Groups: who speaks and how",
+   "tools": [
+    {
+     "name": "share_of_voice",
+     "description": "How much each group speaks compared with its weight in the chamber: share of words (or turns) and of speakers among linked deputies, against the group's share of members on the register in that period, and their ratio (>1 = speaks more than its weight).",
+     "params": [
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "by",
+       "kind": "sex | party = \"sex\"",
+       "description": "Group to compare"
+      },
+      {
+       "name": "per",
+       "kind": "legislature | year | all = \"legislature\"",
+       "description": "Period"
+      },
+      {
+       "name": "unit",
+       "kind": "words | turns = \"words\"",
+       "description": "Measure of voice"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "pandemia",
+       "section": "5",
+       "es": "Pandemia § 5",
+       "en": "Pandemic § 5"
+      },
+      {
+       "page": "voz",
+       "section": "1",
+       "es": "Voz y escaños § 1",
+       "en": "Voice and seats § 1"
+      },
+      {
+       "page": "voz",
+       "section": "2",
+       "es": "Voz y escaños § 2",
+       "en": "Voice and seats § 2"
+      },
+      {
+       "page": "voz",
+       "section": "3",
+       "es": "Voz y escaños § 3",
+       "en": "Voice and seats § 3"
+      },
+      {
+       "page": "voz",
+       "section": "5",
+       "es": "Voz y escaños § 5",
+       "en": "Voice and seats § 5"
+      }
+     ],
+     "summary": {
+      "es": "Cuánto habla cada grupo frente a su peso en el registro de diputados.",
+      "en": "How much each group speaks compared with its weight on the register of deputies."
+     },
+     "example": {
+      "es": "Por legislatura, ¿hablan las diputadas de Costa Rica en proporción a su peso?",
+      "en": "By legislature, do women deputies in Costa Rica speak in proportion to their weight?"
+     }
+    },
+    {
+     "name": "distinctive_words",
+     "description": "Words that most distinguish group A from group B (weighted log-odds with an informative Dirichlet prior, Monroe et al. 2008): e.g. women vs men deputies, one party vs another, one period vs another, a library vs the rest of its chambers. Compare within one language.",
+     "params": [
+      {
+       "name": "field",
+       "kind": "sex | party | period | country | id_dep | library",
+       "description": "What separates the two groups"
+      },
+      {
+       "name": "a",
+       "kind": "string",
+       "description": "Group A: 'F', a party label, a period '2000-2010', an ISO2 code, an id_dep or a library name"
+      },
+      {
+       "name": "b",
+       "kind": "string",
+       "description": "Group B, same kind as A; omit for 'everyone else'"
+      },
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      },
+      {
+       "name": "top",
+       "kind": "integer = 30",
+       "description": ""
+      },
+      {
+       "name": "min_count",
+       "kind": "integer = 20",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "pandemia",
+       "section": "4",
+       "es": "Pandemia § 4",
+       "en": "Pandemic § 4"
+      },
+      {
+       "page": "voz",
+       "section": "3",
+       "es": "Voz y escaños § 3",
+       "en": "Voice and seats § 3"
+      },
+      {
+       "page": "voz",
+       "section": "4",
+       "es": "Voz y escaños § 4",
+       "en": "Voice and seats § 4"
+      },
+      {
+       "page": "marcos",
+       "section": "3",
+       "es": "Marcos § 3",
+       "en": "Frames § 3"
+      }
+     ],
+     "summary": {
+      "es": "Las palabras que más separan dos grupos (log-odds ponderado).",
+      "en": "The words that most separate two groups (weighted log-odds)."
+     },
+     "example": {
+      "es": "¿Qué palabras distinguen al Frente Amplio del Partido Nacional en Uruguay desde 2020?",
+      "en": "Which words set Frente Amplio apart from Partido Nacional in Uruguay since 2020?"
+     }
+    }
+   ]
+  },
+  {
+   "id": "lectura",
+   "es": "Lectura",
+   "en": "Reading",
+   "tools": [
+    {
+     "name": "kwic",
+     "description": "Keyword in context: concordance lines (left context · match · right context) from a sample of the interventions that use the term, for close reading.",
+     "params": [
+      {
+       "name": "pattern",
+       "kind": "string",
+       "description": "Word or phrase ('*' ends a prefix), or RE2 regex if regex=true"
+      },
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "regex",
+       "kind": "boolean = false",
+       "description": ""
+      },
+      {
+       "name": "whole_word",
+       "kind": "boolean = true",
+       "description": ""
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "party",
+       "kind": "string",
+       "description": "Party label as an ILIKE pattern, e.g. 'PSOE' or '%Frente%'"
+      },
+      {
+       "name": "sex",
+       "kind": "M | F",
+       "description": "Speaker's sex (linked deputies only)"
+      },
+      {
+       "name": "n",
+       "kind": "integer = 40",
+       "description": "Interventions to sample"
+      },
+      {
+       "name": "width",
+       "kind": "integer = 70",
+       "description": "Characters of context on each side"
+      },
+      {
+       "name": "order",
+       "kind": "random | newest | oldest = \"random\"",
+       "description": "random gives a representative sample (reproducible with seed)"
+      },
+      {
+       "name": "seed",
+       "kind": "integer = 1",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "pandemia",
+       "section": "1",
+       "es": "Pandemia § 1",
+       "en": "Pandemic § 1"
+      },
+      {
+       "page": "marcos",
+       "section": "4",
+       "es": "Marcos § 4",
+       "en": "Frames § 4"
+      }
+     ],
+     "summary": {
+      "es": "Concordancias: el término con su contexto, para leer.",
+      "en": "Concordance lines: the term in its context, for reading."
+     },
+     "example": {
+      "es": "Enséñame diez usos de «seguridad ciudadana» en Ecuador, al azar.",
+      "en": "Show me ten random uses of 'seguridad ciudadana' in Ecuador."
+     }
+    },
+    {
+     "name": "collocations",
+     "description": "Words that keep company with a term: over-represented within ±window tokens of it (Dunning log-likelihood). Run with different dates to see how a term's associations shift.",
+     "params": [
+      {
+       "name": "pattern",
+       "kind": "string",
+       "description": "Word or phrase ('*' ends a prefix)"
+      },
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "party",
+       "kind": "string",
+       "description": "Party label as an ILIKE pattern, e.g. 'PSOE' or '%Frente%'"
+      },
+      {
+       "name": "sex",
+       "kind": "M | F",
+       "description": "Speaker's sex (linked deputies only)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      },
+      {
+       "name": "window",
+       "kind": "integer = 5",
+       "description": "Tokens on each side"
+      },
+      {
+       "name": "top",
+       "kind": "integer = 30",
+       "description": ""
+      },
+      {
+       "name": "min_count",
+       "kind": "integer = 5",
+       "description": ""
+      },
+      {
+       "name": "sample",
+       "kind": "integer = 5000",
+       "description": "Interventions sampled"
+      },
+      {
+       "name": "exclude_stopwords",
+       "kind": "boolean = true",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "feminicidio",
+       "section": "6",
+       "es": "Feminicidio § 6",
+       "en": "Femicide § 6"
+      },
+      {
+       "page": "marcos",
+       "section": "4",
+       "es": "Marcos § 4",
+       "en": "Frames § 4"
+      }
+     ],
+     "summary": {
+      "es": "Las palabras que rodean a un término más de lo esperado (log-verosimilitud).",
+      "en": "The words around a term more often than expected (log-likelihood)."
+     },
+     "example": {
+      "es": "¿Qué palabras acompañan a «migrantes» en Panamá antes y después de 2018?",
+      "en": "Which words go with 'migrantes' in Panama before and after 2018?"
+     }
+    },
+    {
+     "name": "search_text",
+     "description": "Find interventions containing a word, phrase or regex, newest first, with a snippet around the first match and the total number of matching rows. Plain searches ignore case and accents ('nacion' finds 'Nación').",
+     "params": [
+      {
+       "name": "pattern",
+       "kind": "string",
+       "description": "Word or phrase (or RE2 regular expression if regex=true)"
+      },
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes to restrict to; omit for every downloaded country"
+      },
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Name of a library (see library_describe): only its interventions; countries default to the library's"
+      },
+      {
+       "name": "regex",
+       "kind": "boolean = false",
+       "description": ""
+      },
+      {
+       "name": "whole_word",
+       "kind": "boolean = false",
+       "description": "Plain searches: match whole words only"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "party",
+       "kind": "string",
+       "description": "Party label as an ILIKE pattern, e.g. 'PSOE' or '%Frente%'"
+      },
+      {
+       "name": "sex",
+       "kind": "M | F",
+       "description": "Speaker's sex (linked deputies only)"
+      },
+      {
+       "name": "id_dep",
+       "kind": "string",
+       "description": ""
+      },
+      {
+       "name": "speech_only",
+       "kind": "boolean = true",
+       "description": "Only rows with dm_speech = 1 (recommended)"
+      },
+      {
+       "name": "limit",
+       "kind": "integer = 20",
+       "description": ""
+      },
+      {
+       "name": "offset",
+       "kind": "integer = 0",
+       "description": ""
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Busca intervenciones con una palabra, frase o expresión regular, con un fragmento.",
+      "en": "Finds interventions with a word, phrase or regex, with a snippet."
+     },
+     "example": {
+      "es": "Busca las intervenciones de Guatemala que mencionan «Ley de Competencia».",
+      "en": "Find the Guatemalan interventions that mention 'Ley de Competencia'."
+     }
+    },
+    {
+     "name": "get_intervention",
+     "description": "Full text and metadata of one intervention, optionally with surrounding turns.",
+     "params": [
+      {
+       "name": "id_int",
+       "kind": "string",
+       "description": "Intervention id, e.g. ES0140012300045"
+      },
+      {
+       "name": "context",
+       "kind": "integer = 0",
+       "description": "Also return N turns before and after"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "El texto completo de una intervención y, si quieres, los turnos de alrededor.",
+      "en": "The full text of one intervention and, if you want, the turns around it."
+     },
+     "example": {
+      "es": "Léeme entera la intervención de Perú que más veces dice «feminicidio», con los dos turnos anteriores.",
+      "en": "Read me in full the Peruvian intervention that says 'feminicidio' most often, with the two turns before it."
+     }
+    },
+    {
+     "name": "get_session",
+     "description": "Metadata and the ordered list of turns of a session (speaker, party, words, first words of each turn, or the full text).",
+     "params": [
+      {
+       "name": "id_session",
+       "kind": "string",
+       "description": "Session id, e.g. ES0140012"
+      },
+      {
+       "name": "include_text",
+       "kind": "boolean = false",
+       "description": "Full text of every turn (can be long)"
+      },
+      {
+       "name": "max_rows",
+       "kind": "integer = 300",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "feminicidio",
+       "section": "3",
+       "es": "Feminicidio § 3",
+       "en": "Femicide § 3"
+      }
+     ],
+     "summary": {
+      "es": "Los turnos de una sesión, en orden: quién habla, cuánto y cómo empieza.",
+      "en": "The turns of a sitting, in order: who speaks, how much and how they begin."
+     },
+     "example": {
+      "es": "¿Qué se debatió en la sesión UY0070168?",
+      "en": "What was debated in sitting UY0070168?"
+     }
+    }
+   ]
+  },
+  {
+   "id": "bibliotecas",
+   "es": "Bibliotecas",
+   "en": "Libraries",
+   "tools": [
+    {
+     "name": "library_create",
+     "description": "Create a library: a named, saved subset of interventions — on a topic, in a period, of a group — from one or SEVERAL countries, for focused and comparative analysis. Each country gets its own definition (terms, filters, time window), recorded with the edition of the data. Returns the description of what was gathered (see library_describe). Then pass library=<name> to any analysis tool. Equivalent terms across countries are the user's claim: say so when reporting.",
+     "params": [
+      {
+       "name": "name",
+       "kind": "string",
+       "description": "Library name (case-insensitive)"
+      },
+      {
+       "name": "countries",
+       "kind": "array",
+       "description": "ISO2 codes of the chambers it takes (one or several)"
+      },
+      {
+       "name": "terms",
+       "kind": "string",
+       "description": "An intervention enters if it uses ANY of these: comma- or '+'-separated, '*' ends a prefix, whole words, case- and accent-insensitive. Give Spanish AND Portuguese forms when BR or PT are in ('corrupción+corrupção')"
+      },
+      {
+       "name": "regex",
+       "kind": "boolean = false",
+       "description": "terms is one RE2 regular expression"
+      },
+      {
+       "name": "min_occurrences",
+       "kind": "integer = 1",
+       "description": "Times the terms must appear in the intervention: 2-3 keeps those that DISCUSS the topic, not those that mention it"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "party",
+       "kind": "string",
+       "description": "Party label as an ILIKE pattern, e.g. 'PSOE' or '%Frente%'"
+      },
+      {
+       "name": "sex",
+       "kind": "M | F",
+       "description": "Speaker's sex (linked deputies only)"
+      },
+      {
+       "name": "id_dep",
+       "kind": "string",
+       "description": ""
+      },
+      {
+       "name": "speech_only",
+       "kind": "boolean = true",
+       "description": "Only rows with dm_speech = 1 (recommended)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      },
+      {
+       "name": "event_dates",
+       "kind": "object",
+       "description": "Align on an event: {ISO2: 'YYYY-MM-DD'} per country; each country's window becomes event − days_before … event + days_after (stored as plain dates). To find the dates: term_counter (first use per chamber) or term_frequency(by='session')"
+      },
+      {
+       "name": "days_before",
+       "kind": "integer = 0",
+       "description": ""
+      },
+      {
+       "name": "days_after",
+       "kind": "integer = 0",
+       "description": ""
+      },
+      {
+       "name": "per_country",
+       "kind": "object",
+       "description": "Per-country overrides of the settings above, e.g. {'BR': {'terms': 'aborto+interrupção da gravidez'}, 'ES': {'date_from': '2010'}}"
+      },
+      {
+       "name": "label",
+       "kind": "string",
+       "description": "Common concept the parts share ('abortion'), recorded in every country's definition"
+      },
+      {
+       "name": "description",
+       "kind": "string",
+       "description": ""
+      },
+      {
+       "name": "color",
+       "kind": "string = \"indigo\"",
+       "description": "Colour in the explorer"
+      },
+      {
+       "name": "extend",
+       "kind": "boolean = false",
+       "description": "Add to an existing library of that name instead of failing"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "pandemia",
+       "section": "3",
+       "es": "Pandemia § 3",
+       "en": "Pandemic § 3"
+      },
+      {
+       "page": "marcos",
+       "section": "1",
+       "es": "Marcos § 1",
+       "en": "Frames § 1"
+      }
+     ],
+     "summary": {
+      "es": "Guarda un subconjunto (un tema, un periodo, un grupo) de uno o varios países.",
+      "en": "Saves a subset (a topic, a period, a group) from one or several countries."
+     },
+     "example": {
+      "es": "Crea una biblioteca con las intervenciones sobre agua de Chile, Perú y México desde 2015.",
+      "en": "Create a library with the interventions about water in Chile, Peru and Mexico since 2015."
+     }
+    },
+    {
+     "name": "library_describe",
+     "description": "What is in a library, per country: interventions, sessions, dates, speakers, words, linkage, share of the chair and of very long turns, years too thin to read as trends, the definitions and the data edition — with warnings for comparing countries. Call it before analysing.",
+     "params": [
+      {
+       "name": "name",
+       "kind": "string",
+       "description": "Library name; omit to list every library"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "pandemia",
+       "section": "3",
+       "es": "Pandemia § 3",
+       "en": "Pandemic § 3"
+      }
+     ],
+     "summary": {
+      "es": "Qué hay en una biblioteca, país por país, con avisos para comparar.",
+      "en": "What is in a library, country by country, with warnings for comparing."
+     },
+     "example": {
+      "es": "Antes de comparar, descríbeme la biblioteca «agua».",
+      "en": "Before comparing, describe the library 'agua' for me."
+     }
+    },
+    {
+     "name": "library_edit",
+     "description": "Refine a library by hand: add or remove interventions, or attach a note and tags to one. Removed interventions stay excluded when the library is rebuilt from its definitions.",
+     "params": [
+      {
+       "name": "name",
+       "kind": "string",
+       "description": "Library name (case-insensitive)"
+      },
+      {
+       "name": "action",
+       "kind": "add | remove | note",
+       "description": "add / remove interventions (by id_ints or by a query), or note one (note and/or tags)"
+      },
+      {
+       "name": "id_ints",
+       "kind": "array",
+       "description": "Intervention ids"
+      },
+      {
+       "name": "sql",
+       "kind": "string",
+       "description": "add/remove: a read-only SELECT returning a column id_int, e.g. after reading kwic or search_text results"
+      },
+      {
+       "name": "note",
+       "kind": "string",
+       "description": "note: text attached to the intervention (id_ints[0])"
+      },
+      {
+       "name": "tags",
+       "kind": "array",
+       "description": "note: tags attached to the intervention"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Añade o quita intervenciones a mano, o les pone notas y etiquetas.",
+      "en": "Adds or removes interventions by hand, or attaches notes and tags."
+     },
+     "example": {
+      "es": "Quita de «agua» las intervenciones que solo leen el orden del día.",
+      "en": "Remove from 'agua' the interventions that only read the agenda."
+     }
+    },
+    {
+     "name": "library_combine",
+     "description": "A new library from two existing ones (notes and tags travel with the interventions).",
+     "params": [
+      {
+       "name": "name",
+       "kind": "string",
+       "description": "Name of the NEW library"
+      },
+      {
+       "name": "a",
+       "kind": "string",
+       "description": "Library name (case-insensitive)"
+      },
+      {
+       "name": "b",
+       "kind": "string",
+       "description": "Library name (case-insensitive)"
+      },
+      {
+       "name": "op",
+       "kind": "union | intersection | difference",
+       "description": "union (in either), intersection (in both), difference (in a, not in b)"
+      },
+      {
+       "name": "description",
+       "kind": "string",
+       "description": ""
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Une, cruza o resta dos bibliotecas.",
+      "en": "Joins, intersects or subtracts two libraries."
+     },
+     "example": {
+      "es": "Haz una biblioteca con lo que está en «agua» y también en «minería».",
+      "en": "Make a library with what is in both 'agua' and 'minería'."
+     }
+    },
+    {
+     "name": "library_export",
+     "description": "Export for the Diarios Explorer: one .2replib per country (the explorer holds one country at a time) plus an index (.parlaibero-biblioteca.json) that library_import uses to rebuild the whole comparative library. Each file must be imported in the explorer with ITS country's CSV loaded.",
+     "params": [
+      {
+       "name": "name",
+       "kind": "string",
+       "description": "Library name (case-insensitive)"
+      },
+      {
+       "name": "folder",
+       "kind": "string",
+       "description": "Destination folder (absolute, or relative to the client's working directory)"
+      },
+      {
+       "name": "table_format",
+       "kind": "csv | parquet",
+       "description": "Also write every intervention of the library with its metadata, note and tags"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "index",
+       "section": "5",
+       "es": "Inicio § 5",
+       "en": "Home § 5"
+      }
+     ],
+     "summary": {
+      "es": "Exporta una biblioteca al Diarios Explorer: un archivo por país y un índice.",
+      "en": "Exports a library to the Diarios Explorer: one file per country and an index."
+     },
+     "example": {
+      "es": "Exporta «pandemia» para abrirla en el Diarios Explorer.",
+      "en": "Export 'pandemia' to open it in the Diarios Explorer."
+     }
+    },
+    {
+     "name": "library_import",
+     "description": "Bring libraries made in the Diarios Explorer into the MCP — several countries' files become one comparative library. Every item is checked against the loaded data (row → intervention, then its date and speaker); whatever does not match is reported, not translated silently.",
+     "params": [
+      {
+       "name": "paths",
+       "kind": "array",
+       "description": ".2replib files exported by the explorer (one per country), an index .parlaibero-biblioteca.json, or a folder"
+      },
+      {
+       "name": "name",
+       "kind": "string",
+       "description": "Name of the new library (default: the one in the files)"
+      },
+      {
+       "name": "force",
+       "kind": "boolean = false",
+       "description": "Import even when the files were written on another version of the data (only items whose date and speaker still match)"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Trae al MCP las bibliotecas hechas en el Diarios Explorer.",
+      "en": "Brings libraries made in the Diarios Explorer into the MCP."
+     },
+     "example": {
+      "es": "Importa las bibliotecas que guardé en ~/explorer como una sola, «educación».",
+      "en": "Import the libraries I saved in ~/explorer as one, 'educación'."
+     }
+    },
+    {
+     "name": "library_rebuild",
+     "description": "After downloading a new edition of a country: rebuild the library on it. Definitions run again; interventions added by hand, combined or imported, and their notes, are found again by their text; exclusions are kept. Reports what came in and what was lost, per country.",
+     "params": [
+      {
+       "name": "name",
+       "kind": "string",
+       "description": "Library name (case-insensitive)"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Rehace una biblioteca sobre una edición nueva de los datos.",
+      "en": "Rebuilds a library on a new edition of the data."
+     },
+     "example": {
+      "es": "He descargado la nueva versión de Perú: reconstruye «pandemia».",
+      "en": "I downloaded the new Peru version: rebuild 'pandemia'."
+     }
+    },
+    {
+     "name": "library_delete",
+     "description": "Delete a library (only the library: the data are not touched). Without confirm=true it only says what would be deleted.",
+     "params": [
+      {
+       "name": "name",
+       "kind": "string",
+       "description": "Library name (case-insensitive)"
+      },
+      {
+       "name": "confirm",
+       "kind": "boolean = false",
+       "description": "Must be true: deleting cannot be undone"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Borra una biblioteca (los datos no se tocan); sin confirmar, solo avisa.",
+      "en": "Deletes a library (the data are untouched); without confirming, it only warns."
+     },
+     "example": {
+      "es": "Borra la biblioteca «pruebas».",
+      "en": "Delete the library 'pruebas'."
+     }
+    }
+   ]
+  },
+  {
+   "id": "redes",
+   "es": "Redes",
+   "en": "Networks",
+   "tools": [
+    {
+     "name": "cooccurrence_network",
+     "description": "Network of WORDS of a library and its themes: the library's characteristic words and expressions (its lexicon against the rest of the country's corpus), joined when they occur in the same intervention (or fragment) more than chance (signed G², each term's k strongest neighbours, weight = observed/expected), clustered by Leiden into themes. Per theme: terms, coverage, words of the parties (per 1,000 of their words) and the interventions to read first. The Diarios Explorer's method, ported and tested against its code. Writes an interactive HTML, CSV, JSON and a summary. One network per country. Not for people or institutions (comention_network) nor for who names whom (mention_network).",
+     "params": [
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Library name (the network is built on its interventions)"
+      },
+      {
+       "name": "vocabulary",
+       "kind": "integer = 250",
+       "description": "Terms of the library's lexicon used as nodes (the most over-used against the rest of the corpus)"
+      },
+      {
+       "name": "unit",
+       "kind": "intervention | fragment = \"intervention\"",
+       "description": "Unit of context: the whole intervention, or consecutive fragments of `fragment` tokens"
+      },
+      {
+       "name": "fragment",
+       "kind": "integer = 20",
+       "description": ""
+      },
+      {
+       "name": "neighbours",
+       "kind": "integer = 10",
+       "description": "Each term keeps its k strongest edges (by G²)"
+      },
+      {
+       "name": "resolution",
+       "kind": "number = 1.0",
+       "description": "Leiden resolution γ: higher, more and smaller themes (0.6 / 1 / 1.6 in the explorer)"
+      },
+      {
+       "name": "seed",
+       "kind": "integer = 1",
+       "description": ""
+      },
+      {
+       "name": "exclude",
+       "kind": "array",
+       "description": "Terms to leave out after reading the themes (any case or accents)"
+      },
+      {
+       "name": "expressions",
+       "kind": "boolean = true",
+       "description": "Join the corpus's multi-word expressions ('reforma da previdência') into one node (tables of the Diarios Explorer, downloaded once and checked against the loaded dataset)"
+      },
+      {
+       "name": "speech_only",
+       "kind": "boolean = true",
+       "description": "Leave out stage directions in brackets and upper-case lines (vote lists, headers)"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      },
+      {
+       "name": "output_dir",
+       "kind": "string",
+       "description": "ABSOLUTE folder for the files"
+      },
+      {
+       "name": "formats",
+       "kind": "array",
+       "description": "Files to write in output_dir (default all four)"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": ""
+      },
+      {
+       "name": "max_node_size",
+       "kind": "number = 12",
+       "description": "Largest node radius in the page, in px on screen (nodes keep their size when zooming); the page has a control"
+      },
+      {
+       "name": "max_edge_width",
+       "kind": "number = 1.5",
+       "description": "Widest line in the page, in px (lines stay thin: weights are read in the tooltips and tables)"
+      },
+      {
+       "name": "layout",
+       "kind": "force | clusters | rings = \"force\"",
+       "description": "Layout the page opens with (it can be switched there): 'force'; 'clusters', each group (theme, community, party) as a separate disc, kept apart; 'rings', the Diarios Explorer's centrifugal layout: rings by number of connections (the most connected in the centre), sectors by group"
+      },
+      {
+       "name": "entities",
+       "kind": "array",
+       "description": "Not accepted: this network finds its words itself. Actors go to comention_network"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "marcos",
+       "section": "2",
+       "es": "Marcos § 2",
+       "en": "Frames § 2"
+      }
+     ],
+     "summary": {
+      "es": "Red de palabras de una biblioteca y sus temas; o, con entidades, quién se nombra junto a quién.",
+      "en": "A word network of a library and its themes; or, with entities, who is named together with whom."
+     },
+     "example": {
+      "es": "¿De qué temas se habló en la biblioteca «agua» de Chile y qué partidos los usan más?",
+      "en": "Which themes run through the Chilean 'agua' library, and which parties use them most?"
+     }
+    },
+    {
+     "name": "comention_network",
+     "description": "Network of ACTORS (people and institutions) mentioned in the same intervention of a library: co (volume), NPMI (affinity), Jaccard, counts by group and each actor's bias between two groups, Leiden communities, centralities, examples (KWIC) and ambiguity warnings. Writes an interactive HTML (light/ dark, accessible, with tables), CSV, JSON and a summary. One network per country. Without `entities` it proposes candidates (proper names, acronyms) and builds nothing until you confirm them. Words and ideas are not actors: their network is cooccurrence_network.",
+     "params": [
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Library name (the network is built on its interventions)"
+      },
+      {
+       "name": "entities",
+       "kind": "array",
+       "description": "Actors [{name, type: persona|institucion, pattern, exclude?}]: people and institutions only (words and ideas are cooccurrence_network's nodes). pattern and exclude are regular expressions (RE2: no look-arounds) over lower-case, accent-free text, e.g. '\\bsupremo tribunal|\\bstf\\b'. A match inside `exclude`, or inside a LONGER match of another actor, does not count ('maria pereira' is not 'pereira'). Omit to get candidates first."
+      },
+      {
+       "name": "groups",
+       "kind": "object",
+       "description": "Up to two contrast groups of labels of `group_by`, e.g. {'left': ['PT', 'PSOL'], 'right': ['PL']}; every other label is 'rest'. Case-insensitive. No default: the classification is yours"
+      },
+      {
+       "name": "group_by",
+       "kind": "string = \"party\"",
+       "description": "Column the group labels refer to (party, sex…)"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      },
+      {
+       "name": "min_co",
+       "kind": "integer",
+       "description": "Minimum interventions together; default max(5, N/120), reported"
+      },
+      {
+       "name": "min_npmi",
+       "kind": "number = 0.1",
+       "description": "Minimum NPMI (unrounded)"
+      },
+      {
+       "name": "max_nodes",
+       "kind": "integer = 60",
+       "description": ""
+      },
+      {
+       "name": "max_entities",
+       "kind": "integer = 150",
+       "description": ""
+      },
+      {
+       "name": "kwic_per_entity",
+       "kind": "integer = 5",
+       "description": ""
+      },
+      {
+       "name": "seed",
+       "kind": "integer = 1",
+       "description": ""
+      },
+      {
+       "name": "pooled",
+       "kind": "boolean = false",
+       "description": "One network for all the library's countries instead of one per country"
+      },
+      {
+       "name": "output_dir",
+       "kind": "string",
+       "description": "ABSOLUTE folder for the files"
+      },
+      {
+       "name": "formats",
+       "kind": "array",
+       "description": "Files to write in output_dir (default all four)"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": ""
+      },
+      {
+       "name": "max_node_size",
+       "kind": "number = 12",
+       "description": "Largest node radius in the page, in px on screen (nodes keep their size when zooming); the page has a control"
+      },
+      {
+       "name": "max_edge_width",
+       "kind": "number = 1.5",
+       "description": "Widest line in the page, in px (lines stay thin: weights are read in the tooltips and tables)"
+      },
+      {
+       "name": "layout",
+       "kind": "force | clusters | rings = \"force\"",
+       "description": "Layout the page opens with (it can be switched there): 'force'; 'clusters', each group (theme, community, party) as a separate disc, kept apart; 'rings', the Diarios Explorer's centrifugal layout: rings by number of connections (the most connected in the centre), sectors by group"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "marcos",
+       "section": "5",
+       "es": "Marcos § 5",
+       "en": "Frames § 5"
+      }
+     ],
+     "summary": {
+      "es": "Red de actores mencionados en la misma intervención, con el sesgo de cada uno entre dos grupos.",
+      "en": "A network of actors mentioned in the same intervention, with each one's bias between two groups."
+     },
+     "example": {
+      "es": "¿Qué instituciones se mencionan juntas en «agua» y cuáles nombra más la oposición?",
+      "en": "Which institutions are mentioned together in 'agua', and which does the opposition name more?"
+     }
+    },
+    {
+     "name": "mention_network",
+     "description": "Directed network of who mentions whom in a library: an arrow speaker → deputy (or external actor) counts the speaker's interventions that name them. Names come from the deputies register (in office on the day), by full name anywhere or by surname after a title; homonyms are resolved by the title's gender and the party written next to the name, otherwise listed apart (never guessed). The record's notes in brackets are not counted. Gives in/out strength, PageRank, reciprocity, Leiden communities, a group → group matrix, E-I and asymmetric pairs, and writes an interactive HTML (network and heat map, with tables), CSV, JSON and a summary. One network per country.",
+     "params": [
+      {
+       "name": "library",
+       "kind": "string",
+       "description": "Library name (the network is built on its interventions)"
+      },
+      {
+       "name": "target_scope",
+       "kind": "speakers | external | both = \"both\"",
+       "description": "Who can be mentioned: deputies of the chamber, the external actors given, or both"
+      },
+      {
+       "name": "external_actors",
+       "kind": "array",
+       "description": "People or bodies outside the chamber to count as targets: [{name, aliases: [...], role}]. They are matched first, by any alias, so declaring a homonym of a deputy (a minister, a former adviser) also keeps it from being taken for the deputy"
+      },
+      {
+       "name": "mention_kinds",
+       "kind": "array",
+       "description": "'reference' = talking ABOUT someone (default); 'address' = speaking TO them"
+      },
+      {
+       "name": "groups",
+       "kind": "object",
+       "description": "Up to two contrast groups of labels of `group_by`, e.g. {'left': ['PT', 'PSOL'], 'right': ['PL']}; every other label is 'rest'. Case-insensitive. No default: the classification is yours"
+      },
+      {
+       "name": "group_by",
+       "kind": "string = \"party\"",
+       "description": "Column the group labels refer to (party, sex…)"
+      },
+      {
+       "name": "date_from",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD"
+      },
+      {
+       "name": "date_to",
+       "kind": "string",
+       "description": "YYYY or YYYY-MM-DD (inclusive)"
+      },
+      {
+       "name": "exclude_chair",
+       "kind": "boolean = false",
+       "description": "Leave out the presiding officer's turns (procedural speech: giving the floor, calling votes)"
+      },
+      {
+       "name": "max_turn_words",
+       "kind": "integer",
+       "description": "Leave out turns longer than this many words — mostly documents read into the record; 10000 is a sensible check"
+      },
+      {
+       "name": "min_mentions",
+       "kind": "integer = 2",
+       "description": "Minimum interventions per directed edge"
+      },
+      {
+       "name": "min_speakers",
+       "kind": "integer = 1",
+       "description": "Minimum distinct speakers mentioning a target"
+      },
+      {
+       "name": "top_n",
+       "kind": "integer = 60",
+       "description": "People kept, by total strength"
+      },
+      {
+       "name": "honorifics",
+       "kind": "boolean",
+       "description": "Whether 'señor/senhor X' alone counts as naming the deputy X. Default by language, as measured: yes in Spanish, no in Portuguese (in Brazil it names ministers, judges and former presidents as often as members)"
+      },
+      {
+       "name": "seed",
+       "kind": "integer = 1",
+       "description": ""
+      },
+      {
+       "name": "validation_sample",
+       "kind": "integer = 0",
+       "description": "Write a random sample of N resolved mentions to check by hand"
+      },
+      {
+       "name": "output_dir",
+       "kind": "string",
+       "description": "ABSOLUTE folder for the files"
+      },
+      {
+       "name": "formats",
+       "kind": "array",
+       "description": "Files to write in output_dir (default all four)"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": ""
+      },
+      {
+       "name": "max_node_size",
+       "kind": "number = 12",
+       "description": "Largest node radius in the page, in px on screen (nodes keep their size when zooming); the page has a control"
+      },
+      {
+       "name": "max_edge_width",
+       "kind": "number = 1.5",
+       "description": "Widest line in the page, in px (lines stay thin: weights are read in the tooltips and tables)"
+      },
+      {
+       "name": "layout",
+       "kind": "force | clusters | rings = \"force\"",
+       "description": "Layout the page opens with (it can be switched there): 'force'; 'clusters', each group (theme, community, party) as a separate disc, kept apart; 'rings', the Diarios Explorer's centrifugal layout: rings by number of connections (the most connected in the centre), sectors by group"
+      }
+     ],
+     "used_in": [
+      {
+       "page": "marcos",
+       "section": "6",
+       "es": "Marcos § 6",
+       "en": "Frames § 6"
+      }
+     ],
+     "summary": {
+      "es": "Quién nombra a quién en el pleno: diputados y actores externos que declares.",
+      "en": "Who names whom on the floor: deputies and the external actors you declare."
+     },
+     "example": {
+      "es": "En «agua», ¿a quién nombran el oficialismo y la oposición? Declara a la ministra del ramo como actor externo.",
+      "en": "In 'agua', whom do government and opposition name? Declare the minister in charge as an external actor."
+     }
+    }
+   ]
+  },
+  {
+   "id": "sql",
+   "es": "SQL, exportación y registro",
+   "en": "SQL, export and log",
+   "tools": [
+    {
+     "name": "query_sql",
+     "description": "Run a read-only SQL query (DuckDB dialect). The connection cannot write, read other files or reach the network.",
+     "params": [
+      {
+       "name": "sql",
+       "kind": "string",
+       "description": "DuckDB SQL over the tables in describe_data"
+      },
+      {
+       "name": "max_rows",
+       "kind": "integer = 200",
+       "description": ""
+      },
+      {
+       "name": "max_cell_chars",
+       "kind": "integer = 1000",
+       "description": "Truncate long text cells"
+      },
+      {
+       "name": "timeout_s",
+       "kind": "integer = 120",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "feminicidio",
+       "section": "4",
+       "es": "Feminicidio § 4",
+       "en": "Femicide § 4"
+      },
+      {
+       "page": "pandemia",
+       "section": "1",
+       "es": "Pandemia § 1",
+       "en": "Pandemic § 1"
+      },
+      {
+       "page": "pandemia",
+       "section": "2",
+       "es": "Pandemia § 2",
+       "en": "Pandemic § 2"
+      },
+      {
+       "page": "voz",
+       "section": "2",
+       "es": "Voz y escaños § 2",
+       "en": "Voice and seats § 2"
+      },
+      {
+       "page": "voz",
+       "section": "3",
+       "es": "Voz y escaños § 3",
+       "en": "Voice and seats § 3"
+      },
+      {
+       "page": "voz",
+       "section": "4",
+       "es": "Voz y escaños § 4",
+       "en": "Voice and seats § 4"
+      },
+      {
+       "page": "marcos",
+       "section": "1",
+       "es": "Marcos § 1",
+       "en": "Frames § 1"
+      }
+     ],
+     "summary": {
+      "es": "SQL de solo lectura (DuckDB) para todo lo que no hace otra herramienta.",
+      "en": "Read-only SQL (DuckDB) for anything no other tool does."
+     },
+     "example": {
+      "es": "¿Cuántas sesiones celebró cada parlamento cada año desde 2015?",
+      "en": "How many sittings did each parliament hold each year since 2015?"
+     }
+    },
+    {
+     "name": "export_result",
+     "description": "Save the full result of a query to CSV or Parquet, to continue in R, Python or Stata. Only the destination folder can be written (or read); nothing else on disk is reachable.",
+     "params": [
+      {
+       "name": "sql",
+       "kind": "string",
+       "description": "One SELECT over the tables in describe_data"
+      },
+      {
+       "name": "path",
+       "kind": "string",
+       "description": "Output file, .csv or .parquet (absolute, or relative to the client's working directory)"
+      },
+      {
+       "name": "format",
+       "kind": "csv | parquet",
+       "description": "Defaults to the extension"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "index",
+       "section": "5",
+       "es": "Inicio § 5",
+       "en": "Home § 5"
+      }
+     ],
+     "summary": {
+      "es": "Guarda el resultado de una consulta en CSV o Parquet para R, Python o Stata.",
+      "en": "Saves a query result to CSV or Parquet for R, Python or Stata."
+     },
+     "example": {
+      "es": "Guarda esa tabla en Parquet en ~/proyecto/datos.",
+      "en": "Save that table as Parquet in ~/project/data."
+     }
+    },
+    {
+     "name": "query_log",
+     "description": "The analyses run so far (tool, parameters, dataset versions), for reproducibility. Can write a methods appendix ready to adapt.",
+     "params": [
+      {
+       "name": "last",
+       "kind": "integer = 50",
+       "description": ""
+      },
+      {
+       "name": "methods_path",
+       "kind": "string",
+       "description": "Also write a Markdown methods note (datasets with DOI and version + every analysis run)"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": ""
+      }
+     ],
+     "used_in": [
+      {
+       "page": "index",
+       "section": "5",
+       "es": "Inicio § 5",
+       "en": "Home § 5"
+      }
+     ],
+     "summary": {
+      "es": "Lo que se ha ejecutado, con parámetros y versiones; escribe un apéndice de métodos.",
+      "en": "What has been run, with parameters and versions; writes a methods appendix."
+     },
+     "example": {
+      "es": "Escribe el apéndice de métodos de lo que hemos hecho hoy.",
+      "en": "Write the methods appendix for what we did today."
+     }
+    }
+   ]
+  }
+ ]
+}
