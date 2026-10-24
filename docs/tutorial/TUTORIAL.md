@@ -1,20 +1,22 @@
 # Dieciséis parlamentos, un agente
 
-<!-- eyebrow: Tutorial de parlaibero-mcp -->
+<!-- eyebrow: parlaibero-tools · tutorial -->
 
 *[English version](TUTORIAL.en.md)*
 
-parlaibero-mcp es un servidor MCP: da a un agente de IA (Claude, ChatGPT de escritorio, Codex, Cursor…) 31
-herramientas sobre los discursos de los plenos de dieciséis parlamentos iberoamericanos, casi diez millones de
-intervenciones desde 1976. No hace falta programar. Se pide con palabras, el agente elige la herramienta, la ejecuta en
-tu ordenador y lee el resultado. Este tutorial lo muestra con cuatro estudios completos: cada uno es una cadena de
-peticiones con sus resultados reales y las comprobaciones que, más de una vez, cambian la conclusión.
+Los plenos de dieciséis parlamentos iberoamericanos: casi diez millones de intervenciones desde 1976, vinculadas con el
+registro de diputados. parlaibero-tools ofrece dos herramientas para el mismo corpus: un servidor MCP para consultarlo
+desde un agente de IA y 21 skills de Claude Code para construirlo.
 
-<!-- side -->
+<!-- doors -->
 
-**Instalar**
+### Consultar los datos
 
-Hace falta [uv](https://docs.astral.sh/uv/getting-started/installation/). En Claude Code:
+`parlaibero-mcp` · un servidor MCP con 31 herramientas
+
+Tu agente (Claude, ChatGPT de escritorio, Codex, Cursor…) descarga los conjuntos de Harvard Dataverse y después busca,
+cuenta y lee los plenos en tu ordenador. No hace falta programar: se pide con palabras. Hace falta
+[uv](https://docs.astral.sh/uv/getting-started/installation/); en Claude Code:
 
 ```bash
 claude mcp add parlaibero -s user -- uvx parlaibero-mcp
@@ -34,7 +36,40 @@ están en el [README](../../mcp/README.md)):
 }
 ```
 
+- [Cuatro estudios](#1-cuatro-estudios)
+- [Una biblioteca desde cero](es/bibliotecas.md)
+- [Las 31 herramientas](es/referencia.md)
+
+### Construir un corpus
+
+`diaries-*` · 21 skills de Claude Code
+
+La tubería que convirtió los diarios de sesiones en esos conjuntos: del PDF escaneado o el HTML a la matriz de 16
+columnas, con un sistema de confianza que te deja los casos dudosos y un registro de cada decisión. Para una cámara, un
+país o un periodo que no están, o para auditar cómo se hizo uno.
+
+```bash
+git clone https://github.com/rodrodr/parlaibero-tools.git
+cd parlaibero-tools
+bash install_skills.sh
+```
+
+Y en la carpeta del proyecto que tendrá los datos:
+
+```bash
+bash ~/.claude/skills/diaries-lib/install.sh
+```
+
+- [Construir un corpus](es/construir.md)
+- [Documentación técnica, solo en español](../../skills/diaries-lib/docs/diaries_index.html)
+
+<!-- /doors -->
+
 ## 1. Cuatro estudios
+
+Cada estudio muestra parlaibero-mcp en uso: una cadena de peticiones con sus resultados reales y las comprobaciones
+que, más de una vez, cambian la conclusión. El agente elige la herramienta, la ejecuta en tu ordenador y lee el
+resultado.
 
 <!-- studies -->
 

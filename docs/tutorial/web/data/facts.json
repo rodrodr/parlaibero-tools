@@ -19,6 +19,11 @@
   "UY": "2.0"
  },
  "tools": 31,
+ "skills": {
+  "total": 21,
+  "pipeline": 13,
+  "control": 8
+ },
  "corpus": {
   "sessions": 52718,
   "speech_rows": 9868087,

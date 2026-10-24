@@ -286,7 +286,9 @@
   if (start !== 'es' && start !== 'en') start = /^en\b/i.test(navigator.language || '') ? 'en' : 'es';
   document.querySelectorAll('details.toc').forEach(d => { d.open = !narrow.matches; });
   setLang(start, false);
-  if (hash.length > 2) { const t = document.getElementById(hash); if (t) t.scrollIntoView({ block: 'start', behavior: 'instant' }); }
+  const card = id => { const t = document.getElementById(id); if (t && t.tagName === 'DETAILS') t.open = true; return t; };   // a link to a card opens it
+  if (hash.length > 2) { const t = card(hash); if (t) t.scrollIntoView({ block: 'start', behavior: 'instant' }); }
+  addEventListener('hashchange', () => card(decodeURIComponent(location.hash.slice(1))));
   buttons.forEach(b => b.addEventListener('click', () => setLang(b.dataset.setLang, true)));
   let ticking = false;
   addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; track(); }); } }, { passive: true });
@@ -299,7 +301,7 @@
     const select = () => { const r = document.createRange(); r.selectNodeContents(src); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
     try { navigator.clipboard.writeText(src.innerText).then(done, select); } catch (err) { select(); }
   });
-  const nav = document.querySelector('.nav'), here = nav && nav.querySelector('[aria-current]');
+  const nav = document.querySelector('.nav'), here = nav && [...nav.querySelectorAll('[aria-current]')].find(a => a.offsetParent);
   if (nav && here && nav.scrollWidth > nav.clientWidth) {   // on a phone, start the bar with this page in view
     nav.scrollLeft = here.offsetLeft - (nav.clientWidth - here.offsetWidth) / 2;
   }

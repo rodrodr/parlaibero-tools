@@ -36,7 +36,8 @@ NAME = {
 }
 PAGES = {"feminicidio": ("es/feminicidio.md", "en/feminicidio.md"), "pandemia": ("es/pandemia.md", "en/pandemia.md"),
          "voz": ("es/voz.md", "en/voz.md"), "marcos": ("es/marcos.md", "en/marcos.md"),
-         "bibliotecas": ("es/bibliotecas.md", "en/bibliotecas.md"), "index": ("TUTORIAL.md", "TUTORIAL.en.md")}
+         "bibliotecas": ("es/bibliotecas.md", "en/bibliotecas.md"), "index": ("TUTORIAL.md", "TUTORIAL.en.md"),
+         "construir": ("es/construir.md", "en/construir.md")}
 
 
 def J(key):
@@ -1018,7 +1019,8 @@ GROUPS = [
 ]
 STUDY_PAGES = {"feminicidio": ("Feminicidio", "Femicide"), "pandemia": ("Pandemia", "Pandemic"),
                "voz": ("Voz y escaños", "Voice and seats"), "marcos": ("Marcos", "Frames"),
-               "bibliotecas": ("Bibliotecas", "Libraries"), "index": ("Inicio", "Home")}
+               "bibliotecas": ("Bibliotecas", "Libraries"), "index": ("Inicio", "Home"),
+               "construir": ("Construir un corpus", "Building a corpus")}
 
 
 def used_in():
@@ -1107,6 +1109,64 @@ def studies(sparks):
     (DATA / "studies.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
+# ============================================================ the diaries-* skills
+SKILLS = DOCS.parents[1] / "skills"
+SKILL_GROUPS = [   # the first five are the pipeline, in the order diaries-status keeps; the rest are the control skills
+    ("preparar", "Preparar el país", "Setting up the country", ["diaries-bootstrap"]),
+    ("texto", "Del documento al texto", "From document to text", ["diaries-ocr", "diaries-extract", "diaries-correct"]),
+    ("sesiones", "Sesiones y oradores", "Sittings and speakers",
+     ["diaries-meta", "diaries-dedupe", "diaries-tag", "diaries-matrix"]),
+    ("diputados", "Diputados y vinculación", "Deputies and linking", ["diaries-deputies", "diaries-match", "diaries-merge"]),
+    ("entrega", "La entrega", "The delivery", ["diaries-standardize", "diaries-document"]),
+    ("seguir", "Seguir y corregir", "Tracking and correcting",
+     ["diaries-status", "diaries-review", "diaries-feedback", "diaries-validate"]),
+    ("registrar", "Registrar e informar", "Recording and reporting", ["diaries-decide", "diaries-report"]),
+    ("aprender", "Aprender y mejorar", "Learning and improving", ["diaries-teach", "diaries-refine"]),
+]
+N_STAGES = 5
+
+
+def skills():
+    """The skill cards: the name and description of each SKILL.md, the canonical order of diaries-status, the
+    thresholds of the country template and the texts of web/fichas_skills.json. Fails when the skills change, so that
+    the prose (21 skills, 13 in the pipeline and 8 of control) is read again."""
+    texts = json.loads((WEB / "fichas_skills.json").read_text(encoding="utf-8"))
+    found = {}
+    for f in sorted(SKILLS.glob("*/SKILL.md")):
+        head = f.read_text(encoding="utf-8").split("---")[1]
+        meta = dict(re.findall(r'^([\w-]+):\s*"?(.*?)"?\s*$', head, re.M))
+        found[meta["name"]] = meta["description"]
+    status = (SKILLS / "diaries-status" / "SKILL.md").read_text(encoding="utf-8")
+    order = re.findall(r"^\d+\. (diaries-[a-z]+)\s*$", status.split("El orden canónico", 1)[1].split("\n\n", 1)[0], re.M)
+    grouped = [n for g in SKILL_GROUPS for n in g[3]]
+    pipeline = [n for g in SKILL_GROUPS[:N_STAGES] for n in g[3]]
+    if set(found) != set(grouped) or set(found) != set(texts) or len(grouped) != len(set(grouped)):
+        raise SystemExit(f"skills, groups and texts differ: {sorted(set(found) ^ set(grouped))} {sorted(set(found) ^ set(texts))}")
+    if pipeline != order:
+        raise SystemExit(f"the pipeline groups do not follow diaries-status: {order}")
+    if (len(found), len(pipeline)) != (21, 13):
+        raise SystemExit(f"{len(found)} skills, {len(pipeline)} in the pipeline: read construir.md and the home page again")
+    tpl = (SKILLS / "diaries-lib" / "templates" / "_template.yaml").read_text(encoding="utf-8")
+    default = [float(re.search(rf"^{k}:\s*([\d.]+)", tpl, re.M)[1]) for k in ("threshold_auto", "threshold_flag")]
+    own = {n: [float(a), float(f)] for n, a, f in re.findall(
+        r"^  (diaries-[a-z]+):\n    threshold_auto:\s*([\d.]+)\n    threshold_flag:\s*([\d.]+)", tpl.split("\nthresholds:\n", 1)[1], re.M)}
+    if not own or not set(own) <= set(pipeline):
+        raise SystemExit(f"thresholds of the template not understood: {own}")
+    out = {"thresholds": {"default": default, **own}, "groups": []}
+    for i, (gid, es, en, names) in enumerate(SKILL_GROUPS):
+        out["groups"].append({"id": gid, "es": es, "en": en, "stage": i < N_STAGES, "skills": [
+            {"name": n, "step": order.index(n) + 1 if n in order else None, "description": found[n],
+             "thresholds": own.get(n), **texts[n]} for n in names]})
+    (DATA / "skills.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    for lang in LANGS:
+        head = ["Skill", "AUTO", "FLAG", "HALT"]
+        rows = [[f"`{n}`", "≥ " + num(a, 2, lang), "≥ " + num(f, 2, lang), "< " + num(f, 2, lang)] for n, (a, f) in own.items()]
+        rows.append([es_en(lang, "los demás", "all the others"), "≥ " + num(default[0], 2, lang),
+                     "≥ " + num(default[1], 2, lang), "< " + num(default[1], 2, lang)])
+        TABLES["construir"][("umbrales", lang)] = md_table(head, rows, right=(1, 2, 3))
+    return {"total": len(found), "pipeline": len(pipeline), "control": len(found) - len(pipeline)}
+
+
 # ============================================================ writing
 def write_tables():
     for page, items in TABLES.items():
@@ -1135,15 +1195,16 @@ def main():
     ini_facts = inicio()
     for vid, by_lang in SPECS.items():
         (DATA / f"{vid}.json").write_text(json.dumps(by_lang, ensure_ascii=False, indent=1), encoding="utf-8")
+    n_skills = skills()
     write_tables()
     n_tools = herramientas()
     studies({"feminicidio": fem_spark, "pandemia": pan_spark, "voz": voz_spark, "marcos": mar_spark})
     facts = {"mcp_version": version("parlaibero-mcp"),
              "versions": {c["iso"]: c["downloaded"]["version"] for c in J("Z1_list")["countries"]},
-             "tools": n_tools, "corpus": ini_facts, "feminicidio": fem_totals, "pandemia": pan_facts, "voz": voz_facts,
-             "marcos": mar_facts, "bibliotecas": bib_facts}
+             "tools": n_tools, "skills": n_skills, "corpus": ini_facts, "feminicidio": fem_totals,
+             "pandemia": pan_facts, "voz": voz_facts, "marcos": mar_facts, "bibliotecas": bib_facts}
     (DATA / "facts.json").write_text(json.dumps(facts, ensure_ascii=False, indent=1))
-    print(f"{len(SPECS)} charts, {sum(len(v) for v in TABLES.values())} tables, {n_tools} tools")
+    print(f"{len(SPECS)} charts, {sum(len(v) for v in TABLES.values())} tables, {n_tools} tools, {n_skills['total']} skills")
     if "--show" in sys.argv:
         only = sys.argv[sys.argv.index("--show") + 1:] or list(TABLES)
         for page, items in TABLES.items():

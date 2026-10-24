@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - "docs/tutorial/**"
+      - "skills/**"                     # the skill cards check the SKILL.md files; the skills' own docs are copied
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 

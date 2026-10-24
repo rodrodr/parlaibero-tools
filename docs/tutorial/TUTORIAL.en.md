@@ -1,20 +1,22 @@
 # Sixteen parliaments, one agent
 
-<!-- eyebrow: parlaibero-mcp tutorial -->
+<!-- eyebrow: parlaibero-tools · tutorial -->
 
 *[Versión en español](TUTORIAL.md)*
 
-parlaibero-mcp is an MCP server: it gives an AI agent (Claude, the ChatGPT desktop app, Codex, Cursor…) 31 tools over
-the plenary speeches of sixteen Ibero-American parliaments, nearly ten million interventions since 1976. No programming
-is needed. You ask in words, the agent picks the tool, runs it on your computer and reads the result. This tutorial
-shows it with four complete studies: each one is a chain of requests with their real results and the checks that, more
-than once, change the conclusion.
+The plenary sittings of sixteen Ibero-American parliaments: nearly ten million interventions since 1976, linked to the
+register of deputies. parlaibero-tools offers two tools for the same corpus: an MCP server to query it from an AI agent
+and 21 Claude Code skills to build it.
 
-<!-- side -->
+<!-- doors -->
 
-**Install**
+### Query the data
 
-You need [uv](https://docs.astral.sh/uv/getting-started/installation/). In Claude Code:
+`parlaibero-mcp` · an MCP server with 31 tools
+
+Your agent (Claude, the ChatGPT desktop app, Codex, Cursor…) downloads the datasets from Harvard Dataverse and then
+searches, counts and reads the sittings on your computer. No programming is needed: you ask in words. You need
+[uv](https://docs.astral.sh/uv/getting-started/installation/); in Claude Code:
 
 ```bash
 claude mcp add parlaibero -s user -- uvx parlaibero-mcp
@@ -34,7 +36,39 @@ in the [README](../../mcp/README.md)):
 }
 ```
 
+- [Four studies](#1-four-studies)
+- [A library from scratch](en/bibliotecas.md)
+- [The 31 tools](en/referencia.md)
+
+### Build a corpus
+
+`diaries-*` · 21 Claude Code skills
+
+The pipeline that turned the session diaries into those datasets: from the scanned PDF or the HTML to the 16-column
+matrix, with a confidence system that leaves the doubtful cases to you and a log of every decision. For a chamber, a
+country or a period that is not there, or to audit how one was made.
+
+```bash
+git clone https://github.com/rodrodr/parlaibero-tools.git
+cd parlaibero-tools
+bash install_skills.sh
+```
+
+And in the project folder that will hold the data:
+
+```bash
+bash ~/.claude/skills/diaries-lib/install.sh
+```
+
+- [Building a corpus](en/construir.md)
+- [Technical documentation, in Spanish only](../../skills/diaries-lib/docs/diaries_index.html)
+
+<!-- /doors -->
+
 ## 1. Four studies
+
+Each study shows parlaibero-mcp at work: a chain of requests with their real results and the checks that, more than
+once, change the conclusion. The agent picks the tool, runs it on your computer and reads the result.
 
 <!-- studies -->
 

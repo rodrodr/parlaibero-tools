@@ -10,11 +10,15 @@ The Markdown is the source and reads on its own in GitHub; the site adds what Ma
   <!-- embed:PATH H -->    an interactive page of the MCP (web/redes/…), H pixels high
   <!-- studies -->         the cards of the four studies
   <!-- reference -->       the tools, from web/data/tools.json
+  <!-- pipeline -->        the map of the diaries-* skills, from web/data/skills.json
+  <!-- skills -->          the skill cards, from web/data/skills.json
+  <!-- doors --> … <!-- /doors -->   the two doors of the home page: each opens with a ### title, then its tag line
   > **Pide:** … *El agente usa* …        a request to the agent and its call; what follows (code, charts,
   > **Ask:** … *The agent uses* …        tables, images) is the result
   > **Pídelo de una vez:** / **Ask for it all at once:**   one request for a whole study, with a copy button
   > [!NOTE] [!TIP] [!WARNING] [!IMPORTANT]                   callouts
 Both languages go into every page; the switch shows one. Needs the data written by datos.py (web/data, web/redes).
+The two pages of the skills' own documentation (skills/diaries-lib/docs) are copied as they are into site/skills/.
 """
 import html
 import json
@@ -32,15 +36,25 @@ GH = "https://github.com/rodrodr/parlaibero-tools/blob/main/"
 md = MarkdownIt("commonmark", {"html": False}).enable("table")
 inline = md.renderInline
 
-PAGES = [  # slug, Spanish source, English source, nav label (es, en)
-    ("index", "TUTORIAL.md", "TUTORIAL.en.md", "Inicio", "Home"),
-    ("bibliotecas", "es/bibliotecas.md", "en/bibliotecas.md", "Bibliotecas", "Libraries"),
-    ("feminicidio", "es/feminicidio.md", "en/feminicidio.md", "Feminicidio", "Femicide"),
-    ("pandemia", "es/pandemia.md", "en/pandemia.md", "Pandemia", "Pandemic"),
-    ("voz", "es/voz.md", "en/voz.md", "Voz y escaños", "Voice and seats"),
-    ("marcos", "es/marcos.md", "en/marcos.md", "Marcos", "Frames"),
-    ("referencia", "es/referencia.md", "en/referencia.md", "Herramientas", "Tools"),
+PAGES = [  # slug, Spanish source, English source
+    ("index", "TUTORIAL.md", "TUTORIAL.en.md"),
+    ("bibliotecas", "es/bibliotecas.md", "en/bibliotecas.md"),
+    ("feminicidio", "es/feminicidio.md", "en/feminicidio.md"),
+    ("pandemia", "es/pandemia.md", "en/pandemia.md"),
+    ("voz", "es/voz.md", "en/voz.md"),
+    ("marcos", "es/marcos.md", "en/marcos.md"),
+    ("referencia", "es/referencia.md", "en/referencia.md"),
+    ("construir", "es/construir.md", "en/construir.md"),
 ]
+NAV = [  # the bar, by door: (group label es, en), then each link: slug, section (or ""), label es, en, pages it stands for
+    (None, [("index", "", "Inicio", "Home", ("index",))]),
+    (("Consultar", "Query"), [("bibliotecas", "", "Bibliotecas", "Libraries", ("bibliotecas",)),
+                              ("index", "1", "Estudios", "Studies", ("feminicidio", "pandemia", "voz", "marcos")),
+                              ("referencia", "", "Herramientas", "Tools", ("referencia",))]),
+    (("Construir", "Build"), [("construir", "", "Un corpus", "A corpus", ("construir",)),
+                              ("construir", "6", "Skills", "Skills", ())]),
+]
+ORIGINALS = ROOT / "skills" / "diaries-lib" / "docs"      # the skills' own documentation, published as it is
 COUNTRIES = ["AR", "BR", "CL", "CO", "CR", "DO", "EC", "ES", "GT", "MX", "PA", "PE", "PT", "PY", "SV", "UY"]
 FACTS = json.loads((WEB / "data" / "facts.json").read_text(encoding="utf-8"))
 UI = {
@@ -57,7 +71,13 @@ UI = {
                     "personas: las citas omiten a quien habla y las listas de palabras dejan fuera los nombres propios, "
                     "cuya lista se guarda fuera del repositorio.",
                repo="Código en GitHub", pypi="parlaibero-mcp en PyPI", readme="Documentación técnica",
-               md="Esta página en Markdown", filter="Busca una herramienta o un parámetro"),
+               md="Esta página en Markdown", filter="Busca una herramienta o un parámetro",
+               skill_filter="Busca un skill, una carpeta o un archivo", skill_none="Ningún skill coincide.",
+               reads="Lee", writes="Escribe", confidence="Confianza", step="Paso", of="de", run="Se invoca",
+               agent_reads="Lo que lee el agente", skill_md="El SKILL.md en GitHub", stages="Pasos",
+               control="Control", pipe_src="Las fuentes", pipe_src_v="PDF escaneado o digital, HTML, XML, DOCX o texto",
+               pipe_any="en cualquier momento", pipe_end_k="Se publica",
+               pipe_end="en Harvard Dataverse, de donde los carga <code>download_country</code>"),
     "en": dict(result="Result", contents="On this page", copy="Copy", copied="Copied", data="Show the data",
                WARNING="Warning", NOTE="Note", IMPORTANT="Important", TIP="Tip", parl="16 parliaments",
                call="The call",
@@ -71,7 +91,13 @@ UI = {
                     "leave out the speaker and word lists leave out proper names, whose list is kept outside the "
                     "repository.",
                repo="Code on GitHub", pypi="parlaibero-mcp on PyPI", readme="Technical documentation",
-               md="This page in Markdown", filter="Search a tool or a parameter"),
+               md="This page in Markdown", filter="Search a tool or a parameter",
+               skill_filter="Search a skill, a folder or a file", skill_none="No skill matches.",
+               reads="Reads", writes="Writes", confidence="Confidence", step="Step", of="of", run="Run it",
+               agent_reads="What the agent reads", skill_md="The SKILL.md on GitHub", stages="Steps",
+               control="Control", pipe_src="The sources", pipe_src_v="scanned or digital PDF, HTML, XML, DOCX or text",
+               pipe_any="at any time", pipe_end_k="Published",
+               pipe_end="in Harvard Dataverse, from where <code>download_country</code> loads them"),
 }
 ICONS = {
     "WARNING": '<path d="M10 2.5 18.5 17h-17z"/><path d="M10 8v4"/><circle cx="10" cy="14.5" r=".6"/>',
@@ -184,6 +210,8 @@ def fix_links(text, src):
         full = (here / path).resolve()
         if full in pages:
             return f"[{label}]({pages[full]}.html{'#' + section(anchor) if anchor else ''})"
+        if full.parent == ORIGINALS and full.suffix == ".html":
+            return f"[{label}](skills/{full.name}{'#' + anchor if anchor else ''})"
         try:
             return f"[{label}]({GH}{full.relative_to(ROOT).as_posix()})"
         except ValueError:
@@ -199,7 +227,7 @@ class Page:
     # -- single blocks
     def pre(self, lang_code, content):
         copy = ""
-        if lang_code in ("bash", "json", "sql", "toml"):
+        if lang_code in ("bash", "json", "sql", "toml", "text"):
             copy = f'<button type="button" class="copy" data-done="{self.ui["copied"]}">{self.ui["copy"]}</button>'
         return f'<div class="pre" data-lang="{lang_code}">{copy}<pre><code>{html.escape(content)}</code></pre></div>'
 
@@ -329,6 +357,106 @@ class Page:
                            f'{html.escape(t["description"])}</p>{used}{ex}{params}</div></details>')
         return "".join(out)
 
+    # -- the diaries-* skills
+    @staticmethod
+    def short_dir(path):
+        """source/{iso2}/tagged/{id}.txt -> tagged/: the folder a step writes, for the map."""
+        return path.removeprefix("source/{iso2}/").split("/")[0] + "/"
+
+    def thresholds(self, a, f):
+        d = (lambda v: f"{v:.2f}".replace(".", ",")) if self.lang == "es" else (lambda v: f"{v:.2f}")
+        return f"AUTO ≥ {d(a)} · FLAG ≥ {d(f)}"
+
+    def badge(self, s):
+        text = s["badge"][self.lang] if s.get("badge") else ""
+        if s.get("thresholds"):
+            text += " · " + self.thresholds(*s["thresholds"]).replace("AUTO ≥ ", "").replace(" · FLAG ≥ ", " / ")
+        return f'<span class="pipe-badge{" crit" if s.get("thresholds") else ""}">{html.escape(text)}</span>' if text else ""
+
+    def pipeline(self):
+        data = json.loads((WEB / "data" / "skills.json").read_text(encoding="utf-8"))
+        ui, L = self.ui, self.lang
+        stages, control = [], []
+        for g in data["groups"]:
+            if g["stage"]:
+                steps = "".join(
+                    f'<li><a class="pipe-step" href="#{L}-skill-{s["name"]}"><span class="pipe-n">{s["step"]:02d}</span>'
+                    f'<span class="pipe-name">{s["name"].removeprefix("diaries-")}</span>'
+                    f'<span class="pipe-out">{html.escape(self.short_dir(s["out"][0]))}</span>{self.badge(s)}</a></li>'
+                    for s in g["skills"])
+                stages.append(f'<li class="pipe-stage"><p class="pipe-stage-k">{html.escape(g[L])}</p>'
+                              f'<ol class="pipe-steps">{steps}</ol></li>')
+            else:
+                chips = "".join(f'<a class="pipe-chip" href="#{L}-skill-{s["name"]}">{s["name"].removeprefix("diaries-")}</a>'
+                                for s in g["skills"])
+                control.append(f'<div class="pipe-cgroup"><p class="pipe-stage-k">{html.escape(g[L])}</p>'
+                               f'<div class="pipe-chips">{chips}</div></div>')
+        return (f'<figure class="pipe" id="{L}-pipe"><p class="pipe-src"><span class="pipe-k">{ui["pipe_src"]}</span>'
+                f'<code>source/{{iso2}}/raw/</code> <span>{ui["pipe_src_v"]}</span></p>'
+                f'<ol class="pipe-stages">{"".join(stages)}</ol>'
+                f'<p class="pipe-src pipe-end"><span class="pipe-k">{ui["pipe_end_k"]}</span>'
+                f'<code>{{ISO2}}_interventions.csv</code> <code>{{ISO2}}_deputies.csv</code> <span>{ui["pipe_end"]}</span></p>'
+                f'<div class="pipe-control"><p class="pipe-k">{ui["control"]} · {ui["pipe_any"]}</p>'
+                f'<div class="pipe-cgroups">{"".join(control)}</div></div></figure>')
+
+    def skill_cards(self):
+        data = json.loads((WEB / "data" / "skills.json").read_text(encoding="utf-8"))
+        ui, L = self.ui, self.lang
+        n_steps = sum(len(g["skills"]) for g in data["groups"] if g["stage"])
+        out = [f'<div class="ref-filter"><input type="search" placeholder="{ui["skill_filter"]}" '
+               f'aria-label="{ui["skill_filter"]}"></div><p class="ref-none" hidden>{ui["skill_none"]}</p>']
+        for g in data["groups"]:
+            if g["stage"]:
+                steps = [s["step"] for s in g["skills"]]
+                k = f'{ui["step"]} {steps[0]}' if len(steps) == 1 else f'{ui["stages"]} {steps[0]}–{steps[-1]}'
+            else:
+                k = ui["control"]
+            out.append(f'<h3 class="ref-group" id="{L}-sg-{g["id"]}">{k} · {html.escape(g[L])}</h3>')
+            for s in g["skills"]:
+                rows = []
+                if s["step"]:
+                    rows.append((ui["step"], f'{s["step"]} {ui["of"]} {n_steps}'))
+                for key, label in (("in", ui["reads"]), ("out", ui["writes"])):
+                    if s[key]:
+                        rows.append((label, " ".join(f"<code>{html.escape(p)}</code>" for p in s[key])))
+                if s.get("conf"):
+                    conf = inline(s["conf"][L])
+                    if s.get("thresholds"):
+                        conf += f' <span class="pipe-badge crit">{self.thresholds(*s["thresholds"])}</span>'
+                    rows.append((ui["confidence"], conf))
+                io = "".join(f"<div><dt>{k}</dt><dd>{v}</dd></div>" for k, v in rows)
+                note = f'<p class="skill-note">{inline(s["note"][L])}</p>' if s.get("note") else ""
+                badge = self.badge(s) if s["step"] else ""
+                out.append(f'<details class="tool-card skill-card" id="{L}-skill-{s["name"]}"><summary><code>/{s["name"]}</code>'
+                           f'<span>{html.escape(s["summary"][L])}{" " + badge if badge else ""}</span></summary>'
+                           f'<div class="tool-body"><p class="tool-desc" lang="es"><span class="tool-k">{ui["agent_reads"]}</span>'
+                           f'{html.escape(s["description"])}</p><dl class="skill-io">{io}</dl>{note}'
+                           f'<p class="tool-k">{ui["run"]}</p>{self.pre("text", chr(10).join(s["run"]))}'
+                           f'<p class="tool-used"><a href="{GH}skills/{s["name"]}/SKILL.md">{ui["skill_md"]}</a></p>'
+                           f'</div></details>')
+        return "".join(out)
+
+    def doors(self, bl):
+        """The two doors of the home page: a ### title, a tag line, then text, code and links."""
+        doors = []
+        for b in bl:
+            if b[0] == "h3":
+                doors.append((b[1], []))
+            else:
+                doors[-1][1].append(b)
+        counts = [sum(len(g[k]) for g in json.loads((WEB / "data" / f).read_text(encoding="utf-8"))["groups"])
+                  for f, k in (("tools.json", "tools"), ("skills.json", "skills"))]
+        for (title, body), n in zip(doors, counts):     # each door says how many tools or skills it opens
+            if not re.search(rf"\b{n}\b", " ".join(map(str, body))):
+                raise SystemExit(f"the door «{title}» ({self.lang}) does not say {n}")
+        out = []
+        for k, (title, body) in enumerate(doors):
+            tag = f'<p class="door-tag">{inline(body[0][1])}</p>' if body and body[0][0] == "p" else ""
+            rest = body[1:] if tag else body
+            out.append(f'<section class="door{" door-first" if k == 0 else ""}"><h2 class="door-h">{inline(title)}</h2>'
+                       f'{tag}{"".join(self.block(x) for x in rest)}</section>')
+        return f'<div class="doors">{"".join(out)}</div>'
+
     def block(self, b, legend=False):
         kind = b[0]
         if kind == "p":
@@ -360,6 +488,10 @@ class Page:
                 return self.studies()
             if b[1] == "reference":
                 return self.reference()
+            if b[1] == "pipeline":
+                return self.pipeline()
+            if b[1] == "skills":
+                return self.skill_cards()
             return ""
         raise ValueError(kind)
 
@@ -375,10 +507,15 @@ class Page:
     def render(self):
         text = fix_links((DOCS / self.src).read_text(encoding="utf-8"), self.src)
         bl = blocks(text.split("\n"))
-        title, eyebrow, lede, side = "", "", "", None
+        title, eyebrow, lede, side, doors = "", "", "", None, ""
         i = 0
         while i < len(bl) and bl[i][0] != "h2" and bl[i] != ("dir", "reference"):   # masthead: all before the first section
             b = bl[i]
+            if b == ("dir", "doors"):
+                j = bl.index(("dir", "/doors"), i)
+                doors = self.doors(bl[i + 1:j])
+                i = j + 1
+                continue
             if b[0] == "h1":
                 title = b[1]
             elif b[0] == "dir" and b[1].startswith("eyebrow:"):
@@ -455,7 +592,7 @@ class Page:
 <header class="mast"><div class="wrap mast-grid{'' if side_html else ' single'}">
 <div class="mast-text">{f'<p class="eyebrow">{eyebrow}</p>' if eyebrow else ''}<h1>{inline(title)}</h1>
 <div class="lede">{lede}</div>{parl}</div>{side_html}
-</div></header>
+</div>{f'<div class="wrap">{doors}</div>' if doors else ''}</header>
 <div class="wrap shell">
 <details class="toc" open><summary>{ui["contents"]}</summary><ol>{toc_html}</ol></details>
 <main class="doc" id="{self.lang}-main">{"".join(body)}</main>
@@ -479,11 +616,22 @@ def nbsp(body):
     return "".join(parts)
 
 
-def page_html(slug, titles, es, en, pages):
+def nav(slug):
+    """The bar. A link to a section is written once per language, since the hash of a section also picks the language."""
     links = []
-    for p in pages:
-        current = ' aria-current="page"' if p[0] == slug else ""
-        links.append(f'<a href="{p[0]}.html"{current}><span data-l="es">{p[3]}</span><span data-l="en">{p[4]}</span></a>')
+    for group, items in NAV:
+        if group:
+            links.append(f'<span class="nav-k"><span data-l="es">{group[0]}</span><span data-l="en">{group[1]}</span></span>')
+        for target, sec, es, en, stands in items:
+            current = ' aria-current="page"' if slug in stands else ""
+            if sec:
+                links += [f'<a href="{target}.html#{l}-{sec}" data-l="{l}"{current}>{label}</a>' for l, label in (("es", es), ("en", en))]
+            else:
+                links.append(f'<a href="{target}.html"{current}><span data-l="es">{es}</span><span data-l="en">{en}</span></a>')
+    return "".join(links)
+
+
+def page_html(slug, titles, es, en):
     full = {}
     for l in ("es", "en"):
         plain = re.sub(r"[*`]", "", titles[l])
@@ -495,7 +643,7 @@ def page_html(slug, titles, es, en, pages):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{html.escape(title)}</title>
-<meta name="description" content="Tutorial de parlaibero-mcp: cuatro estudios con los plenos de 16 parlamentos iberoamericanos, hechos desde un agente. A tutorial for parlaibero-mcp.">
+<meta name="description" content="Tutorial de parlaibero-tools: consultar desde un agente los plenos de 16 parlamentos iberoamericanos con parlaibero-mcp y construir un corpus con los skills diaries-*. A tutorial for parlaibero-tools.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316694e'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Georgia'%3E%C2%B6%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -506,7 +654,7 @@ def page_html(slug, titles, es, en, pages):
 <a class="skip" href="#es-main">Ir al contenido · Skip to content</a>
 <header class="bar"><div class="wrap">
   <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">¶</span><span class="brand-text">ParlaIbero</span></a>
-  <nav class="nav" aria-label="Tutorial">{"".join(links)}</nav>
+  <nav class="nav" aria-label="Tutorial">{nav(slug)}</nav>
   <div class="switch" role="group" aria-label="Idioma · Language">
     <button type="button" data-set-lang="es" aria-pressed="true">ES</button>
     <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
@@ -528,15 +676,23 @@ def main():
     for f in (WEB / "assets").iterdir():
         shutil.copy(f, SITE / "assets" / f.name)
     (SITE / ".nojekyll").write_text("")
-    pages = [p for p in PAGES if (DOCS / p[1]).exists()]
-    for slug, es_src, en_src, *_ in pages:
+    # the cards come from datos.py, which CI does not run: a skill added or removed since then stops the build
+    names = {f.parent.name for f in (ROOT / "skills").glob("*/SKILL.md")}
+    cards = {s["name"] for g in json.loads((WEB / "data" / "skills.json").read_text(encoding="utf-8"))["groups"]
+             for s in g["skills"]}
+    if names != cards:
+        raise SystemExit(f"web/data/skills.json is out of date, run datos.py: {sorted(names ^ cards)}")
+    (SITE / "skills").mkdir()
+    for f in ORIGINALS.glob("*.html"):
+        shutil.copy(f, SITE / "skills" / f.name)
+        print(f"site/skills/{f.name}")
+    for slug, es_src, en_src in PAGES:
         if not (DOCS / en_src).exists():
             print(f"  ! {en_src} missing: the Spanish page stands in")
             en_src = es_src
         t_es, es = Page(slug, es_src, "es").render()
         t_en, en = Page(slug, en_src, "en").render()
-        (SITE / f"{slug}.html").write_text(page_html(slug, {"es": t_es, "en": t_en}, nbsp(es), nbsp(en), pages),
-                                           encoding="utf-8")
+        (SITE / f"{slug}.html").write_text(page_html(slug, {"es": t_es, "en": t_en}, nbsp(es), nbsp(en)), encoding="utf-8")
         print(f"site/{slug}.html")
 
 

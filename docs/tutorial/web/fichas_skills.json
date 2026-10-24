@@ -1,0 +1,485 @@
+{
+ "diaries-bootstrap": {
+  "summary": {
+   "es": "Examina de tres a cinco documentos, infiere la configuración del país y te pregunta solo lo que no pudo inferir.",
+   "en": "Examines three to five documents, infers the country's configuration and asks you only what it could not infer."
+  },
+  "in": [
+   "source/{iso2}/raw/"
+  ],
+  "out": [
+   "country_config/{iso2}.yaml",
+   "state/{iso2}/pipeline_state.json",
+   "docs/{iso2}/onboarding_report.md"
+  ],
+  "conf": {
+   "es": "La parte de los campos que infirió con una confianza de 0,80 o más.",
+   "en": "The share of the fields it inferred with a confidence of 0.80 or more."
+  },
+  "note": {
+   "es": "Infiere el formato (PDF de imagen o digital, HTML…), los marcadores de orador, las fechas y la numeración, y muestra la evidencia antes de preguntar. Detecta el trabajo ya hecho en las carpetas intermedias. Una vez por país; `--force` regenera la configuración.",
+   "en": "It infers the format (image or digital PDF, HTML…), the speaker markers, the dates and the numbering, and shows the evidence before asking. It detects work already done in the intermediate folders. Once per country; `--force` regenerates the configuration."
+  },
+  "run": [
+   "/diaries-bootstrap --country {iso2}"
+  ]
+ },
+ "diaries-ocr": {
+  "summary": {
+   "es": "OCR local con Ollama para los PDF escaneados; se salta cuando el PDF ya trae texto o la fuente es HTML.",
+   "en": "Local OCR with Ollama for scanned PDFs; it is skipped when the PDF already has text or the source is HTML."
+  },
+  "badge": {
+   "es": "solo PDF escaneados",
+   "en": "scanned PDFs only"
+  },
+  "in": [
+   "source/{iso2}/raw/{id}.pdf"
+  ],
+  "out": [
+   "source/{iso2}/ocr/{id}/page_NNNN.txt"
+  ],
+  "conf": {
+   "es": "0,7 × la media de las páginas + 0,3 × la peor página: una sola página muy degradada baja la sesión.",
+   "en": "0.7 × the mean of the pages + 0.3 × the worst page: one badly degraded page pulls the sitting down."
+  },
+  "note": {
+   "es": "El modelo principal es LightOnOCR-2:1b y el de respaldo glm-ocr, los dos configurables por país. Tras cada lote mide la «ñ» rota (*seflor*, *sefior*, *senor*…): si pasa del 1 o 2 %, conviene pasar al modelo de respaldo en esas sesiones y registrar las variantes para que `correct` y `tag` las toleren.",
+   "en": "The main model is LightOnOCR-2:1b and the fallback glm-ocr, both configurable per country. After each batch it measures the broken «ñ» (*seflor*, *sefior*, *senor*…): above 1 or 2%, consider the fallback model for those sittings and record the variants so that `correct` and `tag` tolerate them."
+  },
+  "run": [
+   "/diaries-ocr --country {iso2} --all",
+   "/diaries-ocr --country {iso2} --session {id}"
+  ]
+ },
+ "diaries-extract": {
+  "summary": {
+   "es": "Reúne el OCR, el PDF digital, el HTML, el XML, el DOCX o el texto en un texto de trabajo fiel, con las marcas de página. No limpia nada.",
+   "en": "Gathers the OCR, digital PDF, HTML, XML, DOCX or text into a faithful working text that keeps the page marks. It cleans nothing."
+  },
+  "in": [
+   "source/{iso2}/raw/{id}.*",
+   "source/{iso2}/ocr/{id}/"
+  ],
+  "out": [
+   "source/{iso2}/extracted/{id}.txt"
+  ],
+  "conf": {
+   "es": "La proporción de caracteres Unicode válidos. Además mide, sin corregirlos, la fragmentación por columnas y los prefijos de orador ilegibles.",
+   "en": "The share of valid Unicode characters. It also measures, without fixing them, column fragmentation and garbled speaker prefixes."
+  },
+  "note": {
+   "es": "`extracted/` es la capa a la que siempre se puede volver, y por eso no se limpia nunca: cabeceros, guiones y párrafos son cosa de `correct`.",
+   "en": "`extracted/` is the layer one can always go back to, so it is never cleaned: headers, hyphens and paragraphs belong to `correct`."
+  },
+  "run": [
+   "/diaries-extract --country {iso2} --all"
+  ]
+ },
+ "diaries-correct": {
+  "summary": {
+   "es": "El único limpiador: quita cabeceros y pies de página, aísla los marcadores de orador, deshace los guiones de final de línea y rehace los párrafos.",
+   "en": "The only cleaner: it removes running headers and footers, isolates the speaker markers, undoes end-of-line hyphens and rebuilds the paragraphs."
+  },
+  "in": [
+   "source/{iso2}/extracted/{id}.txt"
+  ],
+  "out": [
+   "source/{iso2}/corrected/{id}.txt"
+  ],
+  "conf": {
+   "es": "0,95 si conserva al menos el 80 % de los caracteres; si no, 0,60, y la sesión queda en revisión.",
+   "en": "0.95 if it keeps at least 80% of the characters; otherwise 0.60, and the sitting goes to review."
+  },
+  "note": {
+   "es": "Lo que se quita se descubre por frecuencia, década a década, y se guarda en la configuración del país: descubrir, aplicar, medir lo que queda, refinar. Si en una sesión desaparece más del 2 % de los marcadores de orador, se detiene. El preámbulo de la sesión no se borra nunca.",
+   "en": "What gets removed is discovered by frequency, decade by decade, and stored in the country's configuration: discover, apply, measure what is left, refine. If a sitting loses more than 2% of its speaker markers, it stops. The sitting's preamble is never deleted."
+  },
+  "run": [
+   "/diaries-correct --country {iso2} --all"
+  ]
+ },
+ "diaries-meta": {
+  "summary": {
+   "es": "Saca de cada cabecero la fecha, el número, el tipo de sesión, la legislatura y quién preside, por tramos: la apertura y cada relevo.",
+   "en": "Takes from each header the date, number, type of sitting, legislature and who presides, by segments: the opening and each handover."
+  },
+  "badge": {
+   "es": "antes de tag",
+   "en": "before tag"
+  },
+  "in": [
+   "source/{iso2}/extracted/{id}.txt"
+  ],
+  "out": [
+   "source/{iso2}/meta/{id}.json"
+  ],
+  "conf": {
+   "es": "Los campos extraídos de cinco: fecha, número, tipo, presidencia y legislatura.",
+   "en": "The fields extracted out of five: date, number, type, presidency and legislature."
+  },
+  "note": {
+   "es": "Lee `extracted/` porque `correct` borra los cabeceros. No supone un formato: usa la regla registrada del país o la descubre y la registra. Sin fecha, deriva al menos el año del identificador; nunca inventa el día ni el mes.",
+   "en": "It reads `extracted/` because `correct` deletes the headers. It assumes no format: it uses the country's recorded rule or discovers and records one. Without a date it derives at least the year from the identifier; it never invents the day or the month."
+  },
+  "run": [
+   "/diaries-meta --country {iso2} --all"
+  ]
+ },
+ "diaries-dedupe": {
+  "summary": {
+   "es": "Aparta las sesiones duplicadas: la misma sesión bajo dos identificadores, o una sesión con las filas dobladas.",
+   "en": "Sets aside duplicated sittings: the same sitting under two identifiers, or one sitting with its rows doubled."
+  },
+  "badge": {
+   "es": "antes de tag",
+   "en": "before tag"
+  },
+  "in": [
+   "source/{iso2}/corrected/",
+   "source/{iso2}/meta/"
+  ],
+  "out": [
+   "source/{iso2}/_quarantine_duplicates/"
+  ],
+  "conf": {
+   "es": "No puntúa: aplica una regla. Clase A, mismo boletín y misma fecha real; clase B, filas dobladas con un solapamiento del 25 % o más.",
+   "en": "It does not score: it applies a rule. Class A, same bulletin and same real date; class B, rows doubled with an overlap of 25% or more."
+  },
+  "note": {
+   "es": "Sin `--write` solo informa. La cuarentena es reversible y la clase B pide confirmación. Va antes de `tag` porque el etiquetado calibra su léxico con la frecuencia de cada forma, y un duplicado la cuenta dos veces.",
+   "en": "Without `--write` it only reports. The quarantine is reversible and class B asks for confirmation. It runs before `tag` because tagging calibrates its lexicon on how often each form appears, and a duplicate counts it twice."
+  },
+  "run": [
+   "/diaries-dedupe --country {iso2}",
+   "/diaries-dedupe --country {iso2} --write"
+  ]
+ },
+ "diaries-tag": {
+  "summary": {
+   "es": "Marca dónde empieza cada intervención y quién habla: expresiones regulares en dos niveles, y Claude para los casos dudosos.",
+   "en": "Marks where each intervention starts and who speaks: regular expressions on two levels, and Claude for the doubtful cases."
+  },
+  "badge": {
+   "es": "crítico",
+   "en": "critical"
+  },
+  "in": [
+   "source/{iso2}/corrected/{id}.txt"
+  ],
+  "out": [
+   "source/{iso2}/tagged/{id}.txt"
+  ],
+  "conf": {
+   "es": "Las intervenciones etiquetadas por regla frente al total, contando en contra las que quedan sin etiqueta y la duda de las que resolvió Claude.",
+   "en": "The interventions tagged by rule against the total, counting against it those left untagged and the doubt of those Claude resolved."
+  },
+  "note": {
+   "es": "Las formas de los marcadores se descubren en el corpus, no se suponen. Una sola marca sin etiquetar detiene la sesión, sea cual sea la confianza: atribuiría en silencio la intervención entera al orador anterior.",
+   "en": "The marker forms are discovered in the corpus, not assumed. A single untagged mark stops the sitting, whatever the confidence: it would silently give the whole intervention to the previous speaker."
+  },
+  "run": [
+   "/diaries-tag --country {iso2} --all",
+   "/diaries-tag --country {iso2} --session {id} --dry-run"
+  ]
+ },
+ "diaries-matrix": {
+  "summary": {
+   "es": "Convierte cada intervención etiquetada en una fila con los metadatos de su sesión; lo anterior al primer orador entra como fila 0.",
+   "en": "Turns each tagged intervention into a row with its sitting's metadata; what comes before the first speaker becomes row 0."
+  },
+  "in": [
+   "source/{iso2}/tagged/{id}.txt",
+   "source/{iso2}/meta/{id}.json"
+  ],
+  "out": [
+   "source/{iso2}/matrix/interventions_raw.csv"
+  ],
+  "conf": {
+   "es": "1 − bloques sin orador / bloques.",
+   "en": "1 − blocks without a speaker / blocks."
+  },
+  "note": {
+   "es": "No arranca mientras una sesión de `tag` esté detenida. Si más del 0,1 % de las filas llevan dentro el marcador de otro orador, no se parchea la tabla: se corrige el origen y se repite desde `correct`. Los anexos solo dejan de contar como discurso donde el acta los separa.",
+   "en": "It does not start while a `tag` sitting is stopped. If more than 0.1% of the rows carry another speaker's marker inside, the table is not patched: the source is fixed and the chain is re-run from `correct`. Annexes stop counting as speech only where the record separates them."
+  },
+  "run": [
+   "/diaries-matrix --country {iso2} --all"
+  ]
+ },
+ "diaries-deputies": {
+  "summary": {
+   "es": "Construye el registro de diputados: de un archivo externo, del pase de lista nominal o de los oradores de la matriz.",
+   "en": "Builds the register of deputies: from an external file, from the roll call or from the speakers in the matrix."
+  },
+  "badge": {
+   "es": "o antes de tag",
+   "en": "or before tag"
+  },
+  "in": [
+   "source/{iso2}/matrix/interventions_raw.csv"
+  ],
+  "out": [
+   "source/{iso2}/deputies/deputies.csv",
+   "source/{iso2}/standardize/{ISO2}_deputies.csv"
+  ],
+  "conf": {
+   "es": "1 − diputados ambiguos / diputados.",
+   "en": "1 − ambiguous deputies / deputies."
+  },
+  "note": {
+   "es": "El archivo externo se declara en la configuración del país (`deputies.external_file`). El sexo es una variable derivada y declara de dónde sale. Si las actas traen pase de lista, el registro puede salir de `corrected/` antes de `tag` y mejorar su puntuación.",
+   "en": "The external file is declared in the country's configuration (`deputies.external_file`). Sex is a derived variable and states where it comes from. If the records carry a roll call, the register can come from `corrected/` before `tag` and improve its scoring."
+  },
+  "run": [
+   "/diaries-deputies --country {iso2}"
+  ]
+ },
+ "diaries-match": {
+  "summary": {
+   "es": "Vincula cada nombre de orador con un diputado: coincidencia exacta, después difusa y, para lo que queda, Claude con el contexto de la sesión.",
+   "en": "Links each speaker name to a deputy: exact match, then fuzzy, and for what is left, Claude with the context of the sitting."
+  },
+  "badge": {
+   "es": "crítico",
+   "en": "critical"
+  },
+  "in": [
+   "source/{iso2}/matrix/interventions_raw.csv",
+   "source/{iso2}/deputies/deputies.csv"
+  ],
+  "out": [
+   "source/{iso2}/match/matching_table.csv"
+  ],
+  "conf": {
+   "es": "Oradores distintos vinculados de forma automática / oradores distintos.",
+   "en": "Distinct speakers linked automatically / distinct speakers."
+  },
+  "note": {
+   "es": "Las decisiones humanas quedan congeladas y se vuelven a imponer al final de cada ejecución. Solo la forma femenina de un cargo (*la presidenta*) permite vincular por sexo. Una intervención nunca se borra porque su orador no se vincule.",
+   "en": "Human decisions are frozen and imposed again at the end of every run. Only the feminine form of a title (*la presidenta*) allows linking by sex. An intervention is never deleted because its speaker cannot be linked."
+  },
+  "run": [
+   "/diaries-match --country {iso2}",
+   "/diaries-match --country {iso2} --force"
+  ]
+ },
+ "diaries-merge": {
+  "summary": {
+   "es": "Une la matriz, la vinculación y el registro según el periodo, y atribuye a quien preside las intervenciones que el acta firma solo con el cargo.",
+   "en": "Joins the matrix, the links and the register by period, and gives to whoever presides the interventions the record signs only with the title."
+  },
+  "in": [
+   "source/{iso2}/matrix/interventions_raw.csv",
+   "source/{iso2}/match/matching_table.csv",
+   "source/{iso2}/deputies/deputies.csv"
+  ],
+  "out": [
+   "source/{iso2}/merge/interventions_enriched.csv"
+  ],
+  "conf": {
+   "es": "Filas con diputado / filas, sobre la tabla final.",
+   "en": "Rows with a deputy / rows, on the final table."
+  },
+  "note": {
+   "es": "Con varias presidencias del mismo sexo, o titular y «en funciones», no atribuye: el acta nombra a quienes presidieron, no cuándo fue el relevo. Comprueba que cada diputado exista en el registro para esa legislatura.",
+   "en": "With several presidencies of the same sex, or a holder and an acting one, it does not attribute: the record names who presided, not when they handed over. It checks that every deputy exists in the register for that legislature."
+  },
+  "run": [
+   "/diaries-merge --country {iso2}"
+  ]
+ },
+ "diaries-standardize": {
+  "summary": {
+   "es": "Ordena las 16 columnas canónicas, valida cada fila y asigna los identificadores de sesión y de intervención.",
+   "en": "Puts the 16 canonical columns in order, validates every row and assigns the sitting and intervention identifiers."
+  },
+  "badge": {
+   "es": "la entrega",
+   "en": "the delivery"
+  },
+  "in": [
+   "source/{iso2}/merge/interventions_enriched.csv"
+  ],
+  "out": [
+   "source/{iso2}/standardize/{ISO2}_interventions.csv",
+   "source/{iso2}/standardize/{ISO2}_deputies.csv"
+  ],
+  "conf": {
+   "es": "1 − errores de validación / filas.",
+   "en": "1 − validation errors / rows."
+  },
+  "note": {
+   "es": "No sobrescribe el archivo canónico sin `--force`, y un `--force` puede borrar correcciones hechas después: compara siempre el recuento de filas vinculadas antes y después.",
+   "en": "It does not overwrite the canonical file without `--force`, and a `--force` can erase corrections made later: always compare the count of linked rows before and after."
+  },
+  "run": [
+   "/diaries-standardize --country {iso2}"
+  ]
+ },
+ "diaries-document": {
+  "summary": {
+   "es": "Te entrevista sobre el corpus y escribe el README, el diccionario de datos y los metadatos JSON-LD.",
+   "en": "Interviews you about the corpus and writes the README, the data dictionary and the JSON-LD metadata."
+  },
+  "in": [
+   "country_config/{iso2}.yaml",
+   "source/{iso2}/standardize/"
+  ],
+  "out": [
+   "docs/{iso2}/README.md",
+   "docs/{iso2}/data_dictionary.md",
+   "docs/{iso2}/dataset.jsonld"
+  ],
+  "conf": {
+   "es": "1: es determinista.",
+   "en": "1: it is deterministic."
+  },
+  "note": {
+   "es": "Da dos tasas de vinculación: la bruta y la efectiva, que deja fuera lo que no se puede vincular (la Mesa sin persona, lo que no es discurso). Guarda tus respuestas para la próxima vez.",
+   "en": "It gives two linkage rates: the gross one and the effective one, which leaves out what cannot be linked (the chair with no person, what is not speech). It keeps your answers for next time."
+  },
+  "run": [
+   "/diaries-document --country {iso2}"
+  ]
+ },
+ "diaries-status": {
+  "summary": {
+   "es": "Una tabla con los trece pasos: cuántas sesiones están completas, en revisión, detenidas o pendientes, y cuál es el siguiente paso.",
+   "en": "A table of the thirteen steps: how many sittings are complete, under review, stopped or pending, and which step comes next."
+  },
+  "in": [
+   "state/{iso2}/pipeline_state.json"
+  ],
+  "out": [],
+  "run": [
+   "/diaries-status --country {iso2}"
+  ]
+ },
+ "diaries-review": {
+  "summary": {
+   "es": "Recorre los casos FLAG y HALT: para cada uno, la evidencia, la confianza y tu decisión.",
+   "en": "Goes through the FLAG and HALT cases: for each one, the evidence, the confidence and your decision."
+  },
+  "in": [
+   "state/{iso2}/pipeline_state.json"
+  ],
+  "out": [
+   "state/{iso2}/pipeline_state.json"
+  ],
+  "note": {
+   "es": "Ante cada FLAG: [A]ceptar, [C]orregir, [E]scalar a HALT o [S]altar para más tarde. Los HALT se listan con su error y se marcan resueltos tras arreglarlos a mano.",
+   "en": "For each FLAG: [A]ccept, [C]orrect, [E]scalate to HALT or [S]kip for later. HALTs are listed with their error and marked resolved once fixed by hand."
+  },
+  "run": [
+   "/diaries-review --country {iso2}"
+  ]
+ },
+ "diaries-feedback": {
+  "summary": {
+   "es": "Inyecta una corrección en el estado: para una sesión, como regla desde una fecha, o como estrategia para todo un skill.",
+   "en": "Injects a correction into the state: for one sitting, as a rule from a date on, or as a strategy for a whole skill."
+  },
+  "in": [
+   "state/{iso2}/pipeline_state.json"
+  ],
+  "out": [
+   "state/{iso2}/pipeline_state.json"
+  ],
+  "note": {
+   "es": "Tres tipos: `punctual`, `rule` (reprocesa desde la fecha) y `strategy` (todo el skill, con `--force`). Registra la acción; el porqué va en `/diaries-decide`.",
+   "en": "Three types: `punctual`, `rule` (reprocesses from the date) and `strategy` (the whole skill, with `--force`). It records the action; the reason goes to `/diaries-decide`."
+  },
+  "run": [
+   "/diaries-feedback --country {iso2} --skill diaries-tag --type rule --description \"…\" --from {id}"
+  ]
+ },
+ "diaries-validate": {
+  "summary": {
+   "es": "Mide por muestreo qué parte del corpus está bien estructurada y bien atribuida, con la tasa de error acotada.",
+   "en": "Measures by sampling how much of the corpus is well structured and well attributed, with the error rate bounded."
+  },
+  "in": [
+   "source/{iso2}/standardize/{ISO2}_interventions.csv"
+  ],
+  "out": [
+   "docs/validacion/{ISO2}_muestra.csv"
+  ],
+  "note": {
+   "es": "Un filtro deja pasar solo lo que no admite duda y manda el resto a lectura humana. Sus detectores no comparten código ni léxico con los del pipeline: un control que comparte léxico con lo que vigila hereda sus puntos ciegos.",
+   "en": "A filter lets through only what admits no doubt and sends the rest to human reading. Its detectors share no code or lexicon with the pipeline's: a check that shares the lexicon of what it watches inherits its blind spots."
+  },
+  "run": [
+   "/diaries-validate --country {iso2}"
+  ]
+ },
+ "diaries-decide": {
+  "summary": {
+   "es": "Registra una decisión metodológica en el momento en que se toma, con la evidencia medida; sin evidencia no se guarda.",
+   "en": "Records a methodological decision when it is taken, with the measured evidence; without evidence it is not saved."
+  },
+  "in": [],
+  "out": [
+   "state/{iso2}/decisions.jsonl",
+   "state/_transversal/decisions.jsonl"
+  ],
+  "note": {
+   "es": "Cuatro campos: decisión, alternativas, evidencia (qué se midió, sobre qué y qué salió) y consecuencia. Una decisión superada no se borra: `--supersede` la marca y la enlaza con la que la corrige.",
+   "en": "Four fields: decision, alternatives, evidence (what was measured, on what and with what result) and consequence. A superseded decision is not deleted: `--supersede` marks it and links it to the one that corrects it."
+  },
+  "run": [
+   "/diaries-decide"
+  ]
+ },
+ "diaries-report": {
+  "summary": {
+   "es": "Escribe el informe interno del proceso: cronología, confianzas, correcciones, tasa de automatización y lo que queda abierto.",
+   "en": "Writes the internal report of the process: timeline, confidences, corrections, automation rate and what is still open."
+  },
+  "in": [
+   "state/{iso2}/pipeline_state.json",
+   "country_config/{iso2}.yaml"
+  ],
+  "out": [
+   "docs/{iso2}/pipeline_report.md"
+  ],
+  "run": [
+   "/diaries-report --country {iso2}"
+  ]
+ },
+ "diaries-teach": {
+  "summary": {
+   "es": "La guía interactiva: ocho caminos, de qué es el sistema a cómo dejar constancia de una decisión.",
+   "en": "The interactive guide: eight paths, from what the system is to how to record a decision."
+  },
+  "in": [],
+  "out": [],
+  "note": {
+   "es": "El camino 2, «Nuevo país desde cero», recorre los cinco tramos del pipeline y se ofrece a acompañarte en el primer paso.",
+   "en": "Path 2, «Nuevo país desde cero» (a new country from scratch), walks through the five stretches of the pipeline and offers to go with you through the first step."
+  },
+  "run": [
+   "/diaries-teach"
+  ]
+ },
+ "diaries-refine": {
+  "summary": {
+   "es": "Mejora un SKILL.md a partir de un fallo observado en un caso real y anota el cambio.",
+   "en": "Improves a SKILL.md from a failure seen in a real case and logs the change."
+  },
+  "in": [
+   "~/.claude/skills/diaries-*/SKILL.md"
+  ],
+  "out": [
+   "~/.claude/skills/diaries-*/SKILL.md",
+   "REFINEMENTS.md"
+  ],
+  "note": {
+   "es": "Edita los skills instalados: el cambio rige desde la siguiente ejecución.",
+   "en": "It edits the installed skills: the change applies from the next run."
+  },
+  "run": [
+   "/diaries-refine --skill diaries-tag --issue \"…\""
+  ]
+ }
+}
