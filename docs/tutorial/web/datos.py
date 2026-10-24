@@ -8,6 +8,7 @@ CASOS_OUT is the folder given to casos.py. Every number on the pages comes from 
 """
 import asyncio
 import json
+import math
 import re
 import shutil
 import sys
@@ -35,7 +36,7 @@ NAME = {
 }
 PAGES = {"feminicidio": ("es/feminicidio.md", "en/feminicidio.md"), "pandemia": ("es/pandemia.md", "en/pandemia.md"),
          "voz": ("es/voz.md", "en/voz.md"), "marcos": ("es/marcos.md", "en/marcos.md"),
-         "index": ("TUTORIAL.md", "TUTORIAL.en.md")}
+         "bibliotecas": ("es/bibliotecas.md", "en/bibliotecas.md"), "index": ("TUTORIAL.md", "TUTORIAL.en.md")}
 
 
 def J(key):
@@ -809,6 +810,176 @@ def marcos():
 
 
 # ============================================================ the home page and the tools
+# ============================================================ G. a library from scratch (the guide)
+FOUR = ["CL", "CO", "EC", "PE"]
+# The samples of casos.py G8 and G10 (20 interventions per chamber, seed 1), read by hand: how many talk about
+# Venezuelan migrants. A new edition of the data needs a new reading.
+READ = {"migracion_y_venezuela": {"CL": 16, "CO": 17, "EC": 6, "PE": 18},
+        "migracion_venezolana": {"CL": 20, "CO": 20, "EC": 19, "PE": 20}}
+DEFINING = re.compile(r"^(venezolan|venezuela|migra|inmigra|emigra|refugiad)")
+# What the library leaves out, read by hand (casos.py G18b, G16b, G17c; 20 each): how many of the 20 name venezolan* or
+# Venezuela anywhere in their full text (not only in the kwic line or the 900 characters shown), and then three classes:
+# talks about Venezuelan migrants and names them somewhere in the intervention / talks about migration without saying
+# where from / another topic, Venezuela's politics or procedure. Those naming Venezuela are read whole.
+FUERA = {"perdidas": (20, 16, 3, 1), "contexto_CL": (7, 3, 4, 13), "contexto_CO": (3, 3, 4, 13),
+         "contexto_EC": (4, 2, 0, 18), "contexto_PE": (7, 7, 7, 6), "colchane": (3, 3, 12, 5), "movilidad": (3, 0, 2, 18),
+         "extranjeros": (0, 0, 4, 16)}
+
+
+def wilson(k, n, z=1.96):
+    """95 % interval for a share read in a sample of n."""
+    c, h = (k + z * z / 2) / (n + z * z), z * math.sqrt(k * (n - k) / n + z * z / 4) / (n + z * z)
+    return max(0.0, c - h), min(1.0, c + h)
+
+
+def bibliotecas():
+    g1 = J("G1_terms")["terms"]
+    for lang in LANGS:
+        rows = [[f"`{t['term'].replace('+', ' + ')}`"] + [num(t["by_country"][c]["occurrences"], 0, lang) for c in FOUR]
+                + [num(t["interventions"], 0, lang)] for t in g1]
+        TABLES["bibliotecas"][("bib_terminos", lang)] = md_table(
+            [es_en(lang, "Término", "Term")] + [NAME[lang][c] for c in FOUR]
+            + [es_en(lang, "Intervenciones (las cuatro)", "Interventions (all four)")], rows, right=(1, 2, 3, 4, 5))
+
+    thresholds = {k: J(f"G3_migra_{k}") for k in (1, 2, 3)}
+    for lang in LANGS:
+        rows = [[es_en(lang, f"{k} o más", f"{k} or more")] + [num(r["parts"][c]["items"], 0, lang) for c in FOUR]
+                + [num(r["items"], 0, lang)] for k, r in thresholds.items()]
+        TABLES["bibliotecas"][("bib_umbral", lang)] = md_table(
+            [es_en(lang, "Menciones por intervención", "Mentions per intervention")] + [NAME[lang][c] for c in FOUR]
+            + ["Total"], rows, right=(1, 2, 3, 4, 5))
+
+    first, second = J("G6_combine"), J("G9_sentence")
+    for lang in LANGS:
+        rows = [[NAME[lang][c], num(first["parts"][c]["items"], 0, lang), f"{READ['migracion_y_venezuela'][c]} / 20",
+                 num(second["parts"][c]["items"], 0, lang), f"{READ['migracion_venezolana'][c]} / 20"] for c in FOUR]
+        rows.append(["**Total**", num(first["items"], 0, lang), "", num(second["items"], 0, lang), ""])
+        TABLES["bibliotecas"][("bib_definiciones", lang)] = md_table(
+            es_en(lang, ["País", "Primera: intervenciones", "Primera: de 20 leídas, sobre migrantes venezolanos",
+                         "Segunda: intervenciones", "Segunda: de 20 leídas, sobre migrantes venezolanos"],
+                  ["Country", "First: interventions", "First: of 20 read, about Venezuelan migrants",
+                   "Second: interventions", "Second: of 20 read, about Venezuelan migrants"]), rows, right=(1, 2, 3, 4))
+
+    final = J("G10d_describe")
+    for lang in LANGS:
+        rows = []
+        for c in FOUR:
+            p = final["parts"][c]
+            rows.append([NAME[lang][c], num(p["items"], 0, lang), num(p["sessions"], 0, lang),
+                         f"{p['date_from']} – {p['date_to']}", num(p["speakers"], 0, lang), num(p["words"], 0, lang),
+                         num(p["linked_pct"], 1, lang), num(p["women_pct_of_sexed"], 1, lang),
+                         num(p["long_turn_words_pct"], 1, lang)])
+        TABLES["bibliotecas"][("bib_describe", lang)] = md_table(
+            es_en(lang, ["País", "Intervenciones", "Sesiones", "Fechas", "Oradores", "Palabras", "Vinculadas (%)",
+                         "Mujeres (% de las que tienen sexo)", "Palabras en turnos largos (%)"],
+                  ["Country", "Interventions", "Sittings", "Dates", "Speakers", "Words", "Linked (%)",
+                   "Women (% of those with sex)", "Words in long turns (%)"]), rows, right=(1, 2, 4, 5, 6, 7, 8))
+
+    # year by year, per thousand interventions of the chamber, with both definitions
+    yr = defaultdict(dict)
+    for r in J("G11_years")["rows"]:
+        yr[(r["library"], r["country"])][r["year"]] = r
+    years = sorted({y for d in yr.values() for y in d})
+    rate = lambda lib, c, y: yr[(lib, c)][y]["per_1000"]
+    spec("bib_anual", {lang: {
+        "type": "multiples", "x_domain": [years[0], years[-1]], "y_shared": False, "digits": 2, "no_area": False,
+        "unit": es_en(lang, "por mil", "per thousand"), "label2": es_en(lang, "primera definición", "first definition"),
+        "extra": es_en(lang, "{v} intervenciones (segunda definición)", "{v} interventions (second definition)"),
+        "title": es_en(lang, "Intervenciones sobre la migración venezolana por cada mil intervenciones del pleno, año a año",
+                       "Interventions on Venezuelan migration per thousand interventions of the floor, year by year"),
+        "sub": es_en(lang, "Cada panel tiene su propia escala: compara la forma dentro de cada cámara, no la altura entre "
+                           "cámaras.",
+                     "Each panel has its own scale: compare the shape within each chamber, not the height across "
+                     "chambers."),
+        "legend": [{"label": es_en(lang, "segunda definición: en la misma frase", "second definition: in the same sentence"),
+                    "color": "c1"},
+                   {"label": es_en(lang, "primera: migración y Venezuela en la intervención",
+                                   "first: migration and Venezuela in the intervention"), "color": "fg3", "dash": True}],
+        "aria": es_en(lang, "intervenciones por mil, año a año", "interventions per thousand, year by year"),
+        "panels": [{"label": NAME[lang][c],
+                    "sub": es_en(lang, "máximo ", "highest ") + str(max(years, key=lambda y: rate("migracion_venezolana", c, y))),
+                    "points": [[y, rate("migracion_venezolana", c, y), yr[("migracion_venezolana", c)][y]["items"]]
+                               for y in years],
+                    "points2": [[y, rate("migracion_y_venezuela", c, y)] for y in years]} for c in FOUR]}
+        for lang in LANGS})
+    for lang in LANGS:
+        rows = []
+        for c in FOUR:
+            for lib, label in (("migracion_venezolana", es_en(lang, "segunda", "second")),
+                               ("migracion_y_venezuela", es_en(lang, "primera", "first"))):
+                rows.append([f"{NAME[lang][c]} ({label})"] + [num(rate(lib, c, y), 2, lang) for y in years])
+        TABLES["bibliotecas"][("bib_anual", lang)] = md_table(
+            [es_en(lang, "País (definición)", "Country (definition)")] + [str(y) for y in years], rows,
+            right=tuple(range(1, len(years) + 1)))
+
+    # what distinguishes the debate within each chamber: the defining terms and personal names left out
+    for lang in LANGS:
+        rows = []
+        for c in FOUR:
+            items = [w for w in J(f"G12_dist_{c}")["distinctive_of_a"] if not DEFINING.match(w["word"].lower())]
+            rows.append([NAME[lang][c], ", ".join(w["word"] for w in words(items, 15))])
+        TABLES["bibliotecas"][("bib_palabras", lang)] = md_table(
+            es_en(lang, ["País", "Palabras que distinguen el debate del resto de su cámara, de más a menos"],
+                  ["Country", "Words that set the debate apart from the rest of its chamber, most first"]), rows)
+
+    # beyond the keywords: the rest of each debate, and what stays outside read by hand
+    context = {r["country"]: r for r in J("G16_context")["rows"]}
+    for lang in LANGS:
+        rows = [[NAME[lang][c], num(r["sessions"], 0, lang), num(r["in_library"], 0, lang), num(r["outside"], 0, lang),
+                 num(r["outside_50_words_or_more"], 0, lang)] for c, r in context.items()]
+        TABLES["bibliotecas"][("bib_contexto", lang)] = md_table(
+            es_en(lang, ["País", "Sesiones", "En la biblioteca", "Fuera", "Fuera, de 50 palabras o más"],
+                  ["Country", "Sittings", "In the library", "Outside", "Outside, 50 words or more"]), rows, right=(1, 2, 3, 4))
+    lost_lib = J("G18_lost")
+    lost = lost_lib["parts"]
+    new = {name: {"items": J(f"G17_{name}")["items"], "outside": J(f"G17b_{name}_fuera")["items"],
+                  "naming": J(f"G17d_{name}_venez")["items"]} for name in ("colchane", "movilidad", "extranjeros")}
+    # (key, label, outside, how many of them name Venezuela: a ceiling for the first class)
+    places = [("perdidas", ("Lo que la segunda definición deja fuera de la primera, Chile",
+                            "What the second definition leaves out of the first, Chile"),
+               lost["CL"]["items"], lost["CL"]["items"])]
+    places += [(f"contexto_{c}", (f"El resto de los debates, {NAME['es'][c]}", f"The rest of the debates, {NAME['en'][c]}"),
+                context[c]["outside"], context[c]["outside_naming_venezuela"]) for c in FOUR]
+    places += [(name, (f"{w}, {NAME['es'][c]}", f"{w}, {NAME['en'][c]}"), new[name]["outside"], new[name]["naming"])
+               for name, c, w in (("colchane", "CL", "*Colchane*"), ("movilidad", "EC", "*movilidad humana*"),
+                                  ("extranjeros", "PE", "`extranjero*`"))]
+    # the first class has to name Venezuela, so its share is estimated among the sampled ones that do, and scaled to
+    # all those outside that do; with none in the sample, all that is known is the ceiling
+    bounds = {}
+    for key, _, outside, naming in places:
+        named_read, on_topic = FUERA[key][:2]
+        lo, hi = wilson(on_topic, named_read) if named_read else (0.0, 1.0)
+        bounds[key] = [round(lo * naming), round(hi * naming)]
+    for lang in LANGS:
+        rows = [[label[LANGS.index(lang)], num(outside, 0, lang), num(naming, 0, lang)]
+                + [str(v) for v in FUERA[key]] + [f"{num(bounds[key][0], 0, lang)}–{num(bounds[key][1], 0, lang)}"]
+                for key, label, outside, naming in places]
+        TABLES["bibliotecas"][("bib_fuera", lang)] = md_table(
+            es_en(lang, ["Dónde", "Fuera", "Nombran Venezuela", "De 20 leídas: nombran Venezuela",
+                         "migrantes venezolanos", "migración sin decir de dónde", "otro tema",
+                         "Migrantes venezolanos fuera (intervalo del 95 %)"],
+                  ["Where", "Outside", "Name Venezuela", "Of 20 read: name Venezuela", "Venezuelan migrants",
+                   "migration without saying where from", "another topic", "Venezuelan migrants outside (95% interval)"]),
+            rows, right=(1, 2, 3, 4, 5, 6, 7))
+    in_cl = final["parts"]["CL"]["items"]
+    coverage_cl = [round(100 * in_cl / (in_cl + bounds["perdidas"][1])), round(100 * in_cl / (in_cl + bounds["perdidas"][0]))]
+
+    sessions = defaultdict(list)
+    for r in J("G11b_sessions")["rows"]:
+        sessions[r["country"]].append(r)
+    floor = {c: {y: yr[("migracion_venezolana", c)][y]["interventions"] for y in years} for c in FOUR}
+    return {"lost": {"total": lost_lib["items"], **{c: p["items"] for c, p in lost.items()}}, "new_words": new,
+            "fuera_bounds": bounds, "coverage_cl_pct": coverage_cl, "first": first["items"], "second": second["items"], "final": final["items"],
+            "once": J("G4_once")["items"], "venezuela": J("G5_venez")["items"], "removed": J("G10b_remove")["removed"],
+            "kwic_totals": {k: J(k)["total_matching_interventions"] for k in
+                            ("G2_kwic_desplazad", "G2_kwic_venez", "G2_kwic_migrante_EC", "G11c_kwic_CO", "G12b_kwic_gc898")},
+            "long_turn_words_pct": {"first": {c: J("G7_describe")["parts"][c]["long_turn_words_pct"] for c in FOUR},
+                                    "second": {c: second["parts"][c]["long_turn_words_pct"] for c in FOUR}},
+            # country, date and length only: the speaker is a role, said in the prose
+            "long_turns": [[r["country"], r["date"], r["n_words"]] for r in J("G10a_long")["rows"]],
+            "floor_interventions": floor, "top_sessions": {c: sessions[c][0] for c in FOUR}}
+
+
 def inicio():
     z1 = J("Z1_list")["countries"]
     for lang in LANGS:
@@ -846,7 +1017,8 @@ GROUPS = [
     ("sql", "SQL, exportación y registro", "SQL, export and log", ["query_sql", "export_result", "query_log"]),
 ]
 STUDY_PAGES = {"feminicidio": ("Feminicidio", "Femicide"), "pandemia": ("Pandemia", "Pandemic"),
-               "voz": ("Voz y escaños", "Voice and seats"), "marcos": ("Marcos", "Frames"), "index": ("Inicio", "Home")}
+               "voz": ("Voz y escaños", "Voice and seats"), "marcos": ("Marcos", "Frames"),
+               "bibliotecas": ("Bibliotecas", "Libraries"), "index": ("Inicio", "Home")}
 
 
 def used_in():
@@ -959,6 +1131,7 @@ def main():
     pan_facts, pan_spark = pandemia()
     voz_facts, voz_spark = voz()
     mar_facts, mar_spark = marcos()
+    bib_facts = bibliotecas()
     ini_facts = inicio()
     for vid, by_lang in SPECS.items():
         (DATA / f"{vid}.json").write_text(json.dumps(by_lang, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -968,7 +1141,7 @@ def main():
     facts = {"mcp_version": version("parlaibero-mcp"),
              "versions": {c["iso"]: c["downloaded"]["version"] for c in J("Z1_list")["countries"]},
              "tools": n_tools, "corpus": ini_facts, "feminicidio": fem_totals, "pandemia": pan_facts, "voz": voz_facts,
-             "marcos": mar_facts}
+             "marcos": mar_facts, "bibliotecas": bib_facts}
     (DATA / "facts.json").write_text(json.dumps(facts, ensure_ascii=False, indent=1))
     print(f"{len(SPECS)} charts, {sum(len(v) for v in TABLES.values())} tables, {n_tools} tools")
     if "--show" in sys.argv:

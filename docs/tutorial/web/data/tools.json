@@ -376,6 +376,12 @@
        "section": "1",
        "es": "Pandemia § 1",
        "en": "Pandemic § 1"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "3",
+       "es": "Bibliotecas § 3",
+       "en": "Libraries § 3"
       }
      ],
      "summary": {
@@ -657,6 +663,12 @@
        "section": "3",
        "es": "Marcos § 3",
        "en": "Frames § 3"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "8",
+       "es": "Bibliotecas § 8",
+       "en": "Libraries § 8"
       }
      ],
      "summary": {
@@ -757,6 +769,24 @@
        "section": "4",
        "es": "Marcos § 4",
        "en": "Frames § 4"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "3",
+       "es": "Bibliotecas § 3",
+       "en": "Libraries § 3"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "5",
+       "es": "Bibliotecas § 5",
+       "en": "Libraries § 5"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "8",
+       "es": "Bibliotecas § 8",
+       "en": "Libraries § 8"
       }
      ],
      "summary": {
@@ -1137,6 +1167,24 @@
        "section": "1",
        "es": "Marcos § 1",
        "en": "Frames § 1"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "4",
+       "es": "Bibliotecas § 4",
+       "en": "Libraries § 4"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "6",
+       "es": "Bibliotecas § 6",
+       "en": "Libraries § 6"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "9",
+       "es": "Bibliotecas § 9",
+       "en": "Libraries § 9"
       }
      ],
      "summary": {
@@ -1164,6 +1212,18 @@
        "section": "3",
        "es": "Pandemia § 3",
        "en": "Pandemic § 3"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "5",
+       "es": "Bibliotecas § 5",
+       "en": "Libraries § 5"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "7",
+       "es": "Bibliotecas § 7",
+       "en": "Libraries § 7"
       }
      ],
      "summary": {
@@ -1210,7 +1270,14 @@
        "description": "note: tags attached to the intervention"
       }
      ],
-     "used_in": [],
+     "used_in": [
+      {
+       "page": "bibliotecas",
+       "section": "7",
+       "es": "Bibliotecas § 7",
+       "en": "Libraries § 7"
+      }
+     ],
      "summary": {
       "es": "Añade o quita intervenciones a mano, o les pone notas y etiquetas.",
       "en": "Adds or removes interventions by hand, or attaches notes and tags."
@@ -1250,7 +1317,20 @@
        "description": ""
       }
      ],
-     "used_in": [],
+     "used_in": [
+      {
+       "page": "bibliotecas",
+       "section": "4",
+       "es": "Bibliotecas § 4",
+       "en": "Libraries § 4"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "9",
+       "es": "Bibliotecas § 9",
+       "en": "Libraries § 9"
+      }
+     ],
      "summary": {
       "es": "Une, cruza o resta dos bibliotecas.",
       "en": "Joins, intersects or subtracts two libraries."
@@ -1286,6 +1366,12 @@
       }
      ],
      "used_in": [
+      {
+       "page": "bibliotecas",
+       "section": "10",
+       "es": "Bibliotecas § 10",
+       "en": "Libraries § 10"
+      },
       {
        "page": "index",
        "section": "5",
@@ -1342,7 +1428,14 @@
        "description": "Library name (case-insensitive)"
       }
      ],
-     "used_in": [],
+     "used_in": [
+      {
+       "page": "bibliotecas",
+       "section": "10",
+       "es": "Bibliotecas § 10",
+       "en": "Libraries § 10"
+      }
+     ],
      "summary": {
       "es": "Rehace una biblioteca sobre una edición nueva de los datos.",
       "en": "Rebuilds a library on a new edition of the data."
@@ -1367,7 +1460,14 @@
        "description": "Must be true: deleting cannot be undone"
       }
      ],
-     "used_in": [],
+     "used_in": [
+      {
+       "page": "bibliotecas",
+       "section": "10",
+       "es": "Bibliotecas § 10",
+       "en": "Libraries § 10"
+      }
+     ],
      "summary": {
       "es": "Borra una biblioteca (los datos no se tocan); sin confirmar, solo avisa.",
       "en": "Deletes a library (the data are untouched); without confirming, it only warns."
@@ -1844,6 +1944,24 @@
        "section": "1",
        "es": "Marcos § 1",
        "en": "Frames § 1"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "7",
+       "es": "Bibliotecas § 7",
+       "en": "Libraries § 7"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "8",
+       "es": "Bibliotecas § 8",
+       "en": "Libraries § 8"
+      },
+      {
+       "page": "bibliotecas",
+       "section": "9",
+       "es": "Bibliotecas § 9",
+       "en": "Libraries § 9"
       }
      ],
      "summary": {

@@ -49,6 +49,10 @@ una vez.
 >
 > *El agente usa* `la_herramienta` (`parámetro=valor`) y lee el resultado.
 
+Si nunca has hecho una biblioteca, empieza por la guía [Una biblioteca desde cero](es/bibliotecas.md). Construye una
+paso a paso, de la pregunta a la lista de comprobación: cuándo hace falta, cómo se prueban las palabras y el umbral,
+cómo se lee una muestra en cada cámara y qué se hace cuando la primera definición falla.
+
 ## 2. Qué hay en la base
 
 > **Pide:** «¿Qué parlamentos tiene ParlaIbero y cuáles tengo descargados?»
@@ -121,7 +125,8 @@ estudio suele seguir este camino:
 3. ¿Dónde se concentra? (`term_frequency`, `get_session`)
 4. ¿Qué se dice exactamente? (`kwic`, `collocations`, `search_text`, `get_intervention`)
 5. ¿Quién habla, y qué distingue a los grupos? (`share_of_voice`, `distinctive_words`)
-6. Un subconjunto para estudiarlo a fondo (`library_create`, `library_describe`)
+6. Un subconjunto para estudiarlo a fondo (`library_create`, `library_describe`), paso a paso en la [guía de
+   bibliotecas](es/bibliotecas.md)
 7. Temas, actores y menciones (`cooccurrence_network`, `comention_network`, `mention_network`)
 8. Lo que ninguna herramienta hace (`query_sql`)
 9. Cerrar el estudio: exportar, registrar y citar (`export_result`, `library_export`, `query_log`, `how_to_cite`)
@@ -132,7 +137,7 @@ antes del siguiente, que es donde aparecen los problemas. La [página de herrami
 
 ## 4. Antes de creer un resultado
 
-Los cuatro estudios encuentran trece trampas. Ninguna es un error del agente: son propiedades de las actas, de los
+Los cuatro estudios y la guía de bibliotecas encuentran quince trampas. Ninguna es un error del agente: son propiedades de las actas, de los
 registros y de las medidas, y cada una tiene su comprobación.
 
 - **El corpus empieza tarde.** El primer uso es el del corpus, no el del país. [Feminicidio, § 1](es/feminicidio.md#1-cuántas-veces-y-desde-cuándo)
@@ -148,6 +153,8 @@ registros y de las medidas, y cada una tiene su comprobación.
 - **La lengua antes que el tema.** Las listas de palabras comparan lenguas y estilos. [Voz, § 4](es/voz.md#4-españa-y-sus-lenguas) y [pandemia, § 4](es/pandemia.md#4-de-qué-habló-cada-cámara)
 - **Etiquetas, fronteras y huecos del registro.** Federaciones de un mismo partido, el día en que cambia la legislatura, años incompletos. [Voz, § 5](es/voz.md#5-españa-por-partido-etiquetas-y-fronteras)
 - **Contar un marco no es adoptarlo, y un nombre no es una persona.** [Marcos, § 4](es/marcos.md#4-privilégios-un-marco-dos-usos) y [§ 6](es/marcos.md#6-quién-nombra-a-quién-el-homónimo)
+- **Una definición que vale en tres cámaras falla en la cuarta.** Lee una muestra en cada cámara por separado. [Bibliotecas, § 5](es/bibliotecas.md#5-describir-y-leer-una-muestra-en-cada-cámara)
+- **Precisa no es completa.** Una definición sin ruido puede dejar fuera dos tercios del tema: la cobertura se mide leyendo lo que queda fuera. [Bibliotecas, § 9](es/bibliotecas.md#9-más-allá-de-las-palabras-clave)
 
 ## 5. Cerrar un estudio
 

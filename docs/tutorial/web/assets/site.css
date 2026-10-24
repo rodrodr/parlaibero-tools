@@ -198,6 +198,7 @@ td code { font-size: .8rem; }
 .viz-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .viz-legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
 .viz-legend i.dot { width: 9px; height: 9px; border-radius: 50%; }
+.viz-legend i.dash { height: 0; border-radius: 0; border-top: 2px dashed; background: none; }
 .viz-tip { position: absolute; pointer-events: none; z-index: 5; background: var(--fg); color: var(--bg); font-size: .78rem; line-height: 1.4; padding: 7px 10px; border-radius: 6px; max-width: 260px; opacity: 0; transition: opacity .12s; white-space: nowrap; }
 .viz-tip.on { opacity: 1; }
 .viz-tip b { font-weight: 600; }

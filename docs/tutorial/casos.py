@@ -105,6 +105,81 @@ FROM interventions
 WHERE country = 'ES' AND dm_speech = 1 AND date >= DATE '2019-01-01'
   AND regexp_matches(lower(text), '\\b(perquè|máis)\\b')
 GROUP BY 1 ORDER BY 1"""
+FOUR = ["CO", "PE", "EC", "CL"]
+MIGRA = "migrante*, migraci*, migratori*, inmigra*, refugiad*"
+MIGRA_RX = r"\b(migrante|migraci|migratori|inmigra|refugiad)"
+# a migration word and «venezolano» in the same sentence (no full stop, colon, semicolon, ? or ! between them)
+SENTENCE_RX = (r"(?i)\b(migrante|migraci|migratori|inmigra|refugiad)[^.;:?!]{0,200}\bvenezolan"
+               r"|\bvenezolan[^.;:?!]{0,200}\b(migrante|migraci|migratori|inmigra|refugiad)")
+READINGS_SQL = """
+SELECT id_int FROM interventions
+WHERE country IN ('CO', 'PE', 'EC', 'CL') AND n_words > 10000 AND regexp_matches(speaker_raw, '(?i)secretari')"""
+LONG_SQL = """
+SELECT i.country, i.date, i.n_words, i.speaker_raw
+FROM lib.library_items li
+JOIN lib.libraries l ON l.id = li.library_id
+JOIN interventions i ON i.country = li.country AND i.id_int = li.id_int
+WHERE l.name = 'migracion_venezolana' AND i.n_words > 10000
+ORDER BY 1, 2"""
+SESSIONS_SQL = """
+SELECT li.country, i.id_session, min(i.date) AS date, count(*) AS interventions
+FROM lib.library_items li
+JOIN lib.libraries l ON l.id = li.library_id
+JOIN interventions i ON i.country = li.country AND i.id_int = li.id_int
+WHERE l.name = 'migracion_venezolana'
+GROUP BY 1, 2
+QUALIFY row_number() OVER (PARTITION BY li.country ORDER BY count(*) DESC, min(i.date)) <= 3
+ORDER BY 1, 4 DESC"""
+LIB_YEARS_SQL = """
+WITH lib AS (
+  SELECT l.name AS library, li.country, year(i.date) AS year, count(*) AS items
+  FROM lib.library_items li
+  JOIN lib.libraries l ON l.id = li.library_id
+  JOIN interventions i ON i.country = li.country AND i.id_int = li.id_int
+  WHERE l.name IN ('migracion_y_venezuela', 'migracion_venezolana')
+  GROUP BY 1, 2, 3),
+base AS (
+  SELECT country, year(date) AS year, count(DISTINCT id_session) AS sessions, count(*) AS interventions
+  FROM interventions
+  WHERE dm_speech = 1 AND country IN ('CO', 'PE', 'EC', 'CL') AND date >= DATE '2015-01-01'
+  GROUP BY 1, 2)
+SELECT n.library, b.country, b.year, b.sessions, b.interventions, coalesce(lib.items, 0) AS items,
+       round(1000.0 * coalesce(lib.items, 0) / b.interventions, 2) AS per_1000
+FROM base b
+CROSS JOIN (VALUES ('migracion_y_venezuela'), ('migracion_venezolana')) n(library)
+LEFT JOIN lib ON lib.library = n.library AND lib.country = b.country AND lib.year = b.year
+ORDER BY 1, 2, 3"""
+# the debates of the topic: in the sittings with three or more interventions of the library, everything between the
+# first and the last, without the chair; what the library leaves out there is read to measure its coverage
+CONTEXT_SQL = """
+WITH items AS (
+  SELECT i.country, i.id_session, i.id_int, i.intervention_order
+  FROM lib.library_items li
+  JOIN lib.libraries l ON l.id = li.library_id
+  JOIN interventions i ON i.country = li.country AND i.id_int = li.id_int
+  WHERE l.name = 'migracion_venezolana'),
+debates AS (
+  SELECT country, id_session, min(intervention_order) AS first, max(intervention_order) AS last
+  FROM items GROUP BY 1, 2 HAVING count(*) >= 3),
+outside AS (
+  SELECT i.* FROM interventions i
+  JOIN debates d ON i.country = d.country AND i.id_session = d.id_session
+   AND i.intervention_order BETWEEN d.first AND d.last
+  WHERE i.dm_speech = 1 AND NOT regexp_matches(coalesce(i.speaker_raw, ''), '(?i)presid')
+    AND i.id_int NOT IN (SELECT id_int FROM items))
+"""
+CONTEXT_COUNT_SQL = CONTEXT_SQL + """SELECT o.country, count(DISTINCT o.id_session) AS sessions,
+       (SELECT count(*) FROM items i JOIN debates d ON i.country = d.country AND i.id_session = d.id_session
+        WHERE i.country = o.country) AS in_library,
+       count(*) AS outside, count(*) FILTER (WHERE o.n_words >= 50) AS outside_50_words_or_more,
+       count(*) FILTER (WHERE regexp_matches(o.text, '(?i)venezolan|venezuela')) AS outside_naming_venezuela
+FROM outside o GROUP BY 1 ORDER BY 1"""
+CONTEXT_SAMPLE_SQL = CONTEXT_SQL + """SELECT country, date, id_int, n_words, text
+FROM outside
+QUALIFY row_number() OVER (PARTITION BY country ORDER BY md5(id_int)) <= 20
+ORDER BY 1, 2"""
+# words of the debate that the definition does not contain (from G12), each tested in its chamber
+NEW_WORDS = [("colchane", "CL", "colchane"), ("movilidad", "EC", "movilidad humana"), ("extranjeros", "PE", "extranjero*")]
 LIB_MONTHS_SQL = """
 SELECT strftime(i.date, '%Y-%m') AS month, count(*) AS interventions, count(DISTINCT i.id_session) AS sessions
 FROM lib.library_items li
@@ -234,6 +309,94 @@ STEPS = [
     ("Z1_list", "list_countries", {}),
     ("Z2_coverage", "coverage", {"countries": ["AR", "ES", "UY", "MX"], "by": "year", "date_from": "2022-01-01",
                                  "date_to": "2023-12-31"}),
+    # ---- G. a library from scratch (the guide): Venezuelan migration in four chambers since 2015
+    ("G1_terms", "term_counter", {"terms": MIGRA + ", desplazad*, venezolan*+venezuela", "countries": FOUR,
+                                  "date_from": "2015-01-01"}),
+    # G1 brings three surprises, read before defining anything: «desplazados» in Colombia, «venezolanos» alone, and
+    # three and a half times more «migrantes» in Ecuador than in Chile
+    ("G2_kwic_desplazad", "kwic", {"pattern": "desplazad*", "countries": ["CO"], "date_from": "2015-01-01", "n": 12,
+                                   "width": 90}),
+    ("G2_kwic_venez", "kwic", {"pattern": "venezolan*", "countries": FOUR, "date_from": "2015-01-01", "n": 16,
+                               "width": 90}),
+    ("G2_kwic_migrante_EC", "kwic", {"pattern": "migrante*", "countries": ["EC"], "date_from": "2015-01-01", "n": 12,
+                                     "width": 90}),
+    *[(f"G3_migra_{k}", "library_create", {"name": name, "countries": FOUR, "terms": MIGRA, "min_occurrences": k,
+                                           "date_from": "2015-01-01", "exclude_chair": True, "label": "migración",
+                                           "description": f"Migración: {k} o más menciones, desde 2015"})
+      for k, name in [(1, "migracion_1"), (2, "migracion"), (3, "migracion_3")]],
+    ("G4_once", "library_combine", {"name": "una_mencion", "a": "migracion_1", "b": "migracion", "op": "difference"}),
+    ("G4_kwic_once", "kwic", {"pattern": MIGRA_RX, "regex": True, "library": "una_mencion", "n": 20, "width": 90}),
+    ("G5_venez", "library_create", {"name": "venezuela", "countries": FOUR, "terms": "venezolan*+venezuela",
+                                    "date_from": "2015-01-01", "exclude_chair": True, "label": "Venezuela",
+                                    "description": "Venezuela o venezolanos, desde 2015"}),
+    ("G6_combine", "library_combine", {"name": "migracion_y_venezuela", "a": "migracion", "b": "venezuela",
+                                       "op": "intersection",
+                                       "description": "Migración (2 o más menciones) y Venezuela en la misma intervención"}),
+    ("G7_describe", "library_describe", {"name": "migracion_y_venezuela"}),
+    # where and how Venezuela is named in each sampled intervention (all of them talk of migration twice or more)
+    *[(f"G8_kwic_{c}", "kwic", {"pattern": r"\b(venezolan|venezuela)", "regex": True,
+                                "library": "migracion_y_venezuela", "countries": [c], "n": 20, "width": 90})
+      for c in FOUR],
+    # read by hand, of the 20 sampled in each chamber, those that talk about Venezuelan migrants: CL 16, CO 17, PE 18,
+    # EC 6 (G10, same test: CL 20, CO 20, PE 20, EC 19); the samples depend on seed=1 and on the library, so a new
+    # edition of the data needs a new reading
+    # after reading G8: in Ecuador most interventions speak of Ecuadorians abroad and name Venezuela elsewhere (a list
+    # of countries, a treaty), so the second definition asks for both words in the same sentence
+    ("G9_sentence", "library_create", {"name": "migracion_venezolana", "countries": FOUR, "terms": SENTENCE_RX,
+                                       "regex": True, "date_from": "2015-01-01", "exclude_chair": True,
+                                       "label": "migración venezolana",
+                                       "description": "Una palabra de migración y «venezolano» en la misma frase, "
+                                                      "desde 2015"}),
+    *[(f"G10_kwic_{c}", "kwic", {"pattern": SENTENCE_RX, "regex": True, "library": "migracion_venezolana",
+                                 "countries": [c], "n": 20, "width": 60}) for c in FOUR],
+    # library_describe (G9) gives Ecuador's long turns 87.6 % of the part's words: reading them, the eight are reports
+    # read out by the secretary (they go), and Peru's two are speeches of the executive (they stay)
+    ("G10a_long", "query_sql", {"sql": LONG_SQL}),
+    ("G10b_remove", "library_edit", {"name": "migracion_venezolana", "action": "remove", "sql": READINGS_SQL}),
+    ("G10c_note", "library_edit", {"name": "migracion_venezolana", "action": "note", "id_ints": ["CO006001600043"],
+                                   "note": "Proposición que crea la comisión accidental de seguimiento a la crisis "
+                                           "migratoria venezolana",
+                                   "tags": ["hito", "comisión accidental"]}),
+    ("G10d_describe", "library_describe", {"name": "migracion_venezolana"}),
+    ("G11_years", "query_sql", {"sql": LIB_YEARS_SQL, "max_rows": 200}),
+    # G11: one year can be one session; and Colombia's part almost vanishes from 2022: what is said of Venezuela then
+    ("G11b_sessions", "query_sql", {"sql": SESSIONS_SQL}),
+    ("G11c_kwic_CO", "kwic", {"pattern": "venezolan*", "countries": ["CO"], "date_from": "2022-07-20", "n": 15,
+                              "width": 80}),
+    *[(f"G12_dist_{c}", "distinctive_words", {"field": "library", "a": "migracion_venezolana", "countries": [c],
+                                              "date_from": "2015-01-01", "exclude_chair": True,
+                                              "max_turn_words": 10000, "top": 40}) for c in FOUR],
+    # G12 brings «gc898» and «corrigió» among Colombia's words: how many interventions use them?
+    ("G12b_kwic_gc898", "kwic", {"pattern": "gc898", "library": "migracion_venezolana", "n": 5, "width": 70}),
+    ("G13_rebuild", "library_rebuild", {"name": "migracion_venezolana"}),
+    ("G14_export", "library_export", {"name": "migracion_venezolana", "folder": str(OUT / "explorador_migracion"),
+                                      "table_format": "csv", "overwrite": True}),
+    ("G15_delete_dry", "library_delete", {"name": "migracion_1"}),
+    *[(f"G15_delete_{n}", "library_delete", {"name": n, "confirm": True}) for n in ["migracion_1", "migracion_3",
+                                                                                    "una_mencion"]],
+    # ---- beyond the keywords: what the library leaves out (the guide's § 9)
+    ("G16_context", "query_sql", {"sql": CONTEXT_COUNT_SQL}),
+    # G16b, G17c and G18b read by hand in three classes: talks about Venezuelan migrants and names them anywhere in the
+    # intervention / about migration without saying from where / another topic or procedure. The text shown is cut (900
+    # characters here, a kwic line there): those whose full text names Venezuela are read whole. Counts in
+    # web/datos.py, FUERA; a new edition needs a new reading
+    ("G16b_context_sample", "query_sql", {"sql": CONTEXT_SAMPLE_SQL, "max_rows": 100, "max_cell_chars": 900}),
+    *[step for name, c, terms in NEW_WORDS for step in [
+        (f"G17_{name}", "library_create", {"name": name, "countries": [c], "terms": terms, "date_from": "2015-01-01",
+                                           "exclude_chair": True}),
+        (f"G17b_{name}_fuera", "library_combine", {"name": f"{name}_fuera", "a": name, "b": "migracion_venezolana",
+                                                   "op": "difference"}),
+        (f"G17c_{name}_kwic", "kwic", {"pattern": terms, "library": f"{name}_fuera", "n": 20, "width": 120}),
+        # a ceiling that needs no reading: speaking of Venezuelan migrants takes naming them
+        (f"G17d_{name}_venez", "library_combine", {"name": f"{name}_venez", "a": f"{name}_fuera", "b": "venezuela",
+                                                   "op": "intersection"})]],
+    ("G18_lost", "library_combine", {"name": "perdidas", "a": "migracion_y_venezuela", "b": "migracion_venezolana",
+                                     "op": "difference"}),
+    ("G18b_lost_kwic_CL", "kwic", {"pattern": r"\b(venezolan|venezuela)", "regex": True, "library": "perdidas",
+                                   "countries": ["CL"], "n": 20, "width": 120}),
+    *[(f"G19_delete_{n}", "library_delete", {"name": n, "confirm": True})
+      for name, _, _ in NEW_WORDS for n in (name, f"{name}_fuera", f"{name}_venez")],
+    ("G19_delete_perdidas", "library_delete", {"name": "perdidas", "confirm": True}),
 ]
 
 
@@ -248,6 +411,11 @@ async def main() -> None:
             continue
         if key == "D9b_minister" and not MINISTER_ALIASES:
             continue
+        if key.startswith("G") and tool in ("library_create", "library_combine"):   # a rerun starts clean
+            try:
+                await server._server.call_tool("library_delete", {"name": args["name"], "confirm": True})
+            except Exception:
+                pass
         t0 = time.time()
         try:
             r = await server._server.call_tool(tool, args)

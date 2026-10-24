@@ -48,6 +48,10 @@ will vary; the data will not. At the end of each study there is a request that a
 >
 > *The agent uses* `the_tool` (`parameter=value`) and reads the result.
 
+If you have never made a library, start with the guide [A library from scratch](en/bibliotecas.md). It builds one step
+by step, from the question to the checklist: when you need one, how to test the words and the threshold, how to read a
+sample in each chamber and what to do when the first definition fails.
+
 ## 2. What is in the database
 
 > **Ask:** "Which parliaments does ParlaIbero have, and which have I downloaded?"
@@ -118,7 +122,8 @@ this path:
 3. Where is it concentrated? (`term_frequency`, `get_session`)
 4. What exactly is said? (`kwic`, `collocations`, `search_text`, `get_intervention`)
 5. Who speaks, and what sets the groups apart? (`share_of_voice`, `distinctive_words`)
-6. A subset to study in depth (`library_create`, `library_describe`)
+6. A subset to study in depth (`library_create`, `library_describe`), step by step in the [libraries
+   guide](en/bibliotecas.md)
 7. Themes, actors and mentions (`cooccurrence_network`, `comention_network`, `mention_network`)
 8. What no tool does (`query_sql`)
 9. Closing the study: export, log and cite (`export_result`, `library_export`, `query_log`, `how_to_cite`)
@@ -129,7 +134,7 @@ parameters and an example request.
 
 ## 4. Before believing a result
 
-The four studies run into thirteen traps. None is an error of the agent: they are properties of the records, of the
+The four studies and the libraries guide run into fifteen traps. None is an error of the agent: they are properties of the records, of the
 registers and of the measures, and each one has its check.
 
 - **The corpus starts late.** The first use is the corpus's, not the country's. [Femicide, § 1](en/feminicidio.md#1-how-many-times-and-since-when)
@@ -145,6 +150,8 @@ registers and of the measures, and each one has its check.
 - **Language before topic.** Word lists compare languages and styles. [Voice, § 4](en/voz.md#4-spain-and-its-languages) and [Pandemic, § 4](en/pandemia.md#4-what-each-chamber-talked-about)
 - **Labels, boundaries and gaps in the register.** Federations of the same party, the day the legislature changes, incomplete years. [Voice, § 5](en/voz.md#5-spain-by-party-labels-and-boundaries)
 - **Counting a frame is not adopting it, and a name is not a person.** [Frames, § 4](en/marcos.md#4-privilégios-one-frame-two-uses) and [§ 6](en/marcos.md#6-who-names-whom-the-namesake)
+- **A definition that works in three chambers fails in the fourth.** Read a sample in each chamber on its own. [Libraries, § 5](en/bibliotecas.md#5-describe-and-read-a-sample-in-each-chamber)
+- **Precise is not complete.** A definition without noise can leave two thirds of the topic outside: coverage is measured by reading what is left out. [Libraries, § 9](en/bibliotecas.md#9-beyond-the-keywords)
 
 ## 5. Closing a study
 

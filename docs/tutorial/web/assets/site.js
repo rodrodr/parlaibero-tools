@@ -57,11 +57,11 @@
     const yMaxShared = d3.max(all) || 1;
     s.panels.forEach(p => {
       const box = document.createElement('div'); grid.appendChild(box);
-      const peak = d3.max(p.points, q => q[1]) || 0;
+      const peak = d3.max(p.points, q => q[1]) || 0, top = d3.max([...p.points, ...(p.points2 || [])], q => q[1]) || 0;
       box.innerHTML = `<div class="panel-h"><b>${p.label}</b><span>${p.sub || (s.peak_label ? s.peak_label + ' ' + fmtNum(peak, s.digits ?? 1) : '')}</span></div>`;
       const W = 200, H = 74, m = { t: 6, r: 4, b: 16, l: 4 };
       const x = d3.scaleLinear().domain(s.x_domain).range([m.l, W - m.r]);
-      const y = d3.scaleLinear().domain([0, s.y_shared ? yMaxShared : (peak || 1)]).range([H - m.b, m.t]);
+      const y = d3.scaleLinear().domain([0, s.y_shared ? yMaxShared : (top || 1)]).range([H - m.b, m.t]);
       const svg = d3.select(box).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img')
         .attr('aria-label', `${p.label}: ${s.aria || ''}`);
       svg.append('line').attr('class', 'grid').attr('x1', m.l).attr('x2', W - m.r).attr('y1', H - m.b).attr('y2', H - m.b).style('stroke', 'var(--axis)');
@@ -271,7 +271,7 @@
     body.dataset.w = String(w); body.innerHTML = '';
     if (spec.legend) {
       const lg = document.createElement('div'); lg.className = 'viz-legend';
-      lg.innerHTML = spec.legend.map(l => `<span><i class="${l.dot ? 'dot' : ''}" style="${l.hollow ? `border:2px solid ${col(l.color)};background:var(--sheet)` : `background:${col(l.color)}`}"></i>${l.label}</span>`).join('');
+      lg.innerHTML = spec.legend.map(l => `<span><i class="${l.dot ? 'dot' : l.dash ? 'dash' : ''}" style="${l.hollow ? `border:2px solid ${col(l.color)};background:var(--sheet)` : l.dash ? `border-top-color:${col(l.color)}` : `background:${col(l.color)}`}"></i>${l.label}</span>`).join('');
       body.appendChild(lg);
     }
     try { RENDER[spec.type](body, spec); } catch (e) { body.textContent = ''; console.error(e); }

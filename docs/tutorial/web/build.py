@@ -34,6 +34,7 @@ inline = md.renderInline
 
 PAGES = [  # slug, Spanish source, English source, nav label (es, en)
     ("index", "TUTORIAL.md", "TUTORIAL.en.md", "Inicio", "Home"),
+    ("bibliotecas", "es/bibliotecas.md", "en/bibliotecas.md", "Bibliotecas", "Libraries"),
     ("feminicidio", "es/feminicidio.md", "en/feminicidio.md", "Feminicidio", "Femicide"),
     ("pandemia", "es/pandemia.md", "en/pandemia.md", "Pandemia", "Pandemic"),
     ("voz", "es/voz.md", "en/voz.md", "Voz y escaños", "Voice and seats"),
