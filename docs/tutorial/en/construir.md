@@ -20,8 +20,8 @@ cd parlaibero-tools
 bash install_skills.sh
 ```
 
-It copies the skills to `~/.claude/skills` without touching those you already have (`--force` replaces them and keeps
-a copy). Then, in the project folder that will hold the data:
+It copies the skills to `~/.claude/skills`. If you already have any of them, it stops without touching them; `--force`
+replaces them and keeps a copy first. Then, in the project folder that will hold the data:
 
 ```bash
 bash ~/.claude/skills/diaries-lib/install.sh
@@ -169,9 +169,9 @@ cases, and you go on from the skill that stopped.
 
 The skills' full technical documentation, written during the construction and in Spanish only, details every
 confidence formula, every check and every stopping rule: the [index of the 21 skills](../../../skills/diaries-lib/docs/diaries_index.html)
-and the [procedure tree](../../../skills/diaries-lib/docs/pipeline_procedure_tree.html). Some parts describe the setup
-of whoever built the corpus or an earlier version of the skills; where they disagree, the `SKILL.md` files and the
-steps on this page prevail.
+and the [procedure tree](../../../skills/diaries-lib/docs/pipeline_procedure_tree.html). They keep references to the
+project the corpus was built in, such as scripts that are not in the repository; where something disagrees, the
+`SKILL.md` files prevail.
 
 ## 6. The 21 cards
 

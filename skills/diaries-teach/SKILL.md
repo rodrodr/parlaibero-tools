@@ -89,10 +89,10 @@ PASO 2 — Configurar el país
 PASO 3 — Cadena de ingesta (por sesión)
 ─────────────────────────────────────────
 /diaries-ocr       → OCR con Ollama si formato es pdf_image
-/diaries-extract   → texto limpio + normalización Unicode
-/diaries-correct   → párrafos e hifenaciones (determinista + tú)
+/diaries-extract   → texto FIEL con marcadores de página (NO limpia: eso es de correct)
+/diaries-correct   → el único limpiador: cabeceros, hifenación, párrafos (determinista + tú)
 /diaries-meta      → fecha, nº sesión, tipo, presidencia por tramos  (lee extracted/, la capa fiel)
-/diaries-dedupe    → quita escaneos duplicados  ⚠ ANTES de tag, no después
+/diaries-dedupe    → pone en cuarentena las sesiones duplicadas  ⚠ ANTES de tag, no después
 /diaries-deputies  → opcional aquí: si hay pase de lista nominal, el padrón sale
                      de corrected/ y mejora el scoring de tag (--deputies)
 /diaries-tag       → etiqueta oradores ⚠ skill más crítico
@@ -116,6 +116,7 @@ PASO 5 — Finalización
 ───────────────────────
 /diaries-merge        → enriquece la matriz con datos del diputado
 /diaries-standardize  → esquema canónico (16 columnas)
+/diaries-validate     → mide por muestreo qué fracción está bien estructurada y atribuida
 /diaries-document     → genera metodología, diccionario, JSON-LD
 /diaries-report       → informe final del proceso
 ```
@@ -298,7 +299,7 @@ source/{iso2}/raw/  (PDF / HTML fuente)
          │
          ▼
   /diaries-extract ──────► source/{iso2}/extracted/{id}.txt
-  (texto limpio, NFC)
+  (texto FIEL, NO limpia)
          │
          ▼
   /diaries-correct ──────► source/{iso2}/corrected/{id}.txt

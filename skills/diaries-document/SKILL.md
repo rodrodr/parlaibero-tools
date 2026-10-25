@@ -206,11 +206,15 @@ las descuenta del denominador. `generate_docs.py` ya computa las dos (`match_rat
 siempre `--matching-table` y verifica que el README enuncia las dos cifras, no solo la bruta —
 [[feedback_vinculacion_efectiva]].
 
-**Puerta hermana y principio de sincronía.** `docs/{iso2}/process_report.md` lo genera
+**Puerta hermana y principio de sincronía.** `docs/{iso2}/pipeline_report.md` lo genera
 `/diaries-report`: este skill documenta el CORPUS para el usuario final; aquel documenta el
-PROCESO — un corpus no está documentado hasta que existen ambos. Y la documentación **se
+PROCESO — un corpus no está documentado hasta que existen ambos. ⚠ No confundirlo con
+`process_report.md`, el informe público que produce la cadena del depósito
+(`actualizar_deposito.sh` → `generar_docs_en.py`): son dos documentos distintos y ninguno de los
+dos skills escribe el de la cadena (decisión `ar-0029`). Y la documentación **se
 regenera SIEMPRE entera y por una sola puerta** (este skill para README / data_dictionary /
-dataset.jsonld; `/diaries-report` para process_report.md): nunca se parchea a mano un archivo
+dataset.jsonld; `/diaries-report` para pipeline_report.md; la cadena del depósito para
+process_report.md): nunca se parchea a mano un archivo
 generado. El inglés y las traducciones son **renders paralelos** de la misma fuente
 (`corpus_info.json` + estadísticas), no padre e hijo: un cambio se aplica en la fuente y se
 re-renderizan todos — [[feedback_sincronia_documentacion]].

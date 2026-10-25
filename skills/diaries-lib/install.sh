@@ -3,12 +3,12 @@
 # ParlaIbero · diaries-* — Instalador de proyecto
 #
 # Prepara un proyecto: dependencias Python + estructura de directorios, y verifica
-# que los 18 skills diaries-* estén disponibles.
+# que los 21 skills diaries-* estén disponibles.
 #
-# ⚠ Los SKILL.md NO viven en este repositorio. Son la ÚNICA FUENTE en
-#   ~/.claude/skills/diaries-*/ (versionados con git ahí, disponibles a cualquier
-#   harness). Se editan directamente allí (p.ej. vía /diaries-refine). Por eso este
-#   instalador NO copia ni sincroniza skills — solo verifica que estén presentes.
+# ⚠ Los SKILL.md que usa Claude Code viven en ~/.claude/skills/diaries-*/ y se editan
+#   directamente allí (p.ej. vía /diaries-refine). Este instalador NO copia ni
+#   sincroniza skills — solo verifica que estén presentes. Los copia ahí
+#   install_skills.sh, desde el repositorio parlaibero-tools.
 #
 # Uso:
 #   bash install.sh        prepara el proyecto y verifica los skills
@@ -27,7 +27,7 @@ LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # ~/.claude/skills/dia
 PROJECT_DIR="$PWD"                                         # proyecto = directorio actual (solo datos)
 SKILLS_DIR="$HOME/.claude/skills"
 
-# ── Listas de skills (fuente única en ~/.claude/skills/) ────────────────────────
+# ── Listas de skills (en ~/.claude/skills/) ─────────────────────────────────────
 # En ORDEN DE EJECUCION. ⚠ meta y dedupe van ANTES de tag: el Paso 0c de tag calibra su
 # inventario estructural sobre todo el corpus, y las sesiones duplicadas cuentan sus formas
 # de marcador DOS VECES. deputies es opcional aquí (solo si el acta trae pase de lista).
@@ -39,6 +39,7 @@ PIPELINE_SKILLS=(
 CONTROL_SKILLS=(
   "status" "review" "feedback" "report" "decide" "validate" "teach" "refine"
 )
+TOTAL=$(( ${#PIPELINE_SKILLS[@]} + ${#CONTROL_SKILLS[@]} ))
 
 # ── Cabecera ──────────────────────────────────────────────────────────────────
 echo ""
@@ -47,7 +48,7 @@ echo -e "${D}──────────────────────�
 echo -e "  Modo: preparación de proyecto (directorio actual)"
 echo -e "  Proyecto: ${D}${PROJECT_DIR}${NC}  (datos)"
 echo -e "  Código:   ${D}${LIB_DIR}${NC}"
-echo -e "  Skills:   ${D}${SKILLS_DIR}${NC}  (fuente única)"
+echo -e "  Skills:   ${D}${SKILLS_DIR}${NC}  (donde los usa Claude Code)"
 echo ""
 
 # ── 1. Python ─────────────────────────────────────────────────────────────────
@@ -78,8 +79,8 @@ else
   exit 1
 fi
 
-# ── 3. Verificar skills en ~/.claude/skills/ (NO se copian: fuente única) ───────
-step "Verificando skills diaries-* en ~/.claude/skills/ (fuente única)"
+# ── 3. Verificar skills en ~/.claude/skills/ (NO se copian aquí) ───────────────
+step "Verificando skills diaries-* en ~/.claude/skills/"
 PRESENT=0; MISSING=0; MISSING_NAMES=()
 
 check_skill() {
@@ -96,11 +97,11 @@ for skill in "${PIPELINE_SKILLS[@]}" "${CONTROL_SKILLS[@]}"; do
 done
 
 if [[ $MISSING -eq 0 ]]; then
-  ok "$PRESENT/18 skills presentes en $SKILLS_DIR"
+  ok "$PRESENT/$TOTAL skills presentes en $SKILLS_DIR"
 else
-  warn "$PRESENT/18 presentes — faltan: ${MISSING_NAMES[*]}"
-  warn "Los skills son la fuente única en ~/.claude/skills/ (versionada con git ahí)."
-  warn "Restaúralos desde ese repositorio global; este proyecto NO los contiene."
+  warn "$PRESENT/$TOTAL presentes — faltan: ${MISSING_NAMES[*]}"
+  warn "Claude Code los busca en ~/.claude/skills/; este proyecto NO los contiene."
+  warn "Instálalos desde el repositorio parlaibero-tools:  bash install_skills.sh"
 fi
 
 # ── 4. Estructura de directorios del proyecto (en el directorio actual) ────────
@@ -137,7 +138,7 @@ echo ""
 echo -e "${D}────────────────────────────────────────────────────────────────${NC}"
 echo -e "${G}Proyecto preparado${NC}"
 echo ""
-echo -e "  Skills diaries-* presentes: ${G}${PRESENT}${NC}/18"
+echo -e "  Skills diaries-* presentes: ${G}${PRESENT}${NC}/${TOTAL}"
 [[ $MISSING -gt 0 ]] && echo -e "  Faltan en ~/.claude/skills/: ${Y}${MISSING}${NC}"
 echo ""
 echo -e "  Próximo paso:"

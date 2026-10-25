@@ -18,8 +18,7 @@ The Markdown is the source and reads on its own in GitHub; the site adds what Ma
   > **Pídelo de una vez:** / **Ask for it all at once:**   one request for a whole study, with a copy button
   > [!NOTE] [!TIP] [!WARNING] [!IMPORTANT]                   callouts
 Both languages go into every page; the switch shows one. Needs the data written by datos.py (web/data, web/redes).
-The two pages of the skills' own documentation (skills/diaries-lib/docs) are copied into site/skills/, with the
-example names replaced (ANONYMISE).
+The two pages of the skills' own documentation (skills/diaries-lib/docs) are copied into site/skills/ as they are.
 """
 import html
 import json
@@ -56,9 +55,6 @@ NAV = [  # the bar, by door: (group label es, en), then each link: slug, section
                               ("construir", "6", "Skills", "Skills", ())]),
 ]
 ORIGINALS = ROOT / "skills" / "diaries-lib" / "docs"      # the skills' own documentation, published as it is
-ANONYMISE = {  # the site names no one, so an example name in those pages becomes a placeholder when copied
-    "pipeline_procedure_tree.html": [(r"iniciales expandidas \([^)]*\)", "iniciales expandidas (Nombre A. ↔ Nombre Apellido)")],
-}
 COUNTRIES = ["AR", "BR", "CL", "CO", "CR", "DO", "EC", "ES", "GT", "MX", "PA", "PE", "PT", "PY", "SV", "UY"]
 FACTS = json.loads((WEB / "data" / "facts.json").read_text(encoding="utf-8"))
 UI = {
@@ -688,12 +684,7 @@ def main():
         raise SystemExit(f"web/data/skills.json is out of date, run datos.py: {sorted(names ^ cards)}")
     (SITE / "skills").mkdir()
     for f in ORIGINALS.glob("*.html"):
-        text = f.read_text(encoding="utf-8")
-        for pattern, placeholder in ANONYMISE.get(f.name, []):
-            text, n = re.subn(pattern, placeholder, text)
-            if not n:
-                raise SystemExit(f"{f.name}: «{pattern}» not found, check the page for names by hand")
-        (SITE / "skills" / f.name).write_text(text, encoding="utf-8")
+        shutil.copy(f, SITE / "skills" / f.name)
         print(f"site/skills/{f.name}")
     for slug, es_src, en_src in PAGES:
         if not (DOCS / en_src).exists():

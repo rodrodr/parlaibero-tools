@@ -171,6 +171,8 @@
     <li><a href="#review">review<span class="lvl ctrl">ctrl</span></a></li>
     <li><a href="#feedback">feedback<span class="lvl ctrl">ctrl</span></a></li>
     <li><a href="#report">report<span class="lvl ctrl">ctrl</span></a></li>
+    <li><a href="#decide">decide<span class="lvl ctrl">ctrl</span></a></li>
+    <li><a href="#validate">validate<span class="lvl ctrl">ctrl</span></a></li>
     <li><a href="#teach">teach<span class="lvl ctrl">ctrl</span></a></li>
     <li><a href="#refine">refine<span class="lvl ctrl">ctrl</span></a></li>
   </ol>
@@ -686,7 +688,7 @@ si tasa_cobertura &lt; 0.80 → confianza = min(confianza, tasa_cobertura)</div>
           <div class="branches">
             <div class="br"><span class="cond">Pasada 1: fuzzy token_sort_ratio ≥ 85</span><span class="arr">→</span><span class="res">typos, acentos, OCR, orden de tokens</span></div>
             <div class="br"><span class="cond">Pasada 2: subconjunto de apellido + mismo nombre</span><span class="arr">→</span><span class="res">apellido completo vs primero (inter-legislatura)</span></div>
-            <div class="br"><span class="cond">Pasada 3: vecinos ±5 ordenados por apellido</span><span class="arr">→</span><span class="res">iniciales expandidas (Alfonso G. ↔ Alfonso González)</span></div>
+            <div class="br"><span class="cond">Pasada 3: vecinos ±5 ordenados por apellido</span><span class="arr">→</span><span class="res">iniciales expandidas (Nombre A. ↔ Nombre Apellido)</span></div>
             <div class="br"><span class="cond">par ambiguo</span><span class="arr">→</span><span class="res">presenta al usuario (partido/distrito/fechas) antes de fusionar</span></div>
           </div>
           <div class="note">Mismas filas con <b>mismo</b> id_dep en distintas legislaturas son correctas. Re-escanea tras cada ronda de fusión.</div>
@@ -949,7 +951,7 @@ vinculadas, has perdido trabajo: recupéralo del backup antes de continuar.</div
           <div class="br"><span class="cond">AMARILLO</span><span class="arr">→</span><span class="res">automatización ≥ 60% · HALTs ≤ 5% · confianza ≥ 0.75</span></div>
           <div class="br"><span class="cond">ROJO</span><span class="arr">→</span><span class="res">cualquier otra combinación</span></div>
         </div>
-        <div class="note">Incluye histogramas ASCII de confianza por skill e historial de correcciones (punctual/rule/strategy). Salida: <span class="mono">docs/{iso2}/process_report.md</span></div>
+        <div class="note">Incluye histogramas ASCII de confianza por skill e historial de correcciones (punctual/rule/strategy). Salida: <span class="mono">docs/{iso2}/pipeline_report.md</span> — interno; <b>nunca</b> <span class="mono">process_report.md</span>, que es el informe público de la cadena del depósito (decisión <code>ar-0029</code>)</div>
         <div class="note"><strong>Lee antes lo que registró <code>/diaries-decide</code></strong> (<span class="mono">decisions.jsonl</span>) en vez de reconstruir el razonamiento: cada entrada trae qué se decidió, qué se descartó, con qué evidencia y qué cambió.</div>
       </div></div>
     </details>
@@ -971,6 +973,56 @@ vinculadas, has perdido trabajo: recupéralo del backup antes de continuar.</div
       </div></div>
     </details>
 
+    <details class="skill" id="validate" open>
+      <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-validate</span><br><span class="stitle">Integridad estructural por muestreo + calibración de la tasa de fuga</span></span>
+        <span class="sbadges"><span class="badge">--country {iso2}</span><span class="badge">--n 300</span></span></summary>
+      <div class="sbody">
+        <div class="note crit">No dice si el pipeline terminó (eso es <code>/diaries-status</code>): dice si lo que produjo es correcto.
+        <b>Principio de independencia:</b> sus detectores no comparten código ni léxico con <code>correct</code>/<code>tag</code>;
+        un control que comparte léxico con su productor hereda sus puntos ciegos.</div>
+        <div class="block"><div class="lab">Paso 1 · Muestra ponderada por intervención + auto-filtro (<code>validate_structural.py</code>)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">trivialmente correcta según reglas deterministas</span><span class="arr">→</span><span class="res"><span class="out auto">PASS</span></span></div>
+            <div class="br"><span class="cond">cualquier sombra de duda</span><span class="arr">→</span><span class="res"><span class="out flag">FLAG</span> a revisión humana — el filtro separa la OBVIEDAD, no juzga la calidad</span></div>
+          </div>
+          <div class="formula">D1 pureza     ningún marcador de otro orador en text (buscado INLINE, nunca anclado a línea)
+D2 atribución mandato en la LEGISLATURA (no fecha exacta) · orador nombrado sin id_dep
+D3 carácter   sin glifos corrompidos (uso privado, carácter de reemplazo)
+la homonimia NO se marca: ya la adjudicó /diaries-match con revisión humana</div>
+        </div>
+        <div class="block"><div class="lab">Paso 2 · Calibración de la tasa de fuga — obligatoria (<code>prepare_leak_calibration.py</code>)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">200 filas PASS al azar, por igual entre países</span><span class="arr">→</span><span class="res">las revisa una persona; una fuga es un PASS con problema: un error silencioso</span></div>
+            <div class="br"><span class="cond">cuándo parar</span><span class="arr">→</span><span class="res">se declara la tasa medida con su intervalo; perseguir el «0 en 200» es una regresión infinita</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 3 · Triaje de los FLAG (<code>export_flags_review.py</code>)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">hueco de padrón: sin id_dep, sin mandato</span><span class="arr">→</span><span class="res">se resuelve solo (casi siempre, personas que no figuran en el padrón)</span></div>
+            <div class="br"><span class="cond">marcador ajeno · cadena de firmas · glifos corruptos</span><span class="arr">→</span><span class="res">revisión humana, con el contexto recortado alrededor del hallazgo</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 4 · Fechas contra la cabecera del acta (<code>audit_session_dates.py</code>)</div>
+          <div class="opts"><span class="opt">OK</span><span class="opt">FECHA_DISTINTA</span><span class="opt">OCR_CABECERA</span><span class="opt">CONFLADA</span><span class="opt">SIN_CABECERA</span></div>
+          <div class="branches">
+            <div class="br"><span class="cond">discrepancia</span><span class="arr">→</span><span class="res">NO manda automáticamente el acta: decide la cronología contra las sesiones vecinas</span></div>
+            <div class="br"><span class="cond">desfase CONSTANTE</span><span class="arr">→</span><span class="res">defecto del patrón, nunca de los datos</span></div>
+            <div class="br"><span class="cond">más de la mitad sin cabecera</span><span class="arr">→</span><span class="res">no es una cifra de calidad: el patrón no la encuentra</span></div>
+          </div>
+        </div>
+        <div class="block"><div class="lab">Paso 5 · Integridad de <code>intervention_order</code> (<code>check_order_integrity.py</code>)</div>
+          <div class="branches">
+            <div class="br"><span class="cond">hueco EXPLICADO</span><span class="arr">→</span><span class="res">Prolegomena en orden 0 · filas declaradas <code>dm_speech = 0</code> presentes en la matriz</span></div>
+            <div class="br"><span class="cond">hueco HUÉRFANO</span><span class="arr">→</span><span class="res">la posición no está en ninguna parte → fila perdida de verdad</span></div>
+          </div>
+        </div>
+        <div class="note">No usa AUTO/FLAG/HALT por confianza: el veredicto es determinista. <b>No corrige nada</b>: «sin mandato» y
+        «sin id_dep» no son instrucciones de borrado (la intervención se mantiene siempre), y una fecha mal derivada se arregla
+        reprocesando, no con un <code>UPDATE</code> sobre la matriz.</div>
+        <div class="block"><div class="lab">Salidas</div><span class="pathline">docs/validacion/{ISO2}_muestra.csv</span> <span class="pathline">docs/validacion/calibracion_fuga[_rondaN].csv</span> <span class="pathline">docs/validacion/revision_flags.csv</span> <span class="pathline">docs/{iso2}/auditoria_fechas.csv</span></div>
+      </div>
+    </details>
+
     <details class="skill" id="teach" open>
       <summary><span class="snum ctrl">C</span><span><span class="sname">diaries-teach</span><br><span class="stitle">Guía interactiva — 8 caminos</span></span></summary>
       <div class="sbody"><div class="block"><div class="lab">Caminos</div>
@@ -978,7 +1030,7 @@ vinculadas, has perdido trabajo: recupéralo del backup antes de continuar.</div
           <span class="opt">1 · qué es el sistema</span><span class="opt">2 · país nuevo desde cero</span>
           <span class="opt">3 · retomar pipeline</span><span class="opt">4 · problema con un skill</span>
           <span class="opt">5 · confianza AUTO/FLAG/HALT</span><span class="opt">6 · correcciones y propagación</span>
-          <span class="opt">7 · mapa completo de skills</span></div>
+          <span class="opt">7 · mapa completo de skills</span><span class="opt">8 · dejar constancia de una decisión</span></div>
       </div></div>
     </details>
 
@@ -995,7 +1047,7 @@ vinculadas, has perdido trabajo: recupéralo del backup antes de continuar.</div
     ParlaIbero · pipeline de diarios parlamentarios. Fuente: los <code>SKILL.md</code> en
     <code>~/.claude/skills/diaries-*</code>. Documento generado para visualización del árbol de procedimiento.
     Las rutas usan <code>{iso2}</code> en minúsculas y <code>{ISO2}</code> en mayúsculas.
-    Actualizado el 2026-08-23 conforme a los <code>SKILL.md</code> reparados (fuente de verdad).
+    Actualizado el 2026-08-23 conforme a los <code>SKILL.md</code> reparados (fuente de verdad); el 2026-10-25 se añadió <code>diaries-validate</code> y se corrigieron la salida de <code>diaries-report</code> y los caminos de <code>diaries-teach</code>.
   </div>
 </main>
 </div>

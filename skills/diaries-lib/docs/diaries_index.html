@@ -1893,9 +1893,9 @@ vinculadas, has perdido trabajo: recupéralo del backup antes de continuar.</div
 
       <div class="ctrl-card">
         <div class="ctrl-cmd"><span class="accent">/diaries-</span>report</div>
-        <p class="ctrl-desc">Genera el informe completo del proceso: línea temporal, distribuciones de confianza, historial de correcciones y tasa de automatización.</p>
+        <p class="ctrl-desc">Genera el informe interno del proceso: línea temporal, distribuciones de confianza, historial de correcciones y tasa de automatización. Escribe <code>pipeline_report.md</code>, <strong>nunca</strong> <code>process_report.md</code>: ese es el informe público que produce la cadena del depósito (decisión <code>ar-0029</code>).</p>
         <pre class="ctrl-usage">/diaries-report --country {iso2}
-# Salida: docs/{iso2}/process_report.md</pre>
+# Salida: docs/{iso2}/pipeline_report.md</pre>
       </div>
 
       <div class="ctrl-card" style="border-color: var(--accent-subtle);">
@@ -1926,7 +1926,7 @@ python3 scripts/generar_metodologia.py
 
       <div class="ctrl-card" style="border-color: var(--accent-subtle); background: oklch(98.5% 0.006 24);">
         <div class="ctrl-cmd"><span class="accent">/diaries-</span>refine</div>
-        <p class="ctrl-desc">Mejora un skill a partir de una observación de testing real. Edita el SKILL.md en el repositorio, sincroniza a <code>~/.claude/skills/</code> y registra el cambio en <code>REFINEMENTS.md</code>.</p>
+        <p class="ctrl-desc">Mejora un skill a partir de una observación de testing real. Edita directamente el SKILL.md en <code>~/.claude/skills/</code>, donde el cambio queda activo de inmediato, y lo registra en <code>REFINEMENTS.md</code>.</p>
         <pre class="ctrl-usage">/diaries-refine --skill diaries-tag \
   --issue "Los patrones multi-línea no se detectan"
 
@@ -2062,20 +2062,22 @@ python3 scripts/generar_metodologia.py
         <div class="install-step">
           <div class="install-step-label">
             <span class="install-num">1</span>
-            <span class="install-step-title">Clonar el repositorio</span>
+            <span class="install-step-title">Instalar los skills</span>
           </div>
-          <p class="install-step-desc">El repositorio incluye las utilidades Python y el instalador. Los 21 skills se mantienen aparte, en <code>~/.claude/skills/</code> (fuente única, versionada con git ahí).</p>
-          <pre class="install-code">git clone &lt;repo-url&gt; diaries<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
+          <p class="install-step-desc">Los 21 skills y su biblioteca (<code>diaries-lib</code>) se publican en el repositorio parlaibero-tools. <code>install_skills.sh</code> los copia a <code>~/.claude/skills/</code>, la ruta desde la que los llama Claude Code. Si ya tienes alguno, se detiene sin tocarlo; <code>--force</code> los sustituye y guarda antes una copia.</p>
+          <pre class="install-code">git clone https://github.com/rodrodr/parlaibero-tools.git
+cd parlaibero-tools
+bash install_skills.sh<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
         </div>
 
         <div class="install-step">
           <div class="install-step-label">
             <span class="install-num">2</span>
-            <span class="install-step-title">Ejecutar el instalador</span>
+            <span class="install-step-title">Preparar el proyecto</span>
           </div>
-          <p class="install-step-desc">Un único script instala las dependencias Python, verifica que los 21 skills estén en <code>~/.claude/skills/</code> y crea la estructura de directorios.</p>
-          <pre class="install-code">cd diaries
-bash install.sh<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
+          <p class="install-step-desc">En la carpeta que vaya a contener los datos, un único script instala las dependencias Python, verifica que los 21 skills estén en <code>~/.claude/skills/</code> y crea la estructura de directorios.</p>
+          <pre class="install-code">mkdir mi-corpus &amp;&amp; cd mi-corpus
+bash ~/.claude/skills/diaries-lib/install.sh<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
         </div>
 
         <div class="install-step">
@@ -2083,13 +2085,14 @@ bash install.sh<button class="copy-btn" onclick="copyCode(this)">Copiar</button>
             <span class="install-num">3</span>
             <span class="install-step-title">Empezar</span>
           </div>
-          <p class="install-step-desc">Abre Claude Code desde el directorio del repositorio y ejecuta la guía interactiva.</p>
-          <pre class="install-code">/diaries-teach<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
+          <p class="install-step-desc">Copia las fuentes en <code>source/{iso2}/raw/</code>, abre Claude Code desde la carpeta del proyecto y ejecuta la guía interactiva, o configura directamente el país.</p>
+          <pre class="install-code">/diaries-teach
+/diaries-bootstrap --country {iso2}<button class="copy-btn" onclick="copyCode(this)">Copiar</button></pre>
         </div>
 
         <div style="background: var(--bg-alt); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s4) var(--s6); font-size: 13px; display: flex; flex-direction: column; gap: var(--s3);">
-          <p style="font-family: var(--ff-display); font-weight: 600; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint);">Skills · fuente única</p>
-          <p style="color: var(--text-muted); line-height: 1.6;">Los 21 SKILL.md son la <strong>fuente única</strong> en <code>~/.claude/skills/diaries-*/</code> (versionada con git ahí, disponible a cualquier harness). <strong>No hay copia en el repo.</strong> Se editan directamente allí — p.ej. con <code>/diaries-refine</code>, cuyo cambio queda activo de inmediato y se registra en <code>REFINEMENTS.md</code>. No hay que copiar ni sincronizar.</p>
+          <p style="font-family: var(--ff-display); font-weight: 600; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint);">Skills · dónde viven</p>
+          <p style="color: var(--text-muted); line-height: 1.6;">Claude Code usa los 21 SKILL.md de <code>~/.claude/skills/diaries-*/</code>, y es esa copia la que se edita — p.ej. con <code>/diaries-refine</code>, cuyo cambio queda activo de inmediato y se registra en <code>REFINEMENTS.md</code>. La carpeta <code>skills/</code> del repositorio es la versión publicada: para pasar a una más nueva, <code>git pull</code> y <code>bash install_skills.sh --force</code>, que guarda antes una copia de la instalada (también de lo que hayas cambiado en ella).</p>
         </div>
 
         <div style="background: var(--secondary-subtle); border: 1px solid oklch(85% 0.030 230); border-radius: var(--r-md); padding: var(--s4) var(--s6); font-size: 13px;">
@@ -2123,7 +2126,7 @@ docs/{iso2}/
 ├── data_dictionary.md ← diccionario de variables
 ├── dataset.jsonld     ← metadatos Schema.org (CC BY 4.0)
 ├── corpus_info.json   ← respuestas del procesador (reutilizable)
-└── process_report.md  ← informe del proceso</pre>
+└── pipeline_report.md ← informe interno del proceso (/diaries-report)</pre>
         <p style="margin-top: var(--s6); font-size: 13px; color: var(--text-faint);">El directorio <code>docs/{iso2}/</code> es independiente de <code>source/{iso2}/</code>: la documentación de cada corpus nacional es un activo propio, separado de los datos de trabajo.</p>
 
         <div style="margin-top: var(--s8); padding-top: var(--s6); border-top: 1px solid var(--border);">
@@ -2139,7 +2142,7 @@ docs/{iso2}/
             </div>
             <div style="display: flex; gap: var(--s3);">
               <span style="color: var(--auto); flex-shrink: 0;">✓</span>
-              <span>Verifica los 21 skills en <code>~/.claude/skills/</code> (fuente única; no los copia)</span>
+              <span>Verifica los 21 skills en <code>~/.claude/skills/</code> (no los copia: eso lo hace <code>install_skills.sh</code>)</span>
             </div>
             <div style="display: flex; gap: var(--s3);">
               <span style="color: var(--auto); flex-shrink: 0;">✓</span>
@@ -2151,7 +2154,7 @@ docs/{iso2}/
             </div>
             <div style="display: flex; gap: var(--s3);">
               <span style="color: var(--auto); flex-shrink: 0;">✓</span>
-              <span>Es idempotente: re-ejecútalo cuando quieras (no copia ni sincroniza skills)</span>
+              <span>Es idempotente: re-ejecútalo cuando quieras (no toca los skills)</span>
             </div>
           </div>
         </div>

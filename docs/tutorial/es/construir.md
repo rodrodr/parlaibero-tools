@@ -21,8 +21,8 @@ cd parlaibero-tools
 bash install_skills.sh
 ```
 
-Copia los skills a `~/.claude/skills` sin tocar los que ya tengas (`--force` los sustituye y guarda una copia).
-Después, en la carpeta del proyecto que vaya a contener los datos:
+Copia los skills a `~/.claude/skills`. Si ya tienes alguno, se detiene sin tocarlo; `--force` los sustituye y guarda
+antes una copia. Después, en la carpeta del proyecto que vaya a contener los datos:
 
 ```bash
 bash ~/.claude/skills/diaries-lib/install.sh
@@ -169,9 +169,9 @@ los casos abiertos, y se sigue desde el skill que se detuvo.
 
 La documentación técnica completa de los skills, escrita durante la construcción y solo en español, detalla cada
 fórmula de confianza, cada control y cada regla de parada: el [índice de los 21 skills](../../../skills/diaries-lib/docs/diaries_index.html)
-y el [árbol de procedimiento](../../../skills/diaries-lib/docs/pipeline_procedure_tree.html). Algunas partes describen
-el entorno de quien construyó el corpus o una versión anterior de los skills; donde no coincidan, mandan los `SKILL.md`
-y los pasos de esta página.
+y el [árbol de procedimiento](../../../skills/diaries-lib/docs/pipeline_procedure_tree.html). Conservan referencias al
+proyecto en que se construyó el corpus, como scripts que no están en el repositorio; donde algo no coincida, mandan los
+`SKILL.md`.
 
 ## 6. Las 21 fichas
 
