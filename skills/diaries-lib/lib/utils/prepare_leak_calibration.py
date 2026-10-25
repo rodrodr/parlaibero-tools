@@ -6,10 +6,11 @@ problema: se escapó y nadie la va a mirar nunca. Esa es la asimetría que hace 
 comprobación — un FLAG de más cuesta una revisión inútil; un PASS de más es un error
 silencioso.
 
-Se toman **200 filas al azar entre las marcadas PASS**, repartidas por igual entre los quince
-países para que **todas las convenciones de marcado queden ejercitadas** (el reparto
-proporcional al tamaño del corpus habría dejado a los países pequeños sin apenas comprobar,
-y son los que tienen las convenciones más raras).
+Se toman **200 filas al azar entre las marcadas PASS**, repartidas por igual entre los países
+para que **todas las convenciones de marcado queden ejercitadas** (el reparto proporcional al
+tamaño del corpus habría dejado a los países pequeños sin apenas comprobar, y son los que
+tienen las convenciones más raras). Los países son los que tienen muestra del paso 1
+(`docs/validacion/{ISO2}_muestra.csv`), o los que se pidan con `--country`.
 
 Se incluye el **texto completo**, no truncado: un marcador ajeno puede estar en cualquier
 punto, y recortar escondería justo lo que hay que buscar.
@@ -22,16 +23,20 @@ Ecuador incluido.
 cuando el real era **0,47%** —treinta veces más— por dar el filtro por infalible en vez de
 medirlo.
 
-Uso:  python3 scripts/validacion/preparar_calibracion.py [--n 200]
+Uso:  python3 ~/.claude/skills/diaries-lib/lib/utils/prepare_leak_calibration.py
+          [--n 200] [--ronda 1] [--country {iso2} …]
 """
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import pandas as pd
 
-PAISES = ["ar", "br", "cl", "co", "cr", "do", "es", "gt", "mx", "pa", "pe", "pt", "py", "sv", "uy"]
+sys.path.insert(0, str(Path(__file__).parent))
+from validate_structural import muestras  # noqa: E402
+
 SALIDA_BASE = "docs/validacion/calibracion_fuga"
 
 
@@ -40,22 +45,28 @@ def main() -> None:
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--seed", type=int, default=20260731)
     ap.add_argument("--ronda", type=int, default=1)
+    ap.add_argument("--country", nargs="+", metavar="ISO2",
+                    help="uno o varios países; sin él, todos los que tienen muestra")
     a = ap.parse_args()
 
-    por_pais = a.n // len(PAISES)
-    resto = a.n - por_pais * len(PAISES)
+    paises = muestras(a.country)
+    por_pais = a.n // len(paises)
+    resto = a.n - por_pais * len(paises)
 
     partes = []
-    for i, c in enumerate(PAISES):
-        m = pd.read_csv(f"docs/validacion/{c.upper()}_muestra.csv", dtype=str,
-                        keep_default_na=False)
+    for i, (c, f) in enumerate(paises):
+        m = pd.read_csv(f, dtype=str, keep_default_na=False)
         p = m[m.veredicto == "PASS"]
         k = por_pais + (1 if i < resto else 0)
+        if len(p) < k:
+            print(f"  {c.upper()}: {len(p)} filas PASS en la muestra, de {k} pedidas; van todas")
         s = p.sample(n=min(k, len(p)), random_state=a.seed).copy()
         s.insert(0, "pais", c.upper())
         partes.append(s)
 
     d = pd.concat(partes, ignore_index=True)
+    if d.empty:
+        sys.exit("Ninguna fila PASS en las muestras: no hay nada que calibrar.")
     d["n_caracteres"] = d.text.str.len()
     cols = ["pais", "date", "legislature", "session_number", "intervention_order",
             "speaker_raw", "id_dep", "speaker_name", "n_caracteres", "text"]
@@ -83,7 +94,10 @@ def main() -> None:
     except Exception as e:                       # pragma: no cover
         fmt = f"solo CSV ({type(e).__name__})"
 
-    print(f"{len(d)} filas PASS al azar · {por_pais}–{por_pais+1} por país · {fmt}")
+    cuenta = d.pais.value_counts().reindex([c.upper() for c, _ in paises], fill_value=0)
+    reparto = (f"{cuenta.min()}" if cuenta.min() == cuenta.max()
+               else f"{cuenta.min()}–{cuenta.max()}")
+    print(f"{len(d)} filas PASS al azar · {reparto} por país ({' '.join(cuenta.index)}) · {fmt}")
     print(f"  → {SALIDA.with_suffix('.numbers')}")
     print(f"  → {SALIDA.with_suffix('.csv')}")
     print(f"\n  mediana {int(d.n_caracteres.median()):,} car. · "

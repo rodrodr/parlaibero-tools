@@ -423,6 +423,31 @@ def evaluar(fila, mand, ape, nom, leg, modo, tok, voc_pat=None, voc_nom=None,
     return ("PASS" if not motivos else "FLAG"), motivos, na
 
 
+MUESTRAS = Path("docs/validacion")
+PASO_1 = "python3 ~/.claude/skills/diaries-lib/lib/utils/validate_structural.py --country {iso2}"
+
+
+def muestras(paises: list[str] | None = None) -> list[tuple[str, Path]]:
+    """Las muestras de este paso que leen la calibración y el triaje: las de `paises` o, sin
+    ellos, todas las que haya. Sustituye a la lista fija de los quince, que dejaba fuera a
+    cualquier país nuevo. En orden alfabético, el de aquella lista: el resto del reparto de
+    la calibración cae en los mismos países que antes."""
+    if paises:
+        cs = sorted({p.strip().lower() for x in paises for p in x.split(",") if p.strip()})
+        rutas = [(c, MUESTRAS / f"{c.upper()}_muestra.csv") for c in cs]
+        faltan = [str(f) for _, f in rutas if not f.exists()]
+        if faltan:
+            sys.exit(f"Falta la muestra de: {', '.join(faltan)} (desde {Path.cwd()}).\n"
+                     f"Se genera con el paso 1:  {PASO_1}")
+        return rutas
+    hay = sorted((f.name.removesuffix("_muestra.csv").lower(), f)
+                 for f in MUESTRAS.glob("*_muestra.csv"))
+    if not hay:
+        sys.exit(f"No hay ninguna muestra en {MUESTRAS}/*_muestra.csv (desde {Path.cwd()}).\n"
+                 f"Ejecuta antes el paso 1, un país cada vez:  {PASO_1}")
+    return hay
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--country", required=True)
@@ -469,7 +494,7 @@ def main() -> None:
             for k, v in sorted(cnt.items(), key=lambda x: -x[1]):
                 print(f"    {v:4,}  {k}")
 
-    out = Path(f"docs/validacion/{c.upper()}_muestra.csv")
+    out = MUESTRAS / f"{c.upper()}_muestra.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     m.to_csv(out, index=False, encoding="utf-8")
     print(f"\n→ {out}")

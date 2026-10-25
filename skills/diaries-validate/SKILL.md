@@ -87,6 +87,7 @@ caso, antes del merge. Volver a marcarla es rehacer trabajo hecho por una person
 
 ```bash
 python3 ~/.claude/skills/diaries-lib/lib/utils/prepare_leak_calibration.py --n 200
+# solo unos países:  … --n 200 --country {iso2} [{iso2} …]
 ```
 
 Una **fuga** es una fila marcada PASS que en realidad tenía un problema: se escapó y nadie la
@@ -95,6 +96,16 @@ inútil; un PASS de más es un error silencioso.
 
 200 filas PASS al azar, **repartidas por igual entre países** para que todas las convenciones
 queden ejercitadas. Las revisa una persona.
+
+Los países son **los que tienen muestra del paso 1** (`docs/validacion/{ISO2}_muestra.csv`), o
+solo los de `--country`. Sin ninguna muestra se detiene y dice qué paso 1 falta.
+
+Con `--country {iso2}` se calibra solo ese país: las 200 salen de sus 300 filas del paso 1, que
+en los quince dan entre 228 (PA) y 298 PASS; si hay menos PASS de las pedidas, van todas y lo
+avisa.
+
+⚠ **La salida tiene nombre fijo** (`calibracion_fuga[_rondaN].csv`): en un proyecto que ya tiene
+una ronda revisada, la nueva va con otro `--ronda`, o se pisa la columna `FUGA` rellenada a mano.
 
 **Cuándo parar.** Cada corrección invalida formalmente la ronda que la destapó, así que
 perseguir el «0 en 200» es una regresión infinita. Se declara la tasa medida con su intervalo
@@ -106,8 +117,13 @@ cuatro clases de defecto a una, cada vez más local.
 ## Paso 3 — Triaje de los FLAG
 
 ```bash
-python3 ~/.claude/skills/diaries-lib/lib/utils/export_flags_review.py
+python3 ~/.claude/skills/diaries-lib/lib/utils/export_flags_review.py [--country {iso2} …]
 ```
+
+Los mismos países que el paso 2: los que tienen muestra, o los de `--country`. La salida,
+`revision_flags.csv`, también tiene nombre fijo: guardar antes la que ya esté revisada. Si
+ningún FLAG cae en las tres clases de abajo no escribe nada —un fichero vacío pisaría esa
+revisión— y lo dice.
 
 **No todos los FLAG necesitan ojo humano.** Los de hueco de padrón —orador nombrado sin
 `id_dep`, sin mandato en la legislatura— se resuelven solos: el triaje automático mostró que

@@ -993,6 +993,7 @@ la homonimia NO se marca: ya la adjudicó /diaries-match con revisión humana</d
         <div class="block"><div class="lab">Paso 2 · Calibración de la tasa de fuga — obligatoria (<code>prepare_leak_calibration.py</code>)</div>
           <div class="branches">
             <div class="br"><span class="cond">200 filas PASS al azar, por igual entre países</span><span class="arr">→</span><span class="res">las revisa una persona; una fuga es un PASS con problema: un error silencioso</span></div>
+            <div class="br"><span class="cond">qué países</span><span class="arr">→</span><span class="res">los que tienen <span class="mono">{ISO2}_muestra.csv</span> del paso 1, o los de <code>--country</code></span></div>
             <div class="br"><span class="cond">cuándo parar</span><span class="arr">→</span><span class="res">se declara la tasa medida con su intervalo; perseguir el «0 en 200» es una regresión infinita</span></div>
           </div>
         </div>
@@ -1000,6 +1001,7 @@ la homonimia NO se marca: ya la adjudicó /diaries-match con revisión humana</d
           <div class="branches">
             <div class="br"><span class="cond">hueco de padrón: sin id_dep, sin mandato</span><span class="arr">→</span><span class="res">se resuelve solo (casi siempre, personas que no figuran en el padrón)</span></div>
             <div class="br"><span class="cond">marcador ajeno · cadena de firmas · glifos corruptos</span><span class="arr">→</span><span class="res">revisión humana, con el contexto recortado alrededor del hallazgo</span></div>
+            <div class="br"><span class="cond">qué países</span><span class="arr">→</span><span class="res">los mismos que el paso 2: los que tienen muestra, o los de <code>--country</code></span></div>
           </div>
         </div>
         <div class="block"><div class="lab">Paso 4 · Fechas contra la cabecera del acta (<code>audit_session_dates.py</code>)</div>
@@ -1047,7 +1049,7 @@ la homonimia NO se marca: ya la adjudicó /diaries-match con revisión humana</d
     ParlaIbero · pipeline de diarios parlamentarios. Fuente: los <code>SKILL.md</code> en
     <code>~/.claude/skills/diaries-*</code>. Documento generado para visualización del árbol de procedimiento.
     Las rutas usan <code>{iso2}</code> en minúsculas y <code>{ISO2}</code> en mayúsculas.
-    Actualizado el 2026-08-23 conforme a los <code>SKILL.md</code> reparados (fuente de verdad); el 2026-10-25 se añadió <code>diaries-validate</code> y se corrigieron la salida de <code>diaries-report</code> y los caminos de <code>diaries-teach</code>.
+    Actualizado el 2026-08-23 conforme a los <code>SKILL.md</code> reparados (fuente de verdad); el 2026-10-25 se añadió <code>diaries-validate</code> y se corrigieron la salida de <code>diaries-report</code> y los caminos de <code>diaries-teach</code>; la calibración y el triaje de <code>diaries-validate</code> dejaron de exigir las muestras de los quince países.
   </div>
 </main>
 </div>

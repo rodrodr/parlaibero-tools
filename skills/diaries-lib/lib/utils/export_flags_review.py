@@ -17,10 +17,14 @@ Se recorta el **contexto alrededor del hallazgo** (±220 caracteres) en vez de v
 intervención entera: lo que hay que juzgar es el punto concreto, no leerse el discurso.
 El texto completo queda en `texto_completo` por si hace falta.
 
-Uso:  python3 scripts/validacion/preparar_revision_flags.py
+Lee las muestras del paso 1 que haya en `docs/validacion/{ISO2}_muestra.csv`, o las de los
+países que se pidan con `--country`.
+
+Uso:  python3 ~/.claude/skills/diaries-lib/lib/utils/export_flags_review.py [--country {iso2} …]
 """
 from __future__ import annotations
 
+import argparse
 import re
 from pathlib import Path
 
@@ -33,9 +37,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 # reventaba con ModuleNotFoundError en cuanto se ejecutaba: mismo defecto que el runner de OCR
 # apuntando a un lib/utils/ que ya no existe. Un módulo promovido tiene que arrastrar sus imports.
 from validate_structural import (MARCADOR, GUION_DELANTE, FIRMAS, CORRUPTO,  # noqa: E402
-                                 norm_acentos)
+                                 norm_acentos, muestras)
 
-PAISES = ["ar", "br", "cl", "co", "cr", "do", "es", "gt", "mx", "pa", "pe", "pt", "py", "sv", "uy"]
 SALIDA = Path("docs/validacion/revision_flags")
 VENTANA = 220
 
@@ -61,10 +64,14 @@ def contexto(txt: str, clase: str) -> str:
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--country", nargs="+", metavar="ISO2",
+                    help="uno o varios países; sin él, todos los que tienen muestra")
+    a = ap.parse_args()
+
     filas = []
-    for c in PAISES:
-        m = pd.read_csv(f"docs/validacion/{c.upper()}_muestra.csv", dtype=str,
-                        keep_default_na=False)
+    for c, f in muestras(a.country):
+        m = pd.read_csv(f, dtype=str, keep_default_na=False)
         for _, r in m[m.veredicto == "FLAG"].iterrows():
             for etiqueta, clase in CLASES.items():
                 if etiqueta in r.motivos:
@@ -83,6 +90,11 @@ def main() -> None:
                     })
                     break
 
+    if not filas:
+        # no se escribe un fichero vacío: pisaría una revisión ya hecha
+        print("0 filas para revisión humana: ningún FLAG de marcador ajeno, cadena de firmas "
+              f"ni caracteres corrompidos. No se escribe {SALIDA.with_suffix('.csv')}.")
+        return
     d = pd.DataFrame(filas).sort_values(["clase", "pais"]).reset_index(drop=True)
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
     d.to_csv(SALIDA.with_suffix(".csv"), index=False, encoding="utf-8")
