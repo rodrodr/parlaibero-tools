@@ -688,7 +688,7 @@ si tasa_cobertura &lt; 0.80 → confianza = min(confianza, tasa_cobertura)</div>
           <div class="branches">
             <div class="br"><span class="cond">Pasada 1: fuzzy token_sort_ratio ≥ 85</span><span class="arr">→</span><span class="res">typos, acentos, OCR, orden de tokens</span></div>
             <div class="br"><span class="cond">Pasada 2: subconjunto de apellido + mismo nombre</span><span class="arr">→</span><span class="res">apellido completo vs primero (inter-legislatura)</span></div>
-            <div class="br"><span class="cond">Pasada 3: vecinos ±5 ordenados por apellido</span><span class="arr">→</span><span class="res">iniciales expandidas (Nombre A. ↔ Nombre Apellido)</span></div>
+            <div class="br"><span class="cond">Pasada 3: vecinos ±5 ordenados por apellido</span><span class="arr">→</span><span class="res">iniciales expandidas (Apellido1 A. ↔ Apellido1 Apellido2)</span></div>
             <div class="br"><span class="cond">par ambiguo</span><span class="arr">→</span><span class="res">presenta al usuario (partido/distrito/fechas) antes de fusionar</span></div>
           </div>
           <div class="note">Mismas filas con <b>mismo</b> id_dep en distintas legislaturas son correctas. Re-escanea tras cada ronda de fusión.</div>

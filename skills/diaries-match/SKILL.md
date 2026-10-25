@@ -272,7 +272,8 @@ for dep in deputies:
         # Candidato — confidence = 0.75
 ```
 
-Esto captura `speaker_raw = "Alfonso G."` → `apellidos = "Alfonso González"`.
+Esto captura `speaker_raw = "Apellido1 A."` → `apellidos = "Apellido1 Apellido2"`: el primer apellido entero y el
+segundo reducido a su inicial.
 
 **Heurística 3 — Apellido + nombre parcial (primer token)**
 

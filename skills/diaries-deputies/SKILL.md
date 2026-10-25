@@ -344,7 +344,7 @@ for i in range(len(ids)):
 
 #### Pasada 3 — Scan de vecinos tras ordenar por apellidos
 
-Ordenar el catálogo por `norm(apellidos)` y comparar cada entrada con sus ±5 vecinas. Esto agrupa en contigüidad las variantes del mismo apellido, haciendo visibles pares que el fuzzy global no alcanza (e.g., iniciales: `Alfonso G.` / `Alfonso Gonzalez`).
+Ordenar el catálogo por `norm(apellidos)` y comparar cada entrada con sus ±5 vecinas. Esto agrupa en contigüidad las variantes del mismo apellido, haciendo visibles pares que el fuzzy global no alcanza (e.g., iniciales: `Apellido1 A.` / `Apellido1 Apellido2`, con el segundo apellido reducido a su inicial).
 
 ```python
 import re
