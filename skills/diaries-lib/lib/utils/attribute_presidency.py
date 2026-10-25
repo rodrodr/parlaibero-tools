@@ -352,6 +352,12 @@ def por_fecha(iso2: str, cfg: dict) -> tuple[dict, Counter]:
 VUELTA = "\x00base"          # centinela: el relevo devuelve la mesa al titular de la sesión
 
 
+def _abre_turno(t: str, marca: int, ini: int) -> bool:
+    """¿Entre la etiqueta del turno que empieza en `marca` y la nota en `ini` no se dijo nada?"""
+    fin = t.find(">", marca) + 1
+    return bool(fin) and re.fullmatch(r"[\s\W_]*", re.sub(r"<[^>]+>", " ", t[fin:ini])) is not None
+
+
 def cambios(iso2: str, cfg: dict) -> dict:
     """→ {fecha: [(ordinal_de_intervencion, nombre | VUELTA)]} para scope=segments.
 
@@ -394,7 +400,15 @@ def cambios(iso2: str, cfg: dict) -> dict:
         if marcas and not pos:
             sin_marca.append(Path(fp).stem)
         for ini, nom in marcas:
-            out[f].append((sum(1 for p in pos if p < ini), nom))
+            k = sum(1 for p in pos if p < ini)
+            # ⚠ El tramo nuevo empieza en el turno SIGUIENTE al que contiene la nota: lo dicho antes de
+            # la nota es de quien presidía. La excepción es la nota que ABRE su turno (entre la marca y
+            # la nota no hay nada dicho): ese turno ya es de quien asume. Una nota en medio cuenta como
+            # final. Medido el 2026-10-25 en BO / UY / PT: 0 / 0 / 0 al abrir, 2 / 522 / 5.071 al
+            # final, 0 / 3.590 / 161 en medio.
+            if k and _abre_turno(t, pos[k - 1], ini):
+                k -= 1
+            out[f].append((k, nom))
     if sin_marca:
         print(f"  ⚠ {len(sin_marca):,} documentos con relevo pero SIN marcas de intervención "
               f"({seg.get('intervention_mark', '<int')}): los tramos no se pueden situar "
@@ -435,12 +449,20 @@ def atribuir(iso2: str, cfg: dict, df: pd.DataFrame):
 
     asign, sin = {}, Counter()
     orden = ("intervention_order" if "intervention_order" in df.columns else None)
+    # ⚠ La carátula (Prolegomena, orden 0, que añade recover_frontmatter) no tiene marca en tagged/, y
+    # cambios() sitúa cada relevo contando marcas: si la carátula contara aquí, cada tramo empezaría un
+    # turno antes y el turno que contiene la nota pasaría a quien asume. En Bolivia, el único turno de la
+    # presidenta que asume en la 153.ª se iba a quien la releva al final de ese turno; hasta este arreglo,
+    # esa corrida lo evitaba atribuyendo la mesa ANTES de recuperar las carátulas (bo-0018).
+    # Prueba: tests/test_diaries_lib_presidencia_tramos.py.
+    caratula = (pd.to_numeric(df[orden], errors="coerce") == 0) if orden else pd.Series(False, index=df.index)
     for f, grupo in df.groupby("date", sort=False):
         # ⚠ los tramos se asignan por POSICION, así que hay que recorrer las filas en el
         # orden real de la sesión. En UY, 5 de cada 400 fechas venían desordenadas en el
         # CSV y eso desplazaba el corte, cambiando el presidente de un tramo entero.
         idxs = (list(grupo.sort_values(orden, key=lambda s: pd.to_numeric(s, errors="coerce")).index)
                 if orden else list(grupo.index))
+        idxs = [x for x in idxs if not caratula[x]]
         base = nombres.get(f)
         id_base = resolver(base, completo, apellido, mand, f) if base else None
         if base and not id_base:

@@ -1,5 +1,31 @@
 # Cambios de diaries-lib
 
+## 25-10-2026 · attribute_presidency: la carátula desplazaba cada relevo un turno
+
+- **La carátula contaba como turno.** `cambios()` sitúa cada nota de relevo contando las marcas `<int`
+  de `tagged/`. `atribuir()` contaba además la fila de la carátula (Prolegomena, orden 0, que añade
+  `recover_frontmatter`), que no tiene marca. Así, cada tramo empezaba un turno antes y el turno que
+  contiene la nota pasaba a quien asume.
+  - Caso medido: en la corrida de Bolivia, el único turno de la presidenta que asume
+    en la 153.ª se iba a quien la releva al final de ese turno.
+  - Arreglo: `atribuir()` ya no cuenta las filas de orden 0.
+  - Comprobado que es seguro: en CL, CO, PE, PT y UY el orden 0 es siempre la carátula (una fila por
+    sesión como mucho, sin orador, `dm_speech` 0), y los turnos empiezan en 1.
+- **La nota que abre su turno.** Si entre la marca del turno y la nota no se dijo nada, el tramo nuevo
+  empieza en ese turno. Si la nota cierra el turno o cae en medio, el tramo empieza en el siguiente.
+  - Antes valía siempre «el siguiente»; solo con carátula salía bien, por accidente.
+  - Medido el 25-10-2026: en BO, UY y PT ninguna nota abre su turno, así que esta regla no cambia sus
+    atribuciones.
+- **UY y PT publicados: sin cambios.** Su mesa no sale de este script, sino de los `match_*.py` del
+  reproceso. Esos scripts leen la nota en el texto de cada fila, y el canónico coincide con `merge`
+  fila a fila.
+- **Prueba nueva:** `tests/test_diaries_lib_presidencia_tramos.py` (9 casos). Cubre cada posición de
+  la nota, con y sin carátula, y una copia de la corrida de Bolivia (`DIARIES_BOLIVIA`; sin ella, se salta). Con el
+  módulo anterior fallan 6 de los 9.
+
+Batería: `cd ~/.claude/skills && PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q
+diaries-lib/tests` con `DIARIES_BOLIVIA` → 94 passed (85 + 9); sin ella, 93 passed y 1 skipped.
+
 ## 24-09-2026 · parche A1, ronda 2 (arreglo tras el ataque 1)
 
 Corrige lo que confirmó el probador adversarial de la ronda 1 (`attack-diaries-lib-fix-1.json`): 1 hallazgo alto y 3 bajos. La API pública de `StateManager`, el formato de `pipeline_state.json` y de `confidence_anomalies.jsonl`, y la salida de `vinculacion_tr0109.py`/`vinculacion_efectiva.py` no cambian salvo lo descrito aquí. Pruebas nuevas en `tests/`: cada repro del ataque tiene ahora una prueba que fallaba antes de este arreglo y pasa después.
