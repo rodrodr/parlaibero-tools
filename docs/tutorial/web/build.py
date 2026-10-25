@@ -45,6 +45,7 @@ PAGES = [  # slug, Spanish source, English source
     ("marcos", "es/marcos.md", "en/marcos.md"),
     ("referencia", "es/referencia.md", "en/referencia.md"),
     ("construir", "es/construir.md", "en/construir.md"),
+    ("pais", "es/pais.md", "en/pais.md"),
 ]
 NAV = [  # the bar, by door: (group label es, en), then each link: slug, section (or ""), label es, en, pages it stands for
     (None, [("index", "", "Inicio", "Home", ("index",))]),
@@ -52,6 +53,7 @@ NAV = [  # the bar, by door: (group label es, en), then each link: slug, section
                               ("index", "1", "Estudios", "Studies", ("feminicidio", "pandemia", "voz", "marcos")),
                               ("referencia", "", "Herramientas", "Tools", ("referencia",))]),
     (("Construir", "Build"), [("construir", "", "Un corpus", "A corpus", ("construir",)),
+                              ("pais", "", "Un país", "A country", ("pais",)),
                               ("construir", "6", "Skills", "Skills", ())]),
 ]
 ORIGINALS = ROOT / "skills" / "diaries-lib" / "docs"      # the skills' own documentation, published as it is

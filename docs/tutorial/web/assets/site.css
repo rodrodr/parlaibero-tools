@@ -190,6 +190,7 @@ code.tool { background: var(--tool-soft); color: var(--tool); font-weight: 500; 
 .pre pre { margin: 0; padding: 14px 16px; overflow-x: auto; font: 400 .8rem/1.62 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg); }
 .pre pre code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
 .pre:has(.copy) pre { padding-right: 84px; }
+.pre[data-lang="extracto"] pre, .pre[data-lang="extracto"] pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
 .copy { position: absolute; top: 8px; right: 8px; font: 500 .72rem/1 var(--sans); padding: 7px 10px; border-radius: 6px; border: 1px solid var(--rule); background: var(--sheet); color: var(--fg2); cursor: pointer; }
 .copy:hover { color: var(--fg); border-color: var(--fg3); }
 

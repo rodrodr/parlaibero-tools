@@ -61,6 +61,7 @@ bash ~/.claude/skills/diaries-lib/install.sh
 ```
 
 - [Building a corpus](en/construir.md)
+- [A country from scratch](en/pais.md)
 - [Technical documentation, in Spanish only](../../skills/diaries-lib/docs/diaries_index.html)
 
 <!-- /doors -->

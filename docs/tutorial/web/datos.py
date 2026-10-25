@@ -37,7 +37,7 @@ NAME = {
 PAGES = {"feminicidio": ("es/feminicidio.md", "en/feminicidio.md"), "pandemia": ("es/pandemia.md", "en/pandemia.md"),
          "voz": ("es/voz.md", "en/voz.md"), "marcos": ("es/marcos.md", "en/marcos.md"),
          "bibliotecas": ("es/bibliotecas.md", "en/bibliotecas.md"), "index": ("TUTORIAL.md", "TUTORIAL.en.md"),
-         "construir": ("es/construir.md", "en/construir.md")}
+         "construir": ("es/construir.md", "en/construir.md"), "pais": ("es/pais.md", "en/pais.md")}
 
 
 def J(key):
@@ -1020,7 +1020,8 @@ GROUPS = [
 STUDY_PAGES = {"feminicidio": ("Feminicidio", "Femicide"), "pandemia": ("Pandemia", "Pandemic"),
                "voz": ("Voz y escaños", "Voice and seats"), "marcos": ("Marcos", "Frames"),
                "bibliotecas": ("Bibliotecas", "Libraries"), "index": ("Inicio", "Home"),
-               "construir": ("Construir un corpus", "Building a corpus")}
+               "construir": ("Construir un corpus", "Building a corpus"),
+               "pais": ("Un país desde cero", "A country from scratch")}
 
 
 def used_in():
@@ -1167,6 +1168,192 @@ def skills():
     return {"total": len(found), "pipeline": len(pipeline), "control": len(found) - len(pipeline)}
 
 
+# ============================================================ a country from scratch
+# The walkthrough's figures come from web/data/recorrido.json, which recorrido.py writes from the run (kept outside the
+# repository, with the deputies' names); here they become the tables of pais.md, and the excerpts its code blocks.
+SCRIPTS = {
+    "indices.py": ("lee el índice de cada tomo: qué sesiones trae", "reads each volume's index: which sessions it holds"),
+    "cortar_tomos.py": ("corta los tomos en un PDF por sesión", "cuts the volumes into one PDF per session"),
+    "meta_bo.py": ("aplica la heurística de meta registrada para Bolivia", "applies meta's heuristic as registered for Bolivia"),
+    "pase_de_lista_bo.py": ("lee el pase de lista: `parse_attendance.py` solo conoce el de Uruguay",
+                            "reads the roll call: `parse_attendance.py` only knows Uruguay's"),
+    "padron_bo.py": ("el padrón desde los pases de lista", "the roster from the roll calls"),
+    "tabla_match_bo.py": ("la tabla de vinculación y el override de sesión", "the linkage table and the session override"),
+    "standardize_bo.py": ("standardize, declarando las columnas vacías por decisión",
+                          "standardize, declaring the columns left empty by decision"),
+    "completar_canonico_bo.py": ("lo que `recover_frontmatter` y `attribute_presidency` dejan vacío",
+                                 "what `recover_frontmatter` and `attribute_presidency` leave empty"),
+    "secretaria_bo.py": ("la secretaría por tramos (bo-0025)", "the secretariat by segment (bo-0025)"),
+    "sexo_bo.py": ("sex por vocativo, relevo y morfología (bo-0024)", "sex from vocative, hand-over and morphology (bo-0024)"),
+    "auditoria_genero_bo.py": ("el juez del género, con el vocativo boliviano", "the gender judge, with the Bolivian vocative"),
+    "vinetas_bo.py": ("viñetas de uso privado → «•» (bo-0023)", "private-use bullets → «•» (bo-0023)"),
+    "seudonimizar_ci_bo.py": ("cédulas → «[C.I.]» (bo-0021)", "identity-card numbers → «[C.I.]» (bo-0021)"),
+    "standardize_cadena_bo.sh": ("la cadena de standardize en el orden que funciona",
+                                 "the standardize chain in the order that works"),
+}
+# What went wrong, whose it was, how it showed and what was done. «Agente» is Claude Code running the skills.
+FALLOS = [
+    (("agente", "agent"), "match",
+     ("el padrón se escribió con comas y una columna llevaba «;» dentro: `fuzzy_match` eligió «;» como separador",
+      "the roster was written with commas and one column held «;»: `fuzzy_match` took «;» as the separator"),
+     ("0 de 76 formas vinculadas en la primera pasada", "0 of 76 forms linked on the first pass"),
+     ("padrón con «;»; los 204 id, idénticos", "roster with «;»; the 204 ids unchanged")),
+    (("agente", "agent"), "merge",
+     ("la evidencia de bo-0022 era falsa: que quien abre la secretaría no se nombra",
+      "bo-0022's evidence was false: that whoever opens the secretariat is not named"),
+     ("al comparar las capas para esta página", "comparing the layers for this page"),
+     ("se volvió a preguntar; bo-0025 atribuye 160 filas", "asked again; bo-0025 attributes 160 rows")),
+    (("agente", "agent"), "report",
+     ("la vinculación bruta se calculó sobre todas las filas, no sobre las de habla",
+      "gross linkage was computed over all rows, not over speech rows"),
+     ("`vinculacion_tr0109.py` no coincidía con corpus_info.json", "`vinculacion_tr0109.py` did not match corpus_info.json"),
+     ("corregido, y regenerada la documentación", "corrected, and the documentation regenerated")),
+    (("agente", "agent"), "meta, merge",
+     ("dos recuentos mal dichos al preguntar: «54 de 59» por 59 de 65, y «160 de 162» por 160 de 160",
+      "two counts misstated in a question: «54 of 59» for 59 of 65, and «160 of 162» for 160 of 160"),
+     ("al registrar la decisión", "when recording the decision"),
+     ("la decisión lleva la cifra buena", "the decision carries the right figure")),
+    (("agente", "agent"), "tag",
+     ("cuatro escrituras del estado a la vez sobre el mismo archivo", "four writes to the state file at once"),
+     ("llegaron las cuatro, pero es una carrera", "all four landed, but it is a race"),
+     ("en serie desde entonces", "in series from then on")),
+    (("librería", "library"), "standardize",
+     ("`attribute_presidency` cuenta la fila de la carátula en un sitio y no en otro: cada relevo cae una fila antes",
+      "`attribute_presidency` counts the cover row in one place and not in another: each hand-over lands one row early"),
+     ("la fila 77 de la 153.ª volvía al presidente anterior", "row 77 of the 153rd went back to the previous chair"),
+     ("la mesa se atribuye antes de añadir las carátulas (bo-0018); la librería lo corrigió el 25 de octubre de 2026",
+      "the chair is attributed before the covers are added (bo-0018); the library fixed it on 25 October 2026")),
+    (("librería", "library"), "merge",
+     ("no hay atribución de la secretaría, y tag guarda solo el cargo", "there is no attribution for the secretariat, and tag keeps only the office"),
+     ("186 filas de la secretaría sin id_dep", "186 secretariat rows without id_dep"),
+     ("un script propio (bo-0025)", "a local script (bo-0025)")),
+    (("skill", "skill"), "matrix",
+     ("`verify_tagging` y la auditoría de matrix usan el terminador de la config: las marcas cerradas con punto son "
+      "invisibles para los dos",
+      "`verify_tagging` and matrix's audit use the config's terminator: marks closed with a full stop are invisible to both"),
+     ("una búsqueda propia del terminador", "a search of our own for the terminator"),
+     ("bo-0015: las marcas aceptan «.»", "bo-0015: marks accept «.»")),
+    (("skill", "skill"), "correct",
+     ("el comando del SKILL falla: argparse lee `'---PAGE'` como otra opción",
+      "the SKILL's command fails: argparse reads `'---PAGE'` as another option"),
+     ("al ejecutarlo", "on running it"), ("`--page-break-marker=---PAGE`", "`--page-break-marker=---PAGE`")),
+    (("librería", "library"), "deputies",
+     ("`parse_attendance.py` lleva fijas las anclas del pase de Uruguay", "`parse_attendance.py` has Uruguay's roll-call anchors hard-coded"),
+     ("no vio el pase boliviano", "it did not see the Bolivian roll call"), ("un lector propio", "a reader of our own")),
+    (("librería", "library"), "standardize",
+     ("`derive_sex.py` lleva fija su lista de países; con Bolivia añadida, solo dispara la morfología",
+      "`derive_sex.py` has its country list hard-coded; with Bolivia added, only morphology fires"),
+     ("sexo para el {sp} % de quienes hablan, con un {w} % de mujeres", "sex for {sp}% of speakers, {w}% of them women"),
+     ("vocativo, nota de relevo y morfología (bo-0024)", "vocative, hand-over note and morphology (bo-0024)")),
+    (("skill", "skill"), "validate",
+     ("`prepare_leak_calibration.py` anuncia «< 1,5 %» para 0 de 200 (regla de tres)",
+      "`prepare_leak_calibration.py` announces «< 1.5%» for 0 of 200 (rule of three)"),
+     ("al calcular el intervalo", "computing the interval"), ("se publica el de Wilson", "Wilson's is published")),
+]
+
+
+def ordinal(n, lang):
+    if lang == "es":
+        return f"{n}.ª"
+    return f"{n}{'st' if n % 10 == 1 and n % 100 != 11 else 'rd' if n % 10 == 3 and n % 100 != 13 else 'th'}"
+
+
+def pais():
+    r = json.loads((DATA / "recorrido.json").read_text(encoding="utf-8"))
+    ss, lk, va, me = r["sessions"], r["linkage"], r["validation"], r["measured"]
+    if set(SCRIPTS) != set(r["run"]["scripts"]):
+        raise SystemExit(f"local scripts changed: {sorted(set(SCRIPTS) ^ set(r['run']['scripts']))}")
+    for k, v in r["excerpts"].items():
+        for lang in LANGS:
+            TABLES["pais"][(f"pais_{k}", lang)] = f"```extracto\n{v}\n```"      # wraps, keeps its line breaks
+    sup = sum(1 for d in r["decisions"] if d["status"] == "superada")
+    for lang in LANGS:
+        def n(v, d=0):
+            return num(v, d, lang)
+        TABLES["pais"][("pais_ficha", lang)] = "\n".join(f"- **{k}:** {v}" for k, v in [
+            [es_en(lang, "País", "Country"), es_en(lang, "Bolivia, Cámara de Diputados", "Bolivia, Chamber of Deputies")],
+            [es_en(lang, "Fuente", "Source"), es_en(lang, "El Redactor de Debates, PDF digital", "El Redactor de Debates, digital PDF")],
+            [es_en(lang, "Sesiones", "Sittings"), " · ".join(ordinal(s["number"], lang) for s in ss)],
+            [es_en(lang, "Filas", "Rows"), n(lk["rows"])],
+            [es_en(lang, "Habla vinculada", "Linked speech"), pct(lk["gross"], 1, lang)],
+            [es_en(lang, "Preguntas respondidas", "Questions answered"), n(me["questions"]["n"])],
+            [es_en(lang, "Decisiones", "Decisions"),
+             es_en(lang, f"{len(r['decisions'])}, {sup} superadas", f"{len(r['decisions'])}, {sup} superseded")],
+            [es_en(lang, "Scripts propios", "Local scripts"), n(len(r["run"]["scripts"]))],
+            ["Skills", f"parlaibero-tools `{r['run']['skills_commit']}`"]])
+        rows = [[ordinal(s["number"], lang), s["date"], n(s["pages"]), n(s["tagged"]), n(s["rows"]), n(s["words"])] for s in ss]
+        rows.append(["**Total**", "", n(sum(s["pages"] for s in ss)), n(sum(s["tagged"] for s in ss)),
+                     n(sum(s["rows"] for s in ss)), n(sum(s["words"] for s in ss))])
+        TABLES["pais"][("pais_sesiones", lang)] = md_table(
+            es_en(lang, ["Sesión", "Fecha", "Páginas", "Turnos etiquetados", "Filas del canónico", "Palabras del canónico"],
+                  ["Sitting", "Date", "Pages", "Tagged turns", "Rows of the canonical file", "Words in the canonical file"]),
+            rows, right=(2, 3, 4, 5))
+        what = {"A": ("la plantilla: párrafos de al menos 80 caracteres", "the template: paragraphs of at least 80 characters"),
+                "B": ("la caja medida, y la marca absorbe la línea de abajo", "the measured box, and the mark absorbs the line below"),
+                "C": ("B, y une pares de líneas llenas hasta 2.000 caracteres", "B, and joins pairs of full lines up to 2,000 characters"),
+                "D": ("C, con tope de 6.000", "C, capped at 6,000")}
+        TABLES["pais"][("pais_reflujo", lang)] = md_table(
+            es_en(lang, ["Variante", "Qué hace", "Cortes a mitad de frase", "Marcas separadas de su texto"],
+                  ["Variant", "What it does", "Breaks mid-sentence", "Marks cut off from their text"]),
+            [[v, es_en(lang, *what[v]), n(a), n(b)] for v, a, b in me["reflow"]["variants"]], right=(2, 3))
+        label = {"deputy": ("Diputados (marca «DIP.»)", "Deputies («DIP.» mark)"), "chair": ("Presidencia", "Chair"),
+                 "secretariat": ("Secretaría", "Secretariat")}
+        rows = [[es_en(lang, *label[k]), n(v["rows"]), n(v["linked"]), n(v["people"])] for k, v in lk["by_speaker"].items()]
+        rows.append([es_en(lang, "**Filas de habla**", "**Speech rows**"), n(lk["speech"]), n(lk["linked"]), ""])
+        TABLES["pais"][("pais_vinculacion", lang)] = md_table(
+            es_en(lang, ["Quién habla", "Filas", "Con id_dep", "Personas"], ["Who speaks", "Rows", "With id_dep", "People"]),
+            rows, right=(1, 2, 3))
+        cols = [s["date"] for s in ss]
+
+        def show(v):
+            return es_en(lang, "omitido", "skipped") if v[0] == "skipped" else "—" if v[1] is None else num(v[1], 2, lang)
+        rows = [[f"`{k}`"] + [show(v[c]) for c in cols] + [""] for k, v in r["state"]["sessions"].items()]
+        rows += [[f"`{k}`"] + [""] * len(cols) + [show(v)] for k, v in r["state"]["country"].items()]
+        TABLES["pais"][("pais_estado", lang)] = md_table(
+            ["Skill"] + [ordinal(s["number"], lang) for s in ss] + [es_en(lang, "País", "Country")], rows,
+            right=tuple(range(1, len(cols) + 2)))
+        lo, hi = va["wilson"]
+        first = me["validate_first"]
+        TABLES["pais"][("pais_validacion", lang)] = md_table(es_en(lang, ["Prueba", "Resultado"], ["Check", "Result"]), [
+            [es_en(lang, "Muestra sembrada, primera pasada", "Seeded sample, first pass"),
+             es_en(lang, f"{n(va['sample'])} filas: {n(first['pass'])} PASS, {n(first['flag'])} FLAG",
+                   f"{n(va['sample'])} rows: {n(first['pass'])} PASS, {n(first['flag'])} FLAG")],
+            [es_en(lang, "La misma muestra, con la secretaría atribuida", "The same sample, with the secretariat attributed"),
+             ", ".join(f"{n(c)} {k}" for k, c in va["verdicts"].items())
+             + es_en(lang, f"; {n(va['not_applicable'])} no aplicables", f"; {n(va['not_applicable'])} not applicable")],
+            [es_en(lang, "Calibración de fuga: filas PASS leídas a mano", "Leak calibration: PASS rows read by hand"),
+             es_en(lang, f"{n(va['leak_rows'])}; marcadas como fuga, {n(va['leak_marked'])}; IC 95 % (Wilson) "
+                         f"[{pct(lo, 0, lang)} – {pct(hi, 2, lang)}]",
+                   f"{n(va['leak_rows'])}; marked as leaks, {n(va['leak_marked'])}; 95% CI (Wilson) "
+                   f"[{pct(lo, 0, lang)} – {pct(hi, 2, lang)}]")],
+            [es_en(lang, "De ellas, turnos de la secretaría atribuidos después", "Of them, secretariat turns attributed afterwards"),
+             es_en(lang, f"{n(va['secretariat_recheck'])}, por revisar aparte", f"{n(va['secretariat_recheck'])}, to be checked apart")],
+            [es_en(lang, "Cédulas de identidad → «[C.I.]»", "Identity-card numbers → «[C.I.]»"),
+             es_en(lang, f"{n(va['ci_masked'])} en {n(va['ci_rows'])} filas", f"{n(va['ci_masked'])} in {n(va['ci_rows'])} rows")],
+            [es_en(lang, "Viñetas de uso privado → «•»", "Private-use bullets → «•»"),
+             es_en(lang, f"{n(va['bullets'])} en {n(va['bullet_rows'])} filas", f"{n(va['bullets'])} in {n(va['bullet_rows'])} rows")]])
+        rows = []
+        for d in r["decisions"]:
+            state = es_en(lang, "vigente", "in force") if d["status"] == "vigente" else es_en(
+                lang, f"superada por {d['superseded_by']}: {d['why_es']}", f"superseded by {d['superseded_by']}: {d['why_en']}")
+            if d["supersedes"]:
+                state += es_en(lang, f"; sustituye a {d['supersedes']}", f"; replaces {d['supersedes']}")
+            rows.append([d["id"], es_en(lang, d["phase"], {"fuentes": "sources"}.get(d["phase"], d["phase"])), d[lang], state])
+        TABLES["pais"][("pais_decisiones", lang)] = md_table(
+            es_en(lang, ["Id", "Paso", "Decisión", "Estado"], ["Id", "Step", "Decision", "Status"]), rows)
+        ds = me["derive_sex_as_shipped"]
+        rows = [[es_en(lang, *whose), step, es_en(lang, *what),
+                 es_en(lang, *seen).format(sp=n(ds["speakers_pct"]), w=n(ds["women_pct"])), es_en(lang, *done)]
+                for whose, step, what, seen, done in FALLOS]
+        TABLES["pais"][("pais_fallos", lang)] = md_table(
+            es_en(lang, ["De quién", "Paso", "Qué falló", "Cómo se vio", "Qué se hizo"],
+                  ["Whose", "Step", "What went wrong", "How it showed", "What was done"]), rows)
+        TABLES["pais"][("pais_scripts", lang)] = md_table(
+            es_en(lang, ["Script", "Para qué"], ["Script", "What for"]),
+            [[f"`{k}`", es_en(lang, *SCRIPTS[k])] for k in r["run"]["scripts"]])
+    return {"rows": lk["rows"], "linked_pct": round(100 * lk["gross"], 1), "decisions": len(r["decisions"])}
+
+
 # ============================================================ writing
 def write_tables():
     for page, items in TABLES.items():
@@ -1193,6 +1380,7 @@ def main():
     mar_facts, mar_spark = marcos()
     bib_facts = bibliotecas()
     ini_facts = inicio()
+    pais_facts = pais()
     for vid, by_lang in SPECS.items():
         (DATA / f"{vid}.json").write_text(json.dumps(by_lang, ensure_ascii=False, indent=1), encoding="utf-8")
     n_skills = skills()
@@ -1202,7 +1390,8 @@ def main():
     facts = {"mcp_version": version("parlaibero-mcp"),
              "versions": {c["iso"]: c["downloaded"]["version"] for c in J("Z1_list")["countries"]},
              "tools": n_tools, "skills": n_skills, "corpus": ini_facts, "feminicidio": fem_totals,
-             "pandemia": pan_facts, "voz": voz_facts, "marcos": mar_facts, "bibliotecas": bib_facts}
+             "pandemia": pan_facts, "voz": voz_facts, "marcos": mar_facts, "bibliotecas": bib_facts,
+             "pais": pais_facts}
     (DATA / "facts.json").write_text(json.dumps(facts, ensure_ascii=False, indent=1))
     print(f"{len(SPECS)} charts, {sum(len(v) for v in TABLES.values())} tables, {n_tools} tools, {n_skills['total']} skills")
     if "--show" in sys.argv:

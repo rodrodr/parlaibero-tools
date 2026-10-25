@@ -167,6 +167,9 @@ Three skills record different things:
 If the chain stops, `/diaries-status` says where, and which step is pending next; `/diaries-review` resolves the open
 cases, and you go on from the skill that stopped.
 
+The guide [A country from scratch](pais.md) runs this whole chain on four sessions from Bolivia, a country that is not
+in ParlaIbero: what each skill asked, what was checked by hand and what went wrong.
+
 The skills' full technical documentation, written during the construction and in Spanish only, details every
 confidence formula, every check and every stopping rule: the [index of the 21 skills](../../../skills/diaries-lib/docs/diaries_index.html)
 and the [procedure tree](../../../skills/diaries-lib/docs/pipeline_procedure_tree.html). They keep references to the

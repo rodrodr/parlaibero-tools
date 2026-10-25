@@ -1,0 +1,646 @@
+{
+ "run": {
+  "country": "bo",
+  "skills_commit": "3935e4d",
+  "scripts": [
+   "auditoria_genero_bo.py",
+   "completar_canonico_bo.py",
+   "cortar_tomos.py",
+   "indices.py",
+   "meta_bo.py",
+   "padron_bo.py",
+   "pase_de_lista_bo.py",
+   "secretaria_bo.py",
+   "seudonimizar_ci_bo.py",
+   "sexo_bo.py",
+   "standardize_bo.py",
+   "standardize_cadena_bo.sh",
+   "tabla_match_bo.py",
+   "vinetas_bo.py"
+  ]
+ },
+ "sessions": [
+  {
+   "date": "2024-03-13",
+   "number": 67,
+   "pages": 221,
+   "tagged": 408,
+   "rows": 409,
+   "words": 97873
+  },
+  {
+   "date": "2024-03-26",
+   "number": 76,
+   "pages": 67,
+   "tagged": 128,
+   "rows": 129,
+   "words": 32277
+  },
+  {
+   "date": "2024-07-31",
+   "number": 153,
+   "pages": 79,
+   "tagged": 185,
+   "rows": 186,
+   "words": 40866
+  },
+  {
+   "date": "2024-08-01",
+   "number": 154,
+   "pages": 77,
+   "tagged": 181,
+   "rows": 181,
+   "words": 42700
+  }
+ ],
+ "deputies": {
+  "people": 204,
+  "seats": 130,
+  "attendance": {
+   "present": 478,
+   "absent": 40
+  },
+  "seen_in_sessions": {
+   "1": 74,
+   "3": 76,
+   "4": 54
+  },
+  "speakers": 73,
+  "speakers_with_sex": 72,
+  "speakers_f": 33,
+  "roster_with_sex": 140,
+  "sex_source": {
+   "given_name_morph": 69,
+   "vocative": 71
+  }
+ },
+ "match": {
+  "forms": 76,
+  "methods": {
+   "fuzzy": 71,
+   "role": 5
+  },
+  "frozen": 76,
+  "overrides": 1
+ },
+ "linkage": {
+  "rows": 905,
+  "speech": 898,
+  "linked": 872,
+  "gross": 0.971,
+  "by_speaker": {
+   "deputy": {
+    "rows": 260,
+    "linked": 260,
+    "people": 70
+   },
+   "chair": {
+    "rows": 456,
+    "linked": 456,
+    "people": 2
+   },
+   "secretariat": {
+    "rows": 186,
+    "linked": 160,
+    "people": 4
+   }
+  },
+  "secretariat_without_id": {
+   "2024-08-01": 26
+  },
+  "published": 0.971
+ },
+ "validation": {
+  "sample": 300,
+  "verdicts": {
+   "PASS": 300
+  },
+  "not_applicable": 11,
+  "leak_rows": 200,
+  "leak_marked": 0,
+  "wilson": [
+   0.0,
+   0.0188
+  ],
+  "leak_by_speaker": {
+   "deputy": 57,
+   "secretariat": 35,
+   "chair": 108
+  },
+  "secretariat_recheck": 30,
+  "secretariat_marked": 0,
+  "ci_masked": 1674,
+  "ci_rows": 4,
+  "bullets": 35,
+  "bullet_rows": 6
+ },
+ "state": {
+  "sessions": {
+   "diaries-ocr": {
+    "2024-03-13": [
+     "skipped",
+     null
+    ],
+    "2024-03-26": [
+     "skipped",
+     null
+    ],
+    "2024-07-31": [
+     "skipped",
+     null
+    ],
+    "2024-08-01": [
+     "skipped",
+     null
+    ]
+   },
+   "diaries-extract": {
+    "2024-03-13": [
+     "complete",
+     0.9999
+    ],
+    "2024-03-26": [
+     "complete",
+     1.0
+    ],
+    "2024-07-31": [
+     "complete",
+     1.0
+    ],
+    "2024-08-01": [
+     "complete",
+     1.0
+    ]
+   },
+   "diaries-correct": {
+    "2024-03-13": [
+     "complete",
+     0.95
+    ],
+    "2024-03-26": [
+     "complete",
+     0.95
+    ],
+    "2024-07-31": [
+     "complete",
+     0.95
+    ],
+    "2024-08-01": [
+     "complete",
+     0.95
+    ]
+   },
+   "diaries-meta": {
+    "2024-03-13": [
+     "complete",
+     1.0
+    ],
+    "2024-03-26": [
+     "complete",
+     1.0
+    ],
+    "2024-07-31": [
+     "complete",
+     1.0
+    ],
+    "2024-08-01": [
+     "complete",
+     0.97
+    ]
+   },
+   "diaries-tag": {
+    "2024-03-13": [
+     "complete",
+     0.92
+    ],
+    "2024-03-26": [
+     "complete",
+     0.85
+    ],
+    "2024-07-31": [
+     "complete",
+     0.97
+    ],
+    "2024-08-01": [
+     "complete",
+     1.0
+    ]
+   },
+   "diaries-matrix": {
+    "2024-03-13": [
+     "complete",
+     0.998
+    ],
+    "2024-03-26": [
+     "complete",
+     0.992
+    ],
+    "2024-07-31": [
+     "complete",
+     0.995
+    ],
+    "2024-08-01": [
+     "complete",
+     1.0
+    ]
+   }
+  },
+  "country": {
+   "diaries-deputies": [
+    "complete",
+    1.0
+   ],
+   "diaries-match": [
+    "complete",
+    0.93
+   ],
+   "diaries-merge": [
+    "complete",
+    0.9712
+   ],
+   "diaries-standardize": [
+    "complete",
+    1.0
+   ],
+   "diaries-validate": [
+    "complete",
+    null
+   ],
+   "diaries-document": [
+    "complete",
+    1.0
+   ],
+   "diaries-report": [
+    "complete",
+    1.0
+   ]
+  }
+ },
+ "decisions": [
+  {
+   "id": "bo-0001",
+   "phase": "fuentes",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "Muestra de método: 4 sesiones de la Cámara, de marzo y julio de 2024; las sesiones conjuntas, fuera.",
+   "en": "Method sample: 4 Chamber sessions, from March and July 2024; joint sessions left out."
+  },
+  {
+   "id": "bo-0002",
+   "phase": "fuentes",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "Los tomos mensuales se cortan en un PDF por sesión por su página de cabecera; preliminares e índice, fuera.",
+   "en": "The monthly volumes are cut into one PDF per session at its title page; preliminaries and index left out."
+  },
+  {
+   "id": "bo-0003",
+   "phase": "fuentes",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "El 31 de julio son dos sesiones, la 153.ª y la 154.ª.",
+   "en": "31 July holds two sessions, the 153rd and the 154th."
+  },
+  {
+   "id": "bo-0004",
+   "phase": "extract",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "La 67.ª se extrae en modo fiel aunque salte el control de fragmentación (55 páginas de tabla del anexo).",
+   "en": "The 67th is extracted in faithful mode although the fragmentation gate fires (55 pages of annex table)."
+  },
+  {
+   "id": "bo-0005",
+   "phase": "correct",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "Un solo mobiliario, el cabecero corrido, y el reflujo D, con cajas de hasta 6.000 caracteres.",
+   "en": "One piece of page furniture, the running head, and reflow D, with boxes of up to 6,000 characters."
+  },
+  {
+   "id": "bo-0006",
+   "phase": "correct",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "Se declaran, sin tocar el motor, las 17 palabras que la regla del folio quita en las fronteras de página.",
+   "en": "The 17 words that the folio rule drops at page boundaries are declared, without changing the engine."
+  },
+  {
+   "id": "bo-0007",
+   "phase": "meta",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "Fecha, número y tipo salen de la carátula; los de la 154.ª, de la fórmula de instalación y de la carátula del tomo de agosto.",
+   "en": "Date, number and type come from the cover; for the 154th, from the opening formula and the August volume's cover."
+  },
+  {
+   "id": "bo-0008",
+   "phase": "meta",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "En la 76.ª, las 5 marcas «PRESIDENTE:» sueltas son erratas por la presidenta.",
+   "en": "In the 76th, the 5 stray «PRESIDENTE:» marks are errata for the presiding woman."
+  },
+  {
+   "id": "bo-0009",
+   "phase": "deputies",
+   "status": "superada",
+   "supersedes": "",
+   "superseded_by": "bo-0012",
+   "es": "El padrón sale de los pases de lista.",
+   "en": "The roster comes from the roll calls.",
+   "why_es": "la evidencia estaba mal redactada",
+   "why_en": "its evidence was badly worded"
+  },
+  {
+   "id": "bo-0010",
+   "phase": "deputies",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "Asistencia por sesión: licencia, baja médica y comisión cuentan como ausencia.",
+   "en": "Attendance per session: leave, sick leave and committee duty count as absence."
+  },
+  {
+   "id": "bo-0011",
+   "phase": "deputies",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "party queda vacío, y se declara: el acta no lo da.",
+   "en": "party stays empty, and is declared: the record does not give it."
+  },
+  {
+   "id": "bo-0012",
+   "phase": "deputies",
+   "status": "vigente",
+   "supersedes": "bo-0009",
+   "superseded_by": null,
+   "es": "Padrón de los cuatro pases de lista, 204 personas; titulares y suplentes sin distinguir.",
+   "en": "Roster from the four roll calls, 204 people; titular and substitute members not told apart."
+  },
+  {
+   "id": "bo-0013",
+   "phase": "tag",
+   "status": "superada",
+   "supersedes": "",
+   "superseded_by": "bo-0020",
+   "es": "Las marcas sin «DIP.» exigen al menos 3 palabras.",
+   "en": "Marks without «DIP.» need at least 3 words.",
+   "why_es": "su consecuencia describía mal lo que vería verify_tagging",
+   "why_en": "its consequence misdescribed what verify_tagging would see"
+  },
+  {
+   "id": "bo-0014",
+   "phase": "matrix",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "La matriz no descarta turnos por su longitud: una interjección de 8 caracteres es habla.",
+   "en": "The matrix drops no turn for its length: an 8-character interjection is speech."
+  },
+  {
+   "id": "bo-0015",
+   "phase": "tag",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "Las marcas de nivel 1 aceptan «.» como terminador.",
+   "en": "Level-1 marks accept «.» as a terminator."
+  },
+  {
+   "id": "bo-0016",
+   "phase": "standardize",
+   "status": "superada",
+   "supersedes": "",
+   "superseded_by": "bo-0021",
+   "es": "Las cédulas de identidad se seudonimizan en el canónico.",
+   "en": "Identity-card numbers are pseudonymised in the canonical file.",
+   "why_es": "contaba 3 filas con cédulas; son 4",
+   "why_en": "it counted 3 rows with identity numbers; there are 4"
+  },
+  {
+   "id": "bo-0017",
+   "phase": "match",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "El turno cuya marca nombra a un diputado ausente va, por override, a la diputada aludida.",
+   "en": "The turn whose mark names an absent deputy goes, by override, to the deputy alluded to."
+  },
+  {
+   "id": "bo-0018",
+   "phase": "standardize",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "La mesa se atribuye antes de añadir las carátulas, para esquivar un fallo de attribute_presidency.",
+   "en": "The chair is attributed before the covers are added, to sidestep a defect of attribute_presidency."
+  },
+  {
+   "id": "bo-0019",
+   "phase": "standardize",
+   "status": "superada",
+   "supersedes": "",
+   "superseded_by": "bo-0024",
+   "es": "sex sale del vocativo y de la morfología del nombre.",
+   "en": "sex comes from the vocative and the given name's morphology.",
+   "why_es": "decía 35 de 35; son 36 de 36, y faltaba la cobertura por sexo",
+   "why_en": "it said 35 of 35; it is 36 of 36, and coverage by sex was missing"
+  },
+  {
+   "id": "bo-0020",
+   "phase": "tag",
+   "status": "vigente",
+   "supersedes": "bo-0013",
+   "superseded_by": null,
+   "es": "El patrón de nivel 2 exige de 3 a 6 palabras.",
+   "en": "The level-2 pattern needs 3 to 6 words."
+  },
+  {
+   "id": "bo-0021",
+   "phase": "standardize",
+   "status": "vigente",
+   "supersedes": "bo-0016",
+   "superseded_by": null,
+   "es": "Las cédulas pasan a «[C.I.]» en el canónico.",
+   "en": "Identity-card numbers become «[C.I.]» in the canonical file."
+  },
+  {
+   "id": "bo-0022",
+   "phase": "merge",
+   "status": "superada",
+   "supersedes": "",
+   "superseded_by": "bo-0025",
+   "es": "La secretaría se declara sin id_dep.",
+   "en": "The secretariat is declared without id_dep.",
+   "why_es": "su evidencia era falsa: la primera marca de la secretaría sí la nombra",
+   "why_en": "its evidence was false: the secretariat's first mark does name the holder"
+  },
+  {
+   "id": "bo-0023",
+   "phase": "standardize",
+   "status": "vigente",
+   "supersedes": "",
+   "superseded_by": null,
+   "es": "Las viñetas de uso privado pasan a «•».",
+   "en": "The private-use bullets become «•»."
+  },
+  {
+   "id": "bo-0024",
+   "phase": "standardize",
+   "status": "vigente",
+   "supersedes": "bo-0019",
+   "superseded_by": null,
+   "es": "sex sale del vocativo, de la nota de relevo y de la morfología, con la cobertura medida por sexo.",
+   "en": "sex comes from the vocative, the hand-over note and the morphology, with coverage measured by sex."
+  },
+  {
+   "id": "bo-0025",
+   "phase": "merge",
+   "status": "vigente",
+   "supersedes": "bo-0022",
+   "superseded_by": null,
+   "es": "La secretaría se atribuye por tramos en las 3 sesiones que la nombran.",
+   "en": "The secretariat is attributed by segment in the 3 sessions that name it."
+  }
+ ],
+ "measured": {
+  "questions": {
+   "log": "§ 2-17",
+   "n": 25
+  },
+  "bootstrap": {
+   "log": "§ 3",
+   "chars_per_page": 3340,
+   "marks": {
+    "DIP.": 254,
+    "PRESIDENTE/A": 452,
+    "SECRETARIO/A": 186
+   },
+   "caps_forms": 33,
+   "headings": 30,
+   "bare_names": 2
+  },
+  "cut_check": {
+   "log": "§ 2",
+   "march_words": 134048
+  },
+  "spellings": {
+   "log": "§ 8",
+   "n": 207,
+   "pairs": 3
+  },
+  "validate_first": {
+   "log": "§ 14",
+   "pass": 299,
+   "flag": 1
+  },
+  "reflow": {
+   "log": "§ 5",
+   "variants": [
+    [
+     "A",
+     8468,
+     302
+    ],
+    [
+     "B",
+     3747,
+     141
+    ],
+    [
+     "C",
+     7,
+     0
+    ],
+    [
+     "D",
+     2,
+     0
+    ]
+   ]
+  },
+  "words_lost_at_page_boundaries": {
+   "log": "§ 5",
+   "n": 17
+  },
+  "tag_first_pass_67": {
+   "log": "§ 9",
+   "strict": 398,
+   "level2": 5,
+   "headings": 3
+  },
+  "embedded_marks_found_by_hand": {
+   "log": "§ 10",
+   "anywhere": 4,
+   "one_passage": 8,
+   "tagged_67_before": 400
+  },
+  "match_first_pass": {
+   "log": "§ 11",
+   "linked": 0,
+   "forms": 76
+  },
+  "merge_before_secretariat": {
+   "log": "§ 12",
+   "linked": 716,
+   "rows": 902,
+   "confidence": 0.794
+  },
+  "gross_over_all_rows": {
+   "log": "§ 16",
+   "pct": 79.1,
+   "right_pct": 79.73
+  },
+  "derive_sex_as_shipped": {
+   "log": "§ 13",
+   "speakers_pct": 51,
+   "women_pct": 71
+  },
+  "gender_audit": {
+   "log": "§ 13",
+   "agree": 345,
+   "of": 349,
+   "explained": 4
+  },
+  "secretariat_vocatives": {
+   "log": "§ 17",
+   "agree": 39,
+   "of": 39,
+   "notes_resolved": 31,
+   "notes_without_id": 8
+  },
+  "morph_against_vocative": {
+   "log": "§ 15, § 17",
+   "right": 36,
+   "of": 36,
+   "women": [
+    27,
+    32
+   ],
+   "men": [
+    9,
+    39
+   ]
+  }
+ },
+ "excerpts": {
+  "capa_extracted": "---PAGE 0001---\nCÁMARA DE DIPUTADOS / EL REDACTOR / MARZO 2024\n245\n76ª SESIÓN ORDINARIA\nLEGISLATURA 2023-2024\nLA PAZ, MARTES 26 DE MARZO DE 2024\n[N]\nPRESIDENTE EN EJERCICIO DE LA CÁMARA DE DIPUTADOS\nPRESIDENTE EN EJERCICIO, DIP. [N]: Bueno, muy buenos\ndías colegas Diputados, Diputadas. Para instalar la presente Sesión, solicito a nuestro Diputado\nSecretario, verificar el quorum reglamentario.\nSECRETARIO, DIP. [N]: Muchas gracias. Buenos días, muchas\ngracias hermana Presidenta en ejercicios.\nVamos a proseguir a llamar lista para verificar el quorum correspondiente, vamos con Chuquisaca.\n(Llama lista).",
+  "capa_corrected": "76ª SESIÓN ORDINARIA LEGISLATURA 2023-2024 LA PAZ, MARTES 26 DE MARZO DE 2024 [N]\nPRESIDENTE EN EJERCICIO DE LA CÁMARA DE DIPUTADOS\n\nPRESIDENTE EN EJERCICIO, DIP. [N]: Bueno, muy buenos días colegas Diputados, Diputadas. Para instalar la presente Sesión, solicito a nuestro Diputado Secretario, verificar el quorum reglamentario.\n\nSECRETARIO, DIP. [N]: Muchas gracias. Buenos días, muchas gracias hermana Presidenta en ejercicios.\nVamos a proseguir a llamar lista para verificar el quorum correspondiente, vamos con Chuquisaca.\n(Llama lista).",
+  "capa_tagged": "76ª SESIÓN ORDINARIA LEGISLATURA 2023-2024 LA PAZ, MARTES 26 DE MARZO DE 2024 [N]\nPRESIDENTE EN EJERCICIO DE LA CÁMARA DE DIPUTADOS\n\n<int speaker=\"PRESIDENTE EN EJERCICIO\">Bueno, muy buenos días colegas Diputados, Diputadas. Para instalar la presente Sesión, solicito a nuestro Diputado Secretario, verificar el quorum reglamentario.</int>\n<int speaker=\"SECRETARIO\">Muchas gracias. Buenos días, muchas gracias hermana Presidenta en ejercicios.\nVamos a proseguir a llamar lista para verificar el quorum correspondiente, vamos con Chuquisaca.\n(Llama lista).",
+  "punto": "PRESIDENTE. Muchas gracias colega Diputado. Vamos a ceder la palabra al colega Diputado [N].\nDIP. [N]. Muchas gracias Presidente.",
+  "relevo": "DIP. [N]: … -Asume la Presidencia, la Diputada [N]-\nPRESIDENTA: Ausencia, Cuarto Intermedio, colegas Diputados, Diputadas, 1 hora.\n-Reasume la Presidencia, el Diputado [N]-",
+  "lapsus": "SECRETARIA: Existe el apoyo, Presidente.\nPRESIDENTE: Las y los Diputados que estén de acuerdo con la Dispensación de la lectura del Informe del Proyecto de Ley No 248/2023-2024, sírvase levantar la mano. Informe, Diputada Secretaria.\nSECRETARIA: Mayoría absoluta, Presidenta.",
+  "config": "speaker_tag_patterns:\n  - \"^DIP\\\\.\\\\s+([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ.\\\\-\\\\s]+?)(?::|\\\\.(?=\\\\s+(?:[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]|[…¿¡“«(])))\"\n  - \"^(PRESIDENT[EA](?:\\\\s+EN\\\\s+EJERCICIO)?)(?:,\\\\s*DIP\\\\.\\\\s+[A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ.\\\\-\\\\s]+?)?(?::|\\\\.(?=\\\\s+(?:[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]|[…¿¡“«(])))\"\n  - \"^(SECRETARI[OA])(?:,\\\\s*DIP\\\\.\\\\s+[A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ.\\\\-\\\\s]+?)?(?::|\\\\.(?=\\\\s+(?:[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]|[…¿¡“«(])))\"\n\n# Nivel 2: nombre en mayúsculas de dos o más palabras ante «:», sin «DIP.». Hay 2 marcas así en la 67.ª;\n# el investigador decidió no darles un patrón de nivel 1 porque también casarían encabezados de los\n# documentos leídos (LOTE A:, POR TANTO:, CÓDIGO CATASTRAL:…): las puntúa tag contra el registro.\n# Mínimo 3 palabras (decisión bo-0020, que corrige bo-0013): con 2, ARTÍCULO ÚNICO: (×2) y TITULO EJECUTORIAL: puntuaban 0,70,\n# lo mismo que el nombre real de 5 palabras, y abrían turno; todo nombre del padrón tiene 3 o más.\nspeaker_loose_pattern: \"^(?P<name>(?:DIP\\\\.\\\\s+)?[A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ.\\\\-]+(?:\\\\s+[A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ.\\\\-]+){2,5})(?=\\\\s*:)\"",
+  "meta": "{\n \"date\": \"2024-07-31\",\n \"session_number\": 153,\n \"session_type\": \"ordinaria\",\n \"legislature\": \"2020-2025\",\n \"legislative_session\": \"2023-2024\",\n \"presidency\": {\"scope\": \"segments\", \"segments\": [\n  {\"via\": \"prolegomena\", \"genero\": null, \"marcas\": {\"m\": 38, \"f\": 0}},\n  {\"via\": \"relevo\", \"genero\": \"f\", \"marcas\": {\"m\": 0, \"f\": 1}},\n  {\"via\": \"relevo\", \"genero\": \"m\", \"marcas\": {\"m\": 55, \"f\": 0}}\n ]}\n}"
+ }
+}

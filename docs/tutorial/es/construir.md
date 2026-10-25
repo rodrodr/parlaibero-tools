@@ -167,6 +167,9 @@ Tres skills registran cosas distintas:
 Si la cadena se detiene, `/diaries-status` dice dónde y cuál es el siguiente paso pendiente; `/diaries-review` resuelve
 los casos abiertos, y se sigue desde el skill que se detuvo.
 
+La guía [Un país desde cero](pais.md) recorre esta cadena entera sobre cuatro sesiones de Bolivia, un país que no está
+en ParlaIbero: lo que preguntó cada skill, lo que se comprobó a mano y lo que salió mal.
+
 La documentación técnica completa de los skills, escrita durante la construcción y solo en español, detalla cada
 fórmula de confianza, cada control y cada regla de parada: el [índice de los 21 skills](../../../skills/diaries-lib/docs/diaries_index.html)
 y el [árbol de procedimiento](../../../skills/diaries-lib/docs/pipeline_procedure_tree.html). Conservan referencias al
