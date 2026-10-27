@@ -251,8 +251,8 @@
  },
  "cooccurrence_network": {
   "summary": {
-   "es": "Red de palabras de una biblioteca y sus temas; o, con entidades, quién se nombra junto a quién.",
-   "en": "A word network of a library and its themes; or, with entities, who is named together with whom."
+   "es": "Red de palabras de una biblioteca y sus temas: sus palabras características que aparecen juntas, agrupadas con Leiden.",
+   "en": "A word network of a library and its themes: its characteristic words that occur together, clustered with Leiden."
   },
   "example": {
    "es": "¿De qué temas se habló en la biblioteca «agua» de Chile y qué partidos los usan más?",
@@ -277,6 +277,36 @@
   "example": {
    "es": "En «agua», ¿a quién nombran el oficialismo y la oposición? Declara a la ministra del ramo como actor externo.",
    "en": "In 'agua', whom do government and opposition name? Declare the minister in charge as an external actor."
+  }
+ },
+ "theme_dossier": {
+  "summary": {
+   "es": "La evidencia para leer cada tema de una red de palabras: quién lo sostiene, su perfil por año, las palabras de cada grupo dentro del tema, su estabilidad y pasajes del acta. Escribe una plantilla de codebook.",
+   "en": "The evidence to read each theme of a word network: who sustains it, its profile by year, the words each group says inside it, its stability and passages from the record. Writes a codebook template."
+  },
+  "example": {
+   "es": "Prepara la lectura de los temas de la red de «agua» de Chile, por partido, y enséñame el dossier del tema 2.",
+   "en": "Prepare the reading of the themes of the Chilean 'agua' network, by party, and show me theme 2's dossier."
+  }
+ },
+ "check_codebook": {
+  "summary": {
+   "es": "Comprueba literalmente contra el acta las citas del codebook que escribe el agente, y saca una muestra ciega para medir su acuerdo con una persona (κ de Cohen).",
+   "en": "Checks verbatim against the record the quotes of the codebook the agent writes, and draws a blind sample to measure its agreement with a person (Cohen's κ)."
+  },
+  "example": {
+   "es": "Comprueba el codebook de «agua» y prepárame la muestra ciega de 60 pasajes para codificarla.",
+   "en": "Check the 'agua' codebook and prepare the blind sample of 60 passages for me to code."
+  }
+ },
+ "theme_report": {
+  "summary": {
+   "es": "El informe que interpreta los temas para quien investiga, en .md y .html: el agente escribe el texto y el motor pone las cifras, vuelve a comprobar las citas y dibuja tres figuras con sus tablas.",
+   "en": "The report that interprets the themes for the researcher, as .md and .html: the agent writes the prose, and the engine fills the figures, checks the quotes again and draws three figures with their tables."
+  },
+  "example": {
+   "es": "Escribe el informe de los temas de «agua»: qué es cada tema, cuánto pesa, en qué años y partidos, y cómo se argumenta, con citas.",
+   "en": "Write the report on the 'agua' themes: what each theme is, how much it weighs, in which years and parties, and how it is argued, with quotes."
   }
  },
  "query_sql": {

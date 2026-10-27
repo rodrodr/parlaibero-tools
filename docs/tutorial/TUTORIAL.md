@@ -12,7 +12,7 @@ desde un agente de IA y 21 skills de Claude Code para construirlo.
 
 ### Consultar los datos
 
-`parlaibero-mcp` · un servidor MCP con 31 herramientas
+`parlaibero-mcp` · un servidor MCP con 34 herramientas
 
 Tu agente (Claude, ChatGPT de escritorio, Codex, Cursor…) descarga los conjuntos de Harvard Dataverse y después busca,
 cuenta y lee los plenos en tu ordenador. No hace falta programar: se pide con palabras. Hace falta
@@ -38,7 +38,7 @@ están en el [README](../../mcp/README.md)):
 
 - [Cuatro estudios](#1-cuatro-estudios)
 - [Una biblioteca desde cero](es/bibliotecas.md)
-- [Las 31 herramientas](es/referencia.md)
+- [Las 34 herramientas](es/referencia.md)
 
 ### Construir un corpus
 
@@ -163,13 +163,14 @@ estudio suele seguir este camino:
 5. ¿Quién habla, y qué distingue a los grupos? (`share_of_voice`, `distinctive_words`)
 6. Un subconjunto para estudiarlo a fondo (`library_create`, `library_describe`), paso a paso en la [guía de
    bibliotecas](es/bibliotecas.md)
-7. Temas, actores y menciones (`cooccurrence_network`, `comention_network`, `mention_network`)
+7. Temas, actores y menciones (`cooccurrence_network`, `comention_network`, `mention_network`), y la lectura de los
+   temas hasta un informe (`theme_dossier`, `check_codebook`, `theme_report`)
 8. Lo que ninguna herramienta hace (`query_sql`)
 9. Cerrar el estudio: exportar, registrar y citar (`export_result`, `library_export`, `query_log`, `how_to_cite`)
 
 Puedes pedir un estudio entero de una vez o paso a paso. Paso a paso cuesta más, pero permite mirar cada resultado
 antes del siguiente, que es donde aparecen los problemas. La [página de herramientas](es/referencia.md) describe las
-31, con sus parámetros y un ejemplo de petición.
+34, con sus parámetros y un ejemplo de petición.
 
 ## 4. Antes de creer un resultado
 

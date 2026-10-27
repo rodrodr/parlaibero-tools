@@ -11,7 +11,7 @@ Nothing is sent anywhere: the only requests are plain GETs to Dataverse and, for
 Diarios Explorer's site for its expression tables.
 
 **New here?** The [tutorial](https://rodrodr.github.io/parlaibero-tools/#en) follows four complete studies, from the
-first request to the checks that change the conclusion, with real results, and has a card for each of the 31 tools
+first request to the checks that change the conclusion, with real results, and has a card for each of the 34 tools
 ([en español](https://rodrodr.github.io/parlaibero-tools/#es)).
 
 ## Install

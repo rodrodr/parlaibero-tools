@@ -1015,6 +1015,7 @@ GROUPS = [
      ["library_create", "library_describe", "library_edit", "library_combine", "library_export", "library_import",
       "library_rebuild", "library_delete"]),
     ("redes", "Redes", "Networks", ["cooccurrence_network", "comention_network", "mention_network"]),
+    ("temas", "Lectura de temas", "Reading the themes", ["theme_dossier", "check_codebook", "theme_report"]),
     ("sql", "SQL, exportación y registro", "SQL, export and log", ["query_sql", "export_result", "query_log"]),
 ]
 STUDY_PAGES = {"feminicidio": ("Feminicidio", "Femicide"), "pandemia": ("Pandemia", "Pandemic"),

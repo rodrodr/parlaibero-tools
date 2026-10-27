@@ -52,7 +52,7 @@ década?»*, *«compara el peso de las diputadas en el habla de España y Portug
 **¿Por dónde empezar?** El [tutorial](https://rodrodr.github.io/parlaibero-tools/) recorre cuatro estudios completos
 (la difusión de una palabra, la reacción a la pandemia, la voz de las diputadas frente a su peso en la cámara y los
 marcos de la reforma de las pensiones en Brasil) con sus peticiones, resultados reales y comprobaciones, y una ficha de
-cada una de las 31 herramientas. Está en español e inglés; el texto fuente está en [`docs/tutorial/`](docs/tutorial/).
+cada una de las 34 herramientas. Está en español e inglés; el texto fuente está en [`docs/tutorial/`](docs/tutorial/).
 
 | herramienta | qué hace |
 |---|---|

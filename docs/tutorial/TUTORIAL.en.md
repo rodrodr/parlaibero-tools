@@ -12,7 +12,7 @@ and 21 Claude Code skills to build it.
 
 ### Query the data
 
-`parlaibero-mcp` · an MCP server with 31 tools
+`parlaibero-mcp` · an MCP server with 34 tools
 
 Your agent (Claude, the ChatGPT desktop app, Codex, Cursor…) downloads the datasets from Harvard Dataverse and then
 searches, counts and reads the sittings on your computer. No programming is needed: you ask in words. You need
@@ -38,7 +38,7 @@ in the [README](../../mcp/README.md)):
 
 - [Four studies](#1-four-studies)
 - [A library from scratch](en/bibliotecas.md)
-- [The 31 tools](en/referencia.md)
+- [The 34 tools](en/referencia.md)
 
 ### Build a corpus
 
@@ -159,12 +159,13 @@ this path:
 5. Who speaks, and what sets the groups apart? (`share_of_voice`, `distinctive_words`)
 6. A subset to study in depth (`library_create`, `library_describe`), step by step in the [libraries
    guide](en/bibliotecas.md)
-7. Themes, actors and mentions (`cooccurrence_network`, `comention_network`, `mention_network`)
+7. Themes, actors and mentions (`cooccurrence_network`, `comention_network`, `mention_network`), and reading the
+   themes up to a report (`theme_dossier`, `check_codebook`, `theme_report`)
 8. What no tool does (`query_sql`)
 9. Closing the study: export, log and cite (`export_result`, `library_export`, `query_log`, `how_to_cite`)
 
 You can ask for a whole study at once or step by step. Step by step costs more, but it lets you look at each result
-before the next, which is where the problems show up. The [tools page](en/referencia.md) describes all 31, with their
+before the next, which is where the problems show up. The [tools page](en/referencia.md) describes all 34, with their
 parameters and an example request.
 
 ## 4. Before believing a result

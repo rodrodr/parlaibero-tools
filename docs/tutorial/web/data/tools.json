@@ -1603,8 +1603,8 @@
       }
      ],
      "summary": {
-      "es": "Red de palabras de una biblioteca y sus temas; o, con entidades, quién se nombra junto a quién.",
-      "en": "A word network of a library and its themes; or, with entities, who is named together with whom."
+      "es": "Red de palabras de una biblioteca y sus temas: sus palabras características que aparecen juntas, agrupadas con Leiden.",
+      "en": "A word network of a library and its themes: its characteristic words that occur together, clustered with Leiden."
      },
      "example": {
       "es": "¿De qué temas se habló en la biblioteca «agua» de Chile y qué partidos los usan más?",
@@ -1868,6 +1868,178 @@
      "example": {
       "es": "En «agua», ¿a quién nombran el oficialismo y la oposición? Declara a la ministra del ramo como actor externo.",
       "en": "In 'agua', whom do government and opposition name? Declare the minister in charge as an external actor."
+     }
+    }
+   ]
+  },
+  {
+   "id": "temas",
+   "es": "Lectura de temas",
+   "en": "Reading the themes",
+   "tools": [
+    {
+     "name": "theme_dossier",
+     "description": "The evidence to READ the themes of a word network, so that a theme is more than a list of words. It rebuilds what the network read and proves it (every theme's interventions equal the file's), then gives per theme: core and bridge terms, links to other themes, who sustains it (speakers, sessions: a theme held by one debate is an episode), its profile by year, the words each group says more inside it (a first hint of frames), its stability when Leiden is re-run, and a reading sample stratified by group and year with passages cut from the record. Writes the dossier (JSON, Markdown) and a codebook template; read each theme with theme=k, fill the codebook (verdict, label, definition, anchors with verbatim quotes, frames with stance) and check it with check_codebook. Method: parlaibero://methods/networks § 4.",
+     "params": [
+      {
+       "name": "network",
+       "kind": "string",
+       "description": "ABSOLUTE path of the <library>_words.json that cooccurrence_network wrote (one per country)"
+      },
+      {
+       "name": "theme",
+       "kind": "integer",
+       "description": "A theme's number, as in the page: its full dossier, with the reading sample and its passages. Omit for the overview of all themes (and the files)"
+      },
+      {
+       "name": "sample",
+       "kind": "integer = 10",
+       "description": "Interventions per theme in the reading sample, one per group and year in turn, after the 3 the network ranks first"
+      },
+      {
+       "name": "passages",
+       "kind": "integer = 2",
+       "description": "Passages per intervention, around the densest clusters of the theme's words"
+      },
+      {
+       "name": "window",
+       "kind": "integer = 40",
+       "description": "Words on each side of the theme's words"
+      },
+      {
+       "name": "group_by",
+       "kind": "string = \"party\"",
+       "description": "Column of the groups compared inside each theme (party, sex…)"
+      },
+      {
+       "name": "stability_runs",
+       "kind": "integer = 20",
+       "description": "Leiden re-runs with other seeds on the saved graph"
+      },
+      {
+       "name": "seed",
+       "kind": "integer = 1",
+       "description": "Seed of the reading sample"
+      },
+      {
+       "name": "output_dir",
+       "kind": "string",
+       "description": "ABSOLUTE folder; default the network file's"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": ""
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "La evidencia para leer cada tema de una red de palabras: quién lo sostiene, su perfil por año, las palabras de cada grupo dentro del tema, su estabilidad y pasajes del acta. Escribe una plantilla de codebook.",
+      "en": "The evidence to read each theme of a word network: who sustains it, its profile by year, the words each group says inside it, its stability and passages from the record. Writes a codebook template."
+     },
+     "example": {
+      "es": "Prepara la lectura de los temas de la red de «agua» de Chile, por partido, y enséñame el dossier del tema 2.",
+      "en": "Prepare the reading of the themes of the Chilean 'agua' network, by party, and show me theme 2's dossier."
+     }
+    },
+    {
+     "name": "check_codebook",
+     "description": "Checks a codebook of themes and frames written after reading theme_dossier: its schema and theme numbers, and every anchor against the record (the id exists and is in the library; the quote appears verbatim; it holds the theme's words). Writes a blind sample of passages (no group, no theme) with two empty coding files, one for a person and one for the agent, who codes in a fresh context without the key or the dossier; with both filled (human=, agent=) it gives their agreement (Cohen's κ) and each theme's and frame's share of the coded passages, overall and by group, with Wilson intervals. Method: parlaibero://methods/networks § 4.",
+     "params": [
+      {
+       "name": "codebook",
+       "kind": "string",
+       "description": "ABSOLUTE path of the codebook that theme_dossier wrote, filled"
+      },
+      {
+       "name": "sample_size",
+       "kind": "integer = 60",
+       "description": "Passages in the blind sample to code, allocated to the groups in proportion to their size"
+      },
+      {
+       "name": "seed",
+       "kind": "integer = 1",
+       "description": "Seed of the sample: the same seed draws the same sample"
+      },
+      {
+       "name": "human",
+       "kind": "string",
+       "description": "ABSOLUTE path of the sample coded by a person"
+      },
+      {
+       "name": "agent",
+       "kind": "string",
+       "description": "ABSOLUTE path of the same sample coded by the agent"
+      },
+      {
+       "name": "group_by",
+       "kind": "string = \"party\"",
+       "description": "Column of the groups (party, sex…)"
+      },
+      {
+       "name": "output_dir",
+       "kind": "string",
+       "description": "ABSOLUTE folder; default the codebook's"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": "Replace the sample and coding files (they may hold codes)"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "Comprueba literalmente contra el acta las citas del codebook que escribe el agente, y saca una muestra ciega para medir su acuerdo con una persona (κ de Cohen).",
+      "en": "Checks verbatim against the record the quotes of the codebook the agent writes, and draws a blind sample to measure its agreement with a person (Cohen's κ)."
+     },
+     "example": {
+      "es": "Comprueba el codebook de «agua» y prepárame la muestra ciega de 60 pasajes para codificarla.",
+      "en": "Check the 'agua' codebook and prepare the blind sample of 60 passages for me to code."
+     }
+    },
+    {
+     "name": "theme_report",
+     "description": "The last step of reading a word network's themes: a report that interprets them for the researcher. Without `report` it writes a spec template (JSON) listing the quotable anchors and every figure as a placeholder; you write the interpretation in it (title, lede, findings, a paragraph after each figure, the themes in blocks with their frames and quotes, caveats, next steps). With `report` it checks the spec (every figure is a placeholder the engine fills, every quote an anchor of the codebook found verbatim in the record now, every codable theme in the report once; bare numbers, missing caveats and names are warned) and, without errors, writes the report as Markdown and HTML (three figures with their tables, the seat of every quote, what is measured and what is reading, the method and the citation) and a _check.json. It refuses a codebook with merge or split verdicts or a network that no longer matches. No language model runs here: the prose is yours. Method: parlaibero://methods/networks § 4.",
+     "params": [
+      {
+       "name": "codebook",
+       "kind": "string",
+       "description": "ABSOLUTE path of the filled codebook (checked with check_codebook)"
+      },
+      {
+       "name": "report",
+       "kind": "string",
+       "description": "ABSOLUTE path of the report spec with your interpretation. Omit it to write the spec template next to the codebook"
+      },
+      {
+       "name": "group_by",
+       "kind": "string = \"party\"",
+       "description": "Column of the groups in the figures (party, sex…); a spec keeps its own"
+      },
+      {
+       "name": "language",
+       "kind": "es | pt | en",
+       "description": "Language of the report; default the country's"
+      },
+      {
+       "name": "output_dir",
+       "kind": "string",
+       "description": "ABSOLUTE folder; default the codebook's (template) or the spec's (report)"
+      },
+      {
+       "name": "overwrite",
+       "kind": "boolean = false",
+       "description": "Replace the spec template (it may hold your text)"
+      }
+     ],
+     "used_in": [],
+     "summary": {
+      "es": "El informe que interpreta los temas para quien investiga, en .md y .html: el agente escribe el texto y el motor pone las cifras, vuelve a comprobar las citas y dibuja tres figuras con sus tablas.",
+      "en": "The report that interprets the themes for the researcher, as .md and .html: the agent writes the prose, and the engine fills the figures, checks the quotes again and draws three figures with their tables."
+     },
+     "example": {
+      "es": "Escribe el informe de los temas de «agua»: qué es cada tema, cuánto pesa, en qué años y partidos, y cómo se argumenta, con citas.",
+      "en": "Write the report on the 'agua' themes: what each theme is, how much it weighs, in which years and parties, and how it is argued, with quotes."
      }
     }
    ]
