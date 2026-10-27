@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.6.1 · 2026-10-27
+
+Reading the themes of a word network, in three tools: the engine prepares the evidence, checks the reading and
+renders the report; the reading and the interpretation are the agent's. No language model is called by the server.
+A patch release, so that luz-mcp's pin (`>=0.6.1,<0.7`) takes it; luz-mcp 0.5.0 offers the same three tools.
+
+- **`theme_dossier`** reads a saved `<library>_words.json`, rebuilds the rows, text and tokens the network read and
+  proves it (the interventions and every theme's interventions and dominated words must equal the file's, or it
+  refuses). Per theme: core and bridge terms, linked themes, who sustains it (speakers, sessions; one of either
+  with half or more is flagged), profile by year, the words each group says more inside the theme (signed G²),
+  stability when Leiden is re-run on the saved graph (20 seeds, and 0.6 and 1.6 times the resolution; Jaccard over
+  terms), and a reading sample: the network's first 3 by BM25, then one per group and year in turn, ordered by a
+  hash of (seed, id_int), with passages cut from the record's text. Writes the dossier (JSON, Markdown) and a
+  codebook template; `theme=k` returns one theme's full dossier through the tool.
+- **`check_codebook`** checks the filled codebook (verdict, label, definition, anchors; frames with problem, cause,
+  evaluation, remedy and the stance of each anchor: affirms, contests, cites): schema, theme numbers, and every
+  anchor against the record (id in the library, quote verbatim, theme's words present). Draws a blind sample in
+  proportion to the groups, with two empty coding files (a person, the agent); with both coded, Cohen's κ for
+  theme, frame and stance, and each label's share by group with Wilson 95 % intervals.
+- **`theme_report`** is the protocol's step 5: a report that interprets the themes for the researcher. Without a spec
+  it writes a template (`<library>_report.json`, never replaced) with the quotable anchors and every placeholder and
+  its value. With `report=` it checks the agent's spec:
+  - errors: an unknown placeholder or stray braces; a quote that is not an anchor of that theme or frame, or is no
+    longer verbatim; a codable theme missing or repeated; a frame not in the codebook; empty required text; merge or
+    split verdicts; a changed network;
+  - warnings: bare numbers; a missing caveat on a fragile or one-speaker theme; names after a courtesy title; theme
+    words that occur in speakers' names; frames left out.
+
+  Without errors it writes `.md` and `.html`: the seat line of every quote (never the speaker), the box on what is
+  measured, what is reading and what is missing, three figures with their tables (weight, by year, by group), core
+  terms, method, citation and files. A `_check.json` is written on every call. Spanish, Portuguese and English.
+- `check_codebook` says what comes next (`next`): code the sample, then `theme_report`.
+- Methods: `parlaibero://methods/networks` § 4 (Drawing, Outputs and Cite are now §§ 5-7), with «The report», and
+  the report's files in § 6.
+- Tests: `tests/test_themes.py` (the dossier equals the network on the synthetic store; passages hold the theme's
+  words; samples are deterministic; invented quotes and ids outside the library are found; κ and Wilson by hand)
+  and `tests/test_report.py` (the template is kept; unknown placeholders, invented quotes and missing themes stop the
+  rendering; bare numbers are warned; every quote printed is an anchor; seat lines carry no speaker; the figures'
+  counts are the network's; the three languages have the same strings and all render).
+
 ## 0.6.0 · 2026-10-23 · publicada en PyPI
 
 Three network tools that are never mixed, and pages whose ink follows the data.

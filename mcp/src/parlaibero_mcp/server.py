@@ -18,7 +18,7 @@ except ImportError:  # mcp 1.x
     from mcp.server.fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
-from . import __version__, analysis, dataverse, library as libmod, networks, store
+from . import __version__, analysis, dataverse, library as libmod, networks, report as reportmod, store, themes
 from .textutil import search_regex
 from .catalog import COLLECTION_URL, COUNTRIES, DOCUMENTS, normalize_iso
 
@@ -50,6 +50,13 @@ How to work with it:
    `mention_network` = who names whom on the floor (deputies and external actors you declare).
    Never pass words or concepts as entities. All three write files only to an ABSOLUTE
    `output_dir` and are documented in the resource parlaibero://methods/networks.
+   A word network's themes are lists of words until someone reads them: `theme_dossier` gives the
+   evidence for each theme (passages, who sustains it, how groups speak inside it, its stability),
+   you write a codebook (themes and their frames, anchored in verbatim quotes),
+   `check_codebook` verifies the quotes and measures agreement with a person's coding, and
+   `theme_report` turns your interpretation into a report for the researcher (Markdown and HTML):
+   you write the prose with placeholders for the figures and references to the codebook's quotes,
+   the engine fills and checks them and draws the figures.
 3. Rows with `dm_speech = 0` are not speech (cover page, summaries, vote tallies, reproduced
    documents; `intervention_order = 0` is the session's Prolegomena). Filter `dm_speech = 1`
    to study what was said.
@@ -76,7 +83,7 @@ LOGGED = {"query_sql", "search_text", "term_frequency", "ngram_viewer", "term_co
           "distinctive_words", "kwic", "collocations", "coverage", "export_result", "get_session",
           "get_intervention", "library_create", "library_edit", "library_combine", "library_describe",
           "library_delete", "library_rebuild", "library_export", "library_import", "cooccurrence_network",
-          "comention_network", "mention_network"}
+          "comention_network", "mention_network", "theme_dossier", "check_codebook", "theme_report"}
 
 
 def make_before(logged: set[str], command: str):
@@ -907,6 +914,93 @@ def mention_network(
                                     formats, overwrite, honorifics, max_node_size, max_edge_width, layout)
 
 
+WordsFile = Annotated[str, Field(description="ABSOLUTE path of the <library>_words.json that cooccurrence_network "
+                                             "wrote (one per country)")]
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def theme_dossier(
+    network: WordsFile,
+    theme: Annotated[int | None, Field(ge=1, description="A theme's number, as in the page: its full dossier, with "
+                                                         "the reading sample and its passages. Omit for the "
+                                                         "overview of all themes (and the files)")] = None,
+    sample: Annotated[int, Field(ge=0, le=40, description="Interventions per theme in the reading sample, one per "
+                                                          "group and year in turn, after the 3 the network ranks "
+                                                          "first")] = 10,
+    passages: Annotated[int, Field(ge=1, le=4, description="Passages per intervention, around the densest "
+                                                           "clusters of the theme's words")] = 2,
+    window: Annotated[int, Field(ge=10, le=120, description="Words on each side of the theme's words")] = 40,
+    group_by: Annotated[str, Field(description="Column of the groups compared inside each theme (party, "
+                                               "sex…)")] = "party",
+    stability_runs: Annotated[int, Field(ge=1, le=100, description="Leiden re-runs with other seeds on the "
+                                                                   "saved graph")] = 20,
+    seed: Annotated[int, Field(description="Seed of the reading sample")] = 1,
+    output_dir: Annotated[str | None, Field(description="ABSOLUTE folder; default the network file's")] = None,
+    overwrite: bool = False,
+) -> dict:
+    """The evidence to READ the themes of a word network, so that a theme is more than a list of words. It
+    rebuilds what the network read and proves it (every theme's interventions equal the file's), then gives
+    per theme: core and bridge terms, links to other themes, who sustains it (speakers, sessions: a theme held by
+    one debate is an episode), its profile by year, the words each group says more inside it (a first hint of
+    frames), its stability when Leiden is re-run, and a reading sample stratified by group and year with
+    passages cut from the record. Writes the dossier (JSON, Markdown) and a codebook template; read each theme
+    with theme=k, fill the codebook (verdict, label, definition, anchors with verbatim quotes, frames with
+    stance) and check it with check_codebook. Method: parlaibero://methods/networks § 4."""
+    return themes.theme_dossier(network, theme=theme, sample=sample, n_passages=passages, window=window,
+                                group_by=group_by, stability_runs=stability_runs, seed=seed, output_dir=output_dir,
+                                overwrite=overwrite)
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def check_codebook(
+    codebook: Annotated[str, Field(description="ABSOLUTE path of the codebook that theme_dossier wrote, filled")],
+    sample_size: Annotated[int, Field(ge=1, le=1000, description="Passages in the blind sample to code, allocated "
+                                                                 "to the groups in proportion to their size")] = 60,
+    seed: Annotated[int, Field(description="Seed of the sample: the same seed draws the same sample")] = 1,
+    human: Annotated[str | None, Field(description="ABSOLUTE path of the sample coded by a person")] = None,
+    agent: Annotated[str | None, Field(description="ABSOLUTE path of the same sample coded by the agent")] = None,
+    group_by: Annotated[str, Field(description="Column of the groups (party, sex…)")] = "party",
+    output_dir: Annotated[str | None, Field(description="ABSOLUTE folder; default the codebook's")] = None,
+    overwrite: Annotated[bool, Field(description="Replace the sample and coding files (they may hold codes)")] = False,
+) -> dict:
+    """Checks a codebook of themes and frames written after reading theme_dossier: its schema and theme numbers,
+    and every anchor against the record (the id exists and is in the library; the quote appears verbatim; it
+    holds the theme's words). Writes a blind sample of passages (no group, no theme) with two empty coding
+    files, one for a person and one for the agent, who codes in a fresh context without the key or the dossier;
+    with both filled (human=, agent=) it gives their agreement (Cohen's κ) and each theme's and frame's share of
+    the coded passages, overall and by group, with Wilson intervals. Method:
+    parlaibero://methods/networks § 4."""
+    return themes.check_codebook(codebook, sample_size=sample_size, seed=seed, human=human, agent=agent,
+                                 group_by=group_by, output_dir=output_dir, overwrite=overwrite)
+
+
+@mcp.tool(annotations=WRITE_LOCAL)
+def theme_report(
+    codebook: Annotated[str, Field(description="ABSOLUTE path of the filled codebook (checked with check_codebook)")],
+    report: Annotated[str | None, Field(description="ABSOLUTE path of the report spec with your interpretation. "
+                                                    "Omit it to write the spec template next to the codebook")] = None,
+    group_by: Annotated[str, Field(description="Column of the groups in the figures (party, sex…); a spec keeps "
+                                               "its own")] = "party",
+    language: Annotated[Literal["es", "pt", "en"] | None, Field(description="Language of the report; default the "
+                                                                          "country's")] = None,
+    output_dir: Annotated[str | None, Field(description="ABSOLUTE folder; default the codebook's (template) or "
+                                                        "the spec's (report)")] = None,
+    overwrite: Annotated[bool, Field(description="Replace the spec template (it may hold your text)")] = False,
+) -> dict:
+    """The last step of reading a word network's themes: a report that interprets them for the researcher.
+    Without `report` it writes a spec template (JSON) listing the quotable anchors and every figure as a
+    placeholder; you write the interpretation in it (title, lede, findings, a paragraph after each figure,
+    the themes in blocks with their frames and quotes, caveats, next steps). With `report` it checks the spec
+    (every figure is a placeholder the engine fills, every quote an anchor of the codebook found verbatim in the
+    record now, every codable theme in the report once; bare numbers, missing caveats and names are warned)
+    and, without errors, writes the report as Markdown and HTML (three figures with their tables, the seat of
+    every quote, what is measured and what is reading, the method and the citation) and a _check.json. It
+    refuses a codebook with merge or split verdicts or a network that no longer matches. No language model
+    runs here: the prose is yours. Method: parlaibero://methods/networks § 4."""
+    return reportmod.theme_report(codebook, report=report, group_by=group_by, language=language,
+                                  output_dir=output_dir, overwrite=overwrite)
+
+
 @mcp.resource("parlaibero://about", mime_type="text/markdown")
 def about() -> str:
     """What ParlaIbero is and how this server works."""
@@ -920,7 +1014,8 @@ def about() -> str:
 @mcp.resource("parlaibero://methods/networks", mime_type="text/markdown")
 def methods_networks() -> str:
     """How cooccurrence_network (words), comention_network (actors) and mention_network (who names whom) are
-    built: definitions, rules, limits and validation."""
+    built, and how a word network's themes are read and reported (theme_dossier, check_codebook, theme_report):
+    definitions, rules, limits and validation."""
     from importlib.resources import files
     return files("parlaibero_mcp").joinpath("methods_networks.md").read_text(encoding="utf-8")
 

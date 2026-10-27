@@ -156,6 +156,17 @@ countries gives one network per country. Examples, in words: *«the themes of my
 the left and right blocs»*. Definitions, rules, limits and the measured precision of `mention_network` are in the
 resource `parlaibero://methods/networks`.
 
+**Reading the themes** (since 0.6.1)
+
+| tool | what it does |
+|---|---|
+| `theme_dossier` | the evidence to **read** each theme of a saved word network, so that a theme is more than a list of words: it rebuilds what the network read and proves it, then gives core and bridge terms, who sustains the theme (speakers, sessions), its profile by year, the words each group says more inside it, its stability when Leiden is re-run, and a reading sample stratified by group and year with passages from the record. It writes a codebook template |
+| `check_codebook` | checks the codebook written after reading (themes, and their frames with the stance of each use): every quote must appear verbatim in the record. It draws a blind sample to code by a person and by the agent apart, then gives their agreement (Cohen's κ) and each theme's and frame's share by group with Wilson intervals |
+| `theme_report` | the report that **interprets** the themes for the researcher, as Markdown and HTML. The agent writes the prose in a spec file, with every figure as a placeholder and every quote as a reference to the codebook. The engine fills and checks both, draws three figures with their tables (each theme's weight, by year, by group), and adds the seat of each quote (id, date, group, stance; never the speaker), what is measured versus what is reading, the method and the citation |
+
+The engine prepares, checks and renders; the reading and the interpretation are the agent's, under the protocol of
+`parlaibero://methods/networks` § 4. No language model is called by the server.
+
 The resource `parlaibero://about` summarises the collection.
 
 ### Two filters that change results

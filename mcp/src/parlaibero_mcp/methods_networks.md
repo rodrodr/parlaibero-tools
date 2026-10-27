@@ -10,7 +10,8 @@ answer different questions and are **never mixed in one network**:
 | `mention_network` | **people**: speakers, deputies, external actors you declare | A names B on the floor (directed) | who talks about whom |
 
 A word or a concept is never an actor: `comention_network` refuses `concepto` and points to
-`cooccurrence_network`, and `cooccurrence_network` takes no entities.
+`cooccurrence_network`, and `cooccurrence_network` takes no entities. Three more tools help read the themes of a
+word network, check that reading and report it (§ 4).
 
 All three write their files only to an **absolute** `output_dir`, are deterministic for a given `seed`, are
 recorded in `query_log`, and cite each dataset by DOI and version in every output. A library with several
@@ -245,7 +246,163 @@ two empty columns to label.
 
 ---
 
-## 4. Drawing
+## 4. Reading the themes: `theme_dossier`, `check_codebook` and `theme_report`
+
+A theme of `cooccurrence_network` is a community of words that occur together. It says **what** is talked about,
+usually a sub-issue whose words share referents. It is not yet a subject of debate, and it is not a **frame**: how
+an issue is defined (problem, cause, evaluation, remedy; Entman 1993). Opposing sides use the same nouns, so frames
+cut across the word communities instead of forming one, and a count of a frame's words cannot tell a speaker who
+affirms it from one who quotes it to deny it. Themes have to be read. These tools prepare the reading, check it and
+report it; none calls a language model. The sequence is that of computational grounded theory (Nelson 2020): the
+network detects, the reading refines, a coded sample confirms.
+
+### The dossier
+
+`theme_dossier(network)` reads a saved `<library>_words.json` and **rebuilds what the network read**: the library's
+rows of that country with the same filters, the same text (speech only or full) and the same tokens (with the same
+expression table, checked by its SHA-256). Then it proves it: the number of interventions and, for every theme, the
+interventions that use its words and the words of those it dominates must equal the file's; otherwise it refuses,
+because the library or the data changed. Themes keep the page's numbers. Per theme:
+
+- **core terms** by internal strength, and **bridge terms**, those with most weight towards other themes;
+- **linked themes**, by the weight of the edges between them;
+- a **note** when the theme touches 90 % of the library or more: it is probably made of the words that defined
+  the library (`library_create`'s terms); leave them out with `exclude` and build the network again;
+- **who sustains it**, over the interventions it dominates: speakers, sessions, and the share of the first speaker
+  and of the first session. Half or more from one speaker or one session is flagged: an episode, not a theme;
+- its **profile by year**: interventions, and their share of the year's;
+- the **words of each group inside the theme**: signed G² of the group against the rest of the theme (the network's
+  threshold, 5 occurrences, groups with 5 interventions or more). Groups that share the theme's nouns and differ
+  here are the first hint of frames;
+- **stability**: Leiden re-run on the saved graph with `stability_runs` (20) seeds at the network's resolution, and
+  once at 0.6 and at 1.6 times it, each theme matched by Jaccard over its terms. A mean of 0.8 or more is robust,
+  under 0.5 fragile. It measures the partition of that graph, not the choice of vocabulary;
+- a **reading sample**: the 3 interventions the network ranks first (BM25, which favours long turns and those who
+  speak most), then `sample` (10) more, one per group and year in turn, each stratum in the order of a hash of
+  (seed, id_int), so the same seed gives the same sample on any machine. Each comes with up to `passages` (2)
+  passages of the **record's text** around the densest clusters of the theme's words (`window` words on each
+  side), so that a quote copied from them is found in the record.
+
+Without `theme` it writes `<library>_dossier.json` and `.md` and a codebook template, `<library>_codebook.json`,
+which is never replaced if it exists, and returns the overview. `theme=k` returns that theme's full dossier, so an
+agent that cannot open files reads it through the tool.
+
+### The codebook
+
+One entry per theme, with the page's numbers:
+
+- `verdict`: `theme` (a subject of debate), `merge` (the same subject as `merge_with`), `split` (two subjects; the
+  definition says which) or `artefact` (procedure, one debate, one speaker, noise of the text);
+- for a theme: `label`, `definition`, `include`, `exclude`, and `anchors`: an `id_int` and a quote copied
+  **verbatim**, contiguous and of five words or more;
+- `frames`: each with a `name`, at least one of `problem`, `cause`, `evaluation` and `remedy`, the `groups` that
+  use it, and anchors with a `stance`: `affirms`, `contests` or `cites`.
+
+The template records the network file and its checksums, and who read it (`who`, `model`, `date`).
+
+### The check
+
+`check_codebook(codebook)` refuses a codebook whose network file has changed. It checks the schema and the theme
+numbers, and every anchor against the record: the id exists and is in the library, the quote is there **verbatim**
+(only white space is normalised; a quote that matches only without case or accents is reported apart), and the
+intervention holds the theme's words. Then it draws a **blind sample** of `sample_size` (60) interventions of the
+library, allocated to the groups in proportion to their size (largest remainder, so the sample weighs itself and a
+small group may get none), with one passage each, where the themes' words are densest:
+
+| file | content |
+|---|---|
+| `*_sample.csv` | sample, id_int, date and passage: no group, no theme |
+| `*_key.csv` | each sample's group and dominant theme: not for the coders |
+| `*_coding_human.csv`, `*_coding_agent.csv` | empty: `theme` (a codable theme's number or `none`), `frame` (a codable frame's name or `none`), `stance` (only with a frame). A person and the agent code apart, one label per passage |
+
+Blind means the agent codes in a fresh context, without the key, the dossier or the person's file.
+
+With both files coded (`human=`, `agent=`) it gives, for theme, frame and stance, the observed agreement, **Cohen's
+κ** and the disagreements; and each label's share over the whole sample and by group, with **Wilson 95 %
+intervals**; a group with fewer than 10 coded passages is marked too few to read. The unit is the **passage**
+shown, not the whole intervention: a share is a share of those passages. Report the shares from the person's
+coding, with their intervals, next to the agreement. The report, `*_check.json`, is rewritten on every call; the sample and coding
+files only with `overwrite=true`.
+
+### The report
+
+`theme_report(codebook)` turns the reading into a report for the researcher, who should not have to read the
+dossier to understand the result: a Markdown file and an HTML page that say what the themes are, how much each
+weighs, when and in which groups, and how each is argued, with the quotes that show it. The agent writes the
+interpretation; the engine vouches for every figure and every quote.
+
+Without `report` it writes a spec template, `<library>_report.json`, which is never replaced unless
+`overwrite=true`. It lists:
+
+- `_quotable`: the anchors each theme and frame can quote (id_int, first words, stance);
+- `_placeholders`: every figure the prose can use, with its current value. Examples: `{N}`, `{covered_pct}`,
+  `{dominated:3}`, `{dominated_pct:3}`, `{touching_pct:3}`, `{stability:3}`, `{top_speaker:3}`, `{peak_year:3}`,
+  `{year:3:1934}` (theme 3's share of that year's interventions), `{group:3:<group>}`, `{period:3:<legislature>}`,
+  and sums of themes such as `{dominated:3+2}`;
+- the fields to write:
+  - `title`, `lede`, `findings`, and a paragraph after each figure (`after_figures`);
+  - the codable themes in `blocks`, each listed once;
+  - for each theme: `short` (the figures' label), `about`, `lines` (paragraphs with their quotes), `frames` (text and
+    quotes for each frame of the codebook) and `caveat`;
+  - `residual` (what the artefacts hold), `method_notes`, `next_steps` and `reader`;
+  - `omit_terms` (a name that slipped into a theme's words);
+  - `figures`: `min_year`, `min_group` and `labels`, the shorter column heads of the groups.
+
+In the prose a number is a placeholder, and a quote is a reference to an anchor, `id_int` or `{"id": …, "starts":
+"first words"}`: the text printed is the anchor's, as it is in the record, typos included.
+
+With `report=` it checks the spec.
+
+**Errors** stop the rendering:
+- an unknown placeholder, or braces that are not one;
+- a quote that is not an anchor of that theme or frame, or is no longer verbatim in the record;
+- an intervention with two anchors there and no `starts`;
+- a codable theme missing from the blocks or listed twice;
+- a frame that is not in the codebook;
+- an empty title, lede, finding list, theme description or frame text;
+- a codebook with `merge` or `split` verdicts (resolve them first: the figures are the network's);
+- a network that no longer matches.
+
+**Warnings** do not stop it:
+- a bare number: the engine cannot vouch for it (years, ordinals and a theme's number after the word *theme* are
+  let through);
+- an empty caveat for a theme that is not robust, or one where a single speaker gives a fifth or more of it;
+- a courtesy title followed by a name;
+- a theme word that also occurs in speakers' names;
+- a frame of the codebook left out;
+- a codebook changed since the template was written;
+- no reader.
+
+Without errors it writes `<spec>.md` and `<spec>.html`; the check, `<spec>_check.json`, is rewritten on every call.
+The engine writes:
+
+- **seat lines**: under each quote, its id_int, date, group and stance, never the speaker;
+- **a box** that keeps three things apart:
+  - what the network **measured**;
+  - what is **reading**: labels, definitions, frames and stances, with whose they are;
+  - what is still **missing**: the blind coding. With `check_codebook`'s files next to the codebook, the box gives
+    the sample's size and the themes with fewer than five passages in it, or Cohen's κ once both codings are in;
+- **three figures, each with its table**:
+  - the part of all interventions that each theme dominates, next to the artefacts and the interventions no theme
+    dominates, so that the whole is shown;
+  - the share of each year's interventions that each theme dominates;
+  - the same share for each group.
+
+  The two heatmaps use five quantile classes; an empty cell is a zero, and the highest value of each row is printed.
+  Years and groups under `min_year` and `min_group` interventions are left out and listed;
+- **each theme's core terms**;
+- **the method**: the network's parameters, the dominance rule, the stability and the reading;
+- **the dataset's citation**, with its version;
+- **the files**.
+
+**Dominance** is the unit of every figure. A theme dominates an intervention when it holds more of the
+intervention's words than any other theme, with at least two different words. It is not «is about»: an
+intervention can touch several themes and still be dominated by one. The page has no external resources and
+switches between light and dark.
+
+---
+
+## 5. Drawing
 
 The pages draw every network the same way, so that the ink says what the data say:
 
@@ -275,7 +432,7 @@ The pages draw every network the same way, so that the ink says what the data sa
   ≥ 18.7). Thirty hues cannot all be told apart pairwise, so names on the discs, sectors and legend, the theme
   selector and the tables carry identity too.
 
-## 5. Outputs
+## 6. Outputs
 
 | file | content |
 |---|---|
@@ -285,10 +442,14 @@ The pages draw every network the same way, so that the ink says what the data sa
 | `*_block_matrix.csv`, `*_ambiguas.csv`, `*_validation_sample.csv` | `mention_network` only |
 | `*.json` | everything above, with the parameters and checksums |
 | `*_summary.md` | a short summary with the citation |
+| `*_dossier.json`, `*_dossier.md`, `*_codebook.json` | `theme_dossier`: the evidence for each theme and the codebook template |
+| `*_sample.csv`, `*_key.csv`, `*_coding_human.csv`, `*_coding_agent.csv`, `*_check.json` | `check_codebook` |
+| `*_report.json` | `theme_report`: the spec template, for the agent's interpretation (never replaced) |
+| `<spec>.md`, `<spec>.html`, `<spec>_check.json` | `theme_report`: the report, and the check of its figures and quotes (the page loads nothing) |
 
 The pages load d3 7.8.5 from cdnjs. Nothing else leaves your machine.
 
-## 6. Cite
+## 7. Cite
 
 Each output lists the dataset of every country used, with its DOI and version (see `how_to_cite`).
 Name the tool and the engine version, which is printed in every output.
